@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -9,6 +9,14 @@ import {
   Container,
   Paper,
   Grid,
+  Avatar,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   CssBaseline,
   ThemeProvider,
   createTheme,
@@ -16,70 +24,198 @@ import {
 import {
   AdminPanelSettings,
   LogoutOutlined,
-  GroupOutlined,
   StorefrontOutlined,
+  GroupOutlined,
   VideocamOutlined,
+  CheckCircleOutlined,
+  CancelOutlined,
+  AccessTimeOutlined,
+  TrendingUp,
 } from '@mui/icons-material';
 
+// Tailored Modern Dark Theme
 const adminTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#6366f1',
+      main: '#6366f1', // Indigo
+      light: '#818cf8',
+    },
+    secondary: {
+      main: '#0ea5e9', // Sky Blue
+    },
+    success: {
+      main: '#10b981', // Emerald Green
+    },
+    error: {
+      main: '#ef4444', // Red
+    },
+    warning: {
+      main: '#f59e0b', // Amber
     },
     background: {
       default: '#0f172a',
       paper: '#1e293b',
+    },
+    text: {
+      primary: '#f8fafc',
+      secondary: '#94a3b8',
     },
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 14,
   },
 });
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
+  // Static Dummy Data for Dashboard Metrics
+  const metrics = [
+    {
+      title: 'Total Vendors',
+      value: '24',
+      unit: 'Active Partners',
+      icon: <StorefrontOutlined sx={{ fontSize: 28 }} />,
+      color: '#6366f1', // Indigo
+      bgColor: 'rgba(99, 102, 241, 0.15)',
+    },
+    {
+      title: 'Total Candidates',
+      value: '142',
+      unit: 'Registered Subjects',
+      icon: <GroupOutlined sx={{ fontSize: 28 }} />,
+      color: '#0ea5e9', // Sky Blue
+      bgColor: 'rgba(14, 165, 233, 0.15)',
+    },
+    {
+      title: 'Total Videos',
+      value: '528',
+      unit: 'Uploaded Collections',
+      icon: <VideocamOutlined sx={{ fontSize: 28 }} />,
+      color: '#8b5cf6', // Purple
+      bgColor: 'rgba(139, 92, 246, 0.15)',
+    },
+    {
+      title: 'Approved Videos',
+      value: '410',
+      unit: 'QC Approved (77.6%)',
+      icon: <CheckCircleOutlined sx={{ fontSize: 28 }} />,
+      color: '#10b981', // Green
+      bgColor: 'rgba(16, 185, 129, 0.15)',
+    },
+    {
+      title: 'Rejected Videos',
+      value: '45',
+      unit: 'Requires Re-shoot',
+      icon: <CancelOutlined sx={{ fontSize: 28 }} />,
+      color: '#ef4444', // Red
+      bgColor: 'rgba(239, 68, 68, 0.15)',
+    },
+    {
+      title: 'Total Hours Collected',
+      value: '185.50',
+      unit: 'Hours of Video Data',
+      icon: <AccessTimeOutlined sx={{ fontSize: 28 }} />,
+      color: '#f59e0b', // Amber
+      bgColor: 'rgba(245, 158, 11, 0.15)',
+    },
+  ];
+
+  // Static Dummy Data for Recent Activity Log
+  const recentActivities = [
+    {
+      id: 'VID-9021',
+      vendor: 'Acme Video Solutions',
+      candidate: 'John Doe (CND-042)',
+      environment: 'Kitchen',
+      duration: '45 mins',
+      status: 'Approved',
+      reviewer: 'Alice Auditor',
+    },
+    {
+      id: 'VID-9022',
+      vendor: 'Apex Data Services',
+      candidate: 'Sarah Smith (CND-089)',
+      environment: 'Bedroom',
+      duration: '30 mins',
+      status: 'Rejected',
+      reviewer: 'Bob Reviewer',
+    },
+    {
+      id: 'VID-9023',
+      vendor: 'Global Data Corp',
+      candidate: 'Michael Brown (CND-112)',
+      environment: 'Office',
+      duration: '60 mins',
+      status: 'Approved',
+      reviewer: 'Alice Auditor',
+    },
+    {
+      id: 'VID-9024',
+      vendor: 'Acme Video Solutions',
+      candidate: 'Emily Davis (CND-055)',
+      environment: 'Garden',
+      duration: '50 mins',
+      status: 'Pending',
+      reviewer: 'Unassigned',
+    },
+  ];
+
   const handleLogout = () => {
     navigate('/login');
   };
 
-  const statCards = [
-    { title: 'Total Admins', value: '4 Active', icon: <AdminPanelSettings color="primary" /> },
-    { title: 'Registered Vendors', value: '12 Vendors', icon: <StorefrontOutlined color="secondary" /> },
-    { title: 'Candidates Registered', value: '85 Candidates', icon: <GroupOutlined color="info" /> },
-    { title: 'Uploaded Videos', value: '342 Files', icon: <VideocamOutlined color="warning" /> },
-  ];
-
   return (
     <ThemeProvider theme={adminTheme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
         {/* Navigation Bar */}
-        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-          <Toolbar>
-            <AdminPanelSettings sx={{ mr: 1.5, color: 'primary.main', fontSize: 28 }} />
-            <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1 }}>
-              Admin Control Panel
-            </Typography>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<LogoutOutlined />}
-              onClick={handleLogout}
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-            >
-              Sign Out
-            </Button>
+        <AppBar
+          position="static"
+          elevation={0}
+          sx={{
+            bgcolor: 'background.paper',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          }}
+        >
+          <Toolbar sx={{ py: 1 }}>
+            <AdminPanelSettings sx={{ mr: 1.5, color: 'primary.main', fontSize: 32 }} />
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" fontWeight="bold">
+                Admin Control Dashboard
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Video Data Collection Platform Management
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Chip
+                avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>}
+                label="Super Admin"
+                variant="outlined"
+                color="primary"
+              />
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<LogoutOutlined />}
+                onClick={handleLogout}
+                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              >
+                Sign Out
+              </Button>
+            </Box>
           </Toolbar>
         </AppBar>
 
-        {/* Dashboard Content */}
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          {/* Welcome Header */}
+        {/* Dashboard Content Container */}
+        <Container maxWidth="xl" sx={{ mt: 4 }}>
+          {/* Welcome & Overview Header */}
           <Paper
             elevation={0}
             sx={{
@@ -87,46 +223,156 @@ export default function AdminDashboard() {
               mb: 4,
               borderRadius: 4,
               bgcolor: 'background.paper',
-              backgroundImage: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(30, 41, 59, 1) 100%)',
+              backgroundImage:
+                'linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%)',
               border: '1px solid rgba(99, 102, 241, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 2,
             }}
           >
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              Welcome to Video Platform Admin Panel
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage platform administrators, vendors, candidate collections, video quality control reviews, and payment calculations.
-            </Typography>
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                <Typography variant="h4" fontWeight="bold">
+                  Platform Metrics & Analytics
+                </Typography>
+                <Chip
+                  icon={<TrendingUp />}
+                  label="Live Platform Overview"
+                  color="success"
+                  size="small"
+                  sx={{ fontWeight: 'bold' }}
+                />
+              </Box>
+              <Typography variant="body1" color="text.secondary">
+                Overview of vendors, candidate dataset collection, quality control approvals, and hours.
+              </Typography>
+            </Box>
           </Paper>
 
-          {/* Quick Stats Grid */}
-          <Grid container spacing={3}>
-            {statCards.map((card, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+          {/* 6 Metric Cards Grid */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {metrics.map((card, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
                 <Paper
                   elevation={0}
                   sx={{
                     p: 3,
-                    borderRadius: 3,
+                    borderRadius: 4,
                     bgcolor: 'background.paper',
                     border: '1px solid rgba(255, 255, 255, 0.08)',
+                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: `0 12px 24px -8px ${card.bgColor}`,
+                      borderColor: card.color,
+                    },
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(255, 255, 255, 0.05)', mr: 1.5 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      mb: 2,
+                    }}
+                  >
+                    <Typography variant="subtitle2" color="text.secondary" fontWeight="700">
+                      {card.title.toUpperCase()}
+                    </Typography>
+                    <Box
+                      sx={{
+                        p: 1.2,
+                        borderRadius: 3,
+                        bgcolor: card.bgColor,
+                        color: card.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       {card.icon}
                     </Box>
-                    <Typography variant="body2" color="text.secondary" fontWeight="600">
-                      {card.title}
-                    </Typography>
                   </Box>
-                  <Typography variant="h5" fontWeight="bold">
+                  <Typography variant="h3" fontWeight="bold" sx={{ color: card.color, mb: 0.5 }}>
                     {card.value}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight="500">
+                    {card.unit}
                   </Typography>
                 </Paper>
               </Grid>
             ))}
           </Grid>
+
+          {/* Recent Video Collections Table Summary */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 4,
+              bgcolor: 'background.paper',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              Recent Video Collection Submissions
+            </Typography>
+
+            <TableContainer>
+              <Table sx={{ minWidth: 650 }} aria-label="recent videos table">
+                <TableHead>
+                  <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VIDEO ID</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VENDOR</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>CANDIDATE</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ENVIRONMENT</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>DURATION</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>STATUS</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>REVIEWER</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {recentActivities.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      sx={{
+                        '&:last-child td, &:last-child th': { border: 0 },
+                        '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' },
+                      }}
+                    >
+                      <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
+                        {row.id}
+                      </TableCell>
+                      <TableCell>{row.vendor}</TableCell>
+                      <TableCell>{row.candidate}</TableCell>
+                      <TableCell>
+                        <Chip label={row.environment} size="small" variant="outlined" />
+                      </TableCell>
+                      <TableCell>{row.duration}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={row.status}
+                          size="small"
+                          color={
+                            row.status === 'Approved'
+                              ? 'success'
+                              : row.status === 'Rejected'
+                              ? 'error'
+                              : 'warning'
+                          }
+                          sx={{ fontWeight: 'bold' }}
+                        />
+                      </TableCell>
+                      <TableCell>{row.reviewer}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
         </Container>
       </Box>
     </ThemeProvider>
