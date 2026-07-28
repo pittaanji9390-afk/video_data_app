@@ -7,10 +7,11 @@ const express = require('express');
 const router = express.Router();
 const qcReviewController = require('../controllers/qcReview.controller');
 const { authenticateJWT } = require('../middleware/auth.middleware');
+const { requireRole } = require('../middleware/role.middleware');
 const { validateCreateQCReview } = require('../validators/qcReview.validator');
 
-// Protect all QC review routes with JWT authentication
-router.use(authenticateJWT);
+// Protect all QC review routes with JWT authentication & require admin role
+router.use(authenticateJWT, requireRole('admin'));
 
 // POST /api/v1/qc-reviews - Create / Submit QC Review
 router.post('/', validateCreateQCReview, (req, res, next) => qcReviewController.createQCReview(req, res, next));

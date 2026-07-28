@@ -7,14 +7,15 @@ const express = require('express');
 const router = express.Router();
 const vendorController = require('../controllers/vendor.controller');
 const { authenticateJWT } = require('../middleware/auth.middleware');
+const { requireRole } = require('../middleware/role.middleware');
 const {
   validateVendorIdParam,
   validateCreateVendor,
   validateUpdateVendor,
 } = require('../validators/vendor.validator');
 
-// Protect all vendor routes with JWT authentication
-router.use(authenticateJWT);
+// Protect all vendor routes with JWT authentication & require admin role
+router.use(authenticateJWT, requireRole('admin'));
 
 // POST /api/v1/vendors - Create Vendor
 router.post('/', validateCreateVendor, (req, res, next) => vendorController.createVendor(req, res, next));
