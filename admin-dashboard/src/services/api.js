@@ -1,17 +1,28 @@
 /**
  * API Service for Admin Dashboard
  * Base URL: http://localhost:5000/api/v1
+ * Supports JWT Authorization Header injection
  */
 
 const API_BASE_URL = 'http://localhost:5000/api/v1';
 
+// Token Storage Helpers
+export const getStoredToken = () => localStorage.getItem('access_token');
+export const setStoredToken = (token) => localStorage.setItem('access_token', token);
+export const removeStoredToken = () => localStorage.removeItem('access_token');
+
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
+  const token = getStoredToken();
+
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
   const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     ...options,
   };
 
@@ -32,6 +43,18 @@ async function request(endpoint, options = {}) {
 }
 
 export const apiService = {
+  // Auth API
+  login: async (email, password) => {
+    const res = await request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    if (res.data?.accessToken) {
+      setStoredToken(res.data.accessToken);
+    }
+    return res;
+  },
+
   // Vendors API
   getVendors: async (page = 1, limit = 50, search = '') => {
     const query = new URLSearchParams({ page, limit, search }).toString();

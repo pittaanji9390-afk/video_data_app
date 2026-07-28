@@ -6,7 +6,11 @@
 const express = require('express');
 const router = express.Router();
 const qcReviewController = require('../controllers/qcReview.controller');
+const { authenticateJWT } = require('../middleware/auth.middleware');
 const { validateCreateQCReview } = require('../validators/qcReview.validator');
+
+// Protect all QC review routes with JWT authentication
+router.use(authenticateJWT);
 
 // POST /api/v1/qc-reviews - Create / Submit QC Review
 router.post('/', validateCreateQCReview, (req, res, next) => qcReviewController.createQCReview(req, res, next));

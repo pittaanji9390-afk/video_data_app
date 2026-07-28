@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const videoController = require('../controllers/video.controller');
 const uploadVideoMiddleware = require('../middleware/upload.middleware');
+const { authenticateJWT } = require('../middleware/auth.middleware');
 const {
   validateVideoIdParam,
   validateCreateVideo,
@@ -14,8 +15,11 @@ const {
   validateUpdateVideoMetadata,
 } = require('../validators/video.validator');
 
-// POST /api/v1/videos/upload - Local MP4 Video File Upload
+// POST /api/v1/videos/upload - Local MP4 Video File Upload (Public for mobile app capture)
 router.post('/upload', uploadVideoMiddleware, (req, res, next) => videoController.uploadVideo(req, res, next));
+
+// Apply JWT authentication middleware to protect private video management endpoints
+router.use(authenticateJWT);
 
 // PUT /api/v1/videos/:id/metadata - Update Specific Technical Metadata
 router.put('/:id/metadata', validateVideoIdParam, validateUpdateVideoMetadata, (req, res, next) => videoController.updateVideoMetadata(req, res, next));
