@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart';
+import 'config/routes/app_routes.dart';
+import 'core/constants/app_constants.dart';
+import 'core/theme/app_theme.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const VideoPlatformApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class VideoPlatformApp extends StatelessWidget {
+  const VideoPlatformApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Video Platform',
+      title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const SplashScreen(),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      initialRoute: AppRoutes.splash,
+      routes: AppRoutes.routes,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }
 }
