@@ -4,6 +4,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../config/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/camera_service.dart';
 import '../../services/location_service.dart';
@@ -22,6 +24,9 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   XFile? _recordedFile;
   int _recordedFileSize = 0;
 
+  // Environment Tag
+  String? _selectedEnvironmentTag;
+
   // GPS Location Data
   Position? _currentPosition;
   bool _isFetchingLocation = false;
@@ -35,6 +40,17 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   void initState() {
     super.initState();
     _initializeCamera();
+    _loadSavedEnvironmentTag();
+  }
+
+  Future<void> _loadSavedEnvironmentTag() async {
+    final prefs = await SharedPreferences.getInstance();
+    final tag = prefs.getString('selected_environment_tag');
+    if (tag != null && mounted) {
+      setState(() {
+        _selectedEnvironmentTag = tag;
+      });
+    }
   }
 
   Future<void> _initializeCamera() async {
@@ -139,7 +155,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Video recording & GPS coordinates saved locally!'),
+            content: Text('Video recording & metadata saved locally!'),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
           ),
@@ -183,10 +199,64 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Record Video Data'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sell_outlined),
+            tooltip: 'Environment Tag',
+            onPressed: () async {
+              final result = await Navigator.pushNamed(context, AppRoutes.environmentTag);
+              if (result != null && result is String) {
+                setState(() {
+                  _selectedEnvironmentTag = result;
+                });
+              }
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
           children: [
+            // Environment Tag Banner Header
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.pushNamed(context, AppRoutes.environmentTag);
+                if (result != null && result is String) {
+                  setState(() {
+                    _selectedEnvironmentTag = result;
+                  });
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(25),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primary.withAlpha(80)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.sell_rounded, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _selectedEnvironmentTag != null
+                            ? 'Environment: $_selectedEnvironmentTag'
+                            : 'Select Environment Tag (Kitchen, Bedroom, etc.)',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 20),
+                  ],
+                ),
+              ),
+            ),
+
             // Top Camera / Preview Area
             Expanded(
               child: Container(
@@ -250,7 +320,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               ),
             ),
 
-            // Saved Video & GPS Location Summary Card
+            // Saved Video & GPS & Tag Summary Card
             if (_recordedFile != null || _isFetchingLocation)
               _buildSavedVideoSummaryCard(isDarkMode),
 
@@ -452,6 +522,22 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                 'Size: ${_formatFileSize(_recordedFileSize)}',
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
+              if (_selectedEnvironmentTag != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(30),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    _selectedEnvironmentTag!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
             ],
           ),
           const Divider(height: 20),

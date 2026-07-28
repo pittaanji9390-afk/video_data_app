@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../screens/environment/environment_tag_screen.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/login/login_screen.dart';
 import '../../screens/permission/camera_permission_screen.dart';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String cameraPermission = '/camera-permission';
   static const String recordVideo = '/record-video';
+  static const String environmentTag = '/environment-tag';
   static const String uploadVideo = '/upload-video';
 
   /// Named Routes Map
@@ -24,6 +26,7 @@ class AppRoutes {
       home: (context) => const HomeScreen(),
       cameraPermission: (context) => const CameraPermissionScreen(),
       recordVideo: (context) => const VideoRecordingScreen(),
+      environmentTag: (context) => const EnvironmentTagScreen(),
     };
   }
 
@@ -40,6 +43,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const CameraPermissionScreen());
       case recordVideo:
         return MaterialPageRoute(builder: (_) => const VideoRecordingScreen());
+      case environmentTag:
+        return MaterialPageRoute(builder: (_) => const EnvironmentTagScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
