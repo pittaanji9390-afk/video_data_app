@@ -3,9 +3,6 @@
  * 
  * Loads environment variables via dotenv and exports a centralized
  * configuration object used throughout the application.
- * 
- * dotenv.config() must be called before this module is imported
- * by any other module — handled in server.js.
  */
 
 module.exports = {
@@ -17,5 +14,11 @@ module.exports = {
     name: process.env.DB_NAME || 'videoplatform',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET || 'super_secret_jwt_access_token_key_2026_video_platform',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || 'super_secret_jwt_refresh_token_key_2026_video_platform',
+    expiresIn: process.env.JWT_EXPIRES_IN || '15m',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
 };
