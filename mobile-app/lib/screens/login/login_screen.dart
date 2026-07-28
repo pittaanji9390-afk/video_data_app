@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../config/routes/app_routes.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -30,9 +31,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 2),
         ),
       );
+      // Navigate to Home Screen
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     }
   }
 
