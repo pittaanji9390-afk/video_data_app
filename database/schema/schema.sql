@@ -13,18 +13,18 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================================================
 CREATE TABLE admins (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username        VARCHAR(100)  NOT NULL,
+    username        VARCHAR(100),
     email           VARCHAR(255)  NOT NULL,
+    phone           VARCHAR(20),
     password_hash   VARCHAR(255)  NOT NULL,
-    full_name       VARCHAR(200),
+    full_name       VARCHAR(200)  NOT NULL,
     is_active       BOOLEAN       NOT NULL DEFAULT TRUE,
     last_login_at   TIMESTAMPTZ,
     created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     deleted_at      TIMESTAMPTZ,
 
-    CONSTRAINT uq_admins_username UNIQUE (username),
-    CONSTRAINT uq_admins_email    UNIQUE (email)
+    CONSTRAINT uq_admins_email UNIQUE (email)
 );
 
 -- ============================================================================
