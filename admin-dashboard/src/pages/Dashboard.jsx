@@ -78,17 +78,18 @@ export default function AdminDashboard() {
     {
       title: 'Total Vendors',
       value: '24',
-      unit: 'Active Partners',
+      unit: 'Active Partners (Click to Manage)',
       icon: <StorefrontOutlined sx={{ fontSize: 28 }} />,
-      color: '#6366f1', // Indigo
+      color: '#6366f1',
       bgColor: 'rgba(99, 102, 241, 0.15)',
+      onClick: () => navigate('/vendors'),
     },
     {
       title: 'Total Candidates',
       value: '142',
       unit: 'Registered Subjects',
       icon: <GroupOutlined sx={{ fontSize: 28 }} />,
-      color: '#0ea5e9', // Sky Blue
+      color: '#0ea5e9',
       bgColor: 'rgba(14, 165, 233, 0.15)',
     },
     {
@@ -96,7 +97,7 @@ export default function AdminDashboard() {
       value: '528',
       unit: 'Uploaded Collections',
       icon: <VideocamOutlined sx={{ fontSize: 28 }} />,
-      color: '#8b5cf6', // Purple
+      color: '#8b5cf6',
       bgColor: 'rgba(139, 92, 246, 0.15)',
     },
     {
@@ -104,7 +105,7 @@ export default function AdminDashboard() {
       value: '410',
       unit: 'QC Approved (77.6%)',
       icon: <CheckCircleOutlined sx={{ fontSize: 28 }} />,
-      color: '#10b981', // Green
+      color: '#10b981',
       bgColor: 'rgba(16, 185, 129, 0.15)',
     },
     {
@@ -112,7 +113,7 @@ export default function AdminDashboard() {
       value: '45',
       unit: 'Requires Re-shoot',
       icon: <CancelOutlined sx={{ fontSize: 28 }} />,
-      color: '#ef4444', // Red
+      color: '#ef4444',
       bgColor: 'rgba(239, 68, 68, 0.15)',
     },
     {
@@ -120,7 +121,7 @@ export default function AdminDashboard() {
       value: '185.50',
       unit: 'Hours of Video Data',
       icon: <AccessTimeOutlined sx={{ fontSize: 28 }} />,
-      color: '#f59e0b', // Amber
+      color: '#f59e0b',
       bgColor: 'rgba(245, 158, 11, 0.15)',
     },
   ];
@@ -194,6 +195,15 @@ export default function AdminDashboard() {
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<StorefrontOutlined />}
+                onClick={() => navigate('/vendors')}
+                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              >
+                Manage Vendors
+              </Button>
               <Chip
                 avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>}
                 label="Super Admin"
@@ -258,11 +268,13 @@ export default function AdminDashboard() {
               <Grid item xs={12} sm={6} md={4} key={index}>
                 <Paper
                   elevation={0}
+                  onClick={card.onClick}
                   sx={{
                     p: 3,
                     borderRadius: 4,
                     bgcolor: 'background.paper',
                     border: '1px solid rgba(255, 255, 255, 0.08)',
+                    cursor: card.onClick ? 'pointer' : 'default',
                     transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
                     '&:hover': {
                       transform: 'translateY(-4px)',
