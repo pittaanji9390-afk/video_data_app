@@ -182,7 +182,8 @@ CREATE TABLE video_locations (
 CREATE TABLE qc_reviews (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     video_id        UUID          NOT NULL,
-    reviewer_id     UUID          NOT NULL,
+    reviewer_id     UUID,
+    reviewer_name   VARCHAR(200),
     status          VARCHAR(50)   NOT NULL,
     reject_reason   TEXT,
     reviewed_at     TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
@@ -195,7 +196,7 @@ CREATE TABLE qc_reviews (
     CONSTRAINT fk_qc_reviews_video   FOREIGN KEY (video_id)
         REFERENCES videos (id) ON DELETE CASCADE,
     CONSTRAINT fk_qc_reviews_reviewer FOREIGN KEY (reviewer_id)
-        REFERENCES admins (id) ON DELETE RESTRICT
+        REFERENCES admins (id) ON DELETE SET NULL
 );
 
 -- ============================================================================
