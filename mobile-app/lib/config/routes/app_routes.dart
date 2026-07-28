@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../screens/login/login_screen.dart';
 import '../../screens/splash/splash_screen.dart';
 
 class AppRoutes {
@@ -6,8 +7,8 @@ class AppRoutes {
 
   // Route Name Constants
   static const String splash = '/';
-  static const String home = '/home';
   static const String login = '/login';
+  static const String home = '/home';
   static const String recordVideo = '/record-video';
   static const String uploadVideo = '/upload-video';
 
@@ -15,7 +16,7 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes {
     return {
       splash: (context) => const SplashScreen(),
-      // Additional screens will be attached in future steps
+      login: (context) => const LoginScreen(),
     };
   }
 
@@ -24,6 +25,8 @@ class AppRoutes {
     switch (settings.name) {
       case splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
+      case login:
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
