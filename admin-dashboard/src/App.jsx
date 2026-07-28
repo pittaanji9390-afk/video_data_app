@@ -1,10 +1,17 @@
-import './App.css';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AdminLogin from './pages/Login';
+import AdminDashboard from './pages/Dashboard';
 
 function App() {
   return (
-    <div className="admin-app">
-      <h1>Admin Dashboard</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<AdminLogin />} />
+        <Route path="/dashboard" element={<AdminDashboard />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
