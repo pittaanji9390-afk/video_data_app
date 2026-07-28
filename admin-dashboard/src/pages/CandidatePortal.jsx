@@ -5,28 +5,24 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   Button,
   Grid,
   Chip,
   IconButton,
   Alert,
   Paper,
-  LinearProgress,
   Avatar,
   CssBaseline,
   ThemeProvider,
   createTheme,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  CircularProgress,
+  Switch,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import {
   Videocam,
   Stop,
-  PlayArrow,
-  Replay,
   CloudUpload,
   CheckCircle,
   Logout,
@@ -35,17 +31,35 @@ import {
   Bed,
   Work,
   Park,
-  Timer,
-  LocationOn,
+  Notifications,
+  Home,
+  Person,
+  Search,
+  Mic,
+  Warning,
+  WifiOff,
+  CloudOff,
+  QrCode2,
+  Lock,
+  Download,
+  ArrowForwardIos,
+  HelpOutlineOutlined,
+  Settings,
+  Bathtub,
+  LocalFlorist,
+  Deck,
+  Garage,
+  MoreHoriz,
+  ArrowBack,
 } from '@mui/icons-material';
 
 const candidateTheme = createTheme({
   palette: {
-    mode: 'dark',
-    primary: { main: '#10b981' },
-    secondary: { main: '#6366f1' },
-    background: { default: '#0f172a', paper: '#1e293b' },
-    text: { primary: '#f8fafc', secondary: '#94a3b8' },
+    mode: 'light',
+    primary: { main: '#2563eb' },
+    secondary: { main: '#0ea5e9' },
+    background: { default: '#f8fafc', paper: '#ffffff' },
+    text: { primary: '#0f172a', secondary: '#64748b' },
   },
   typography: {
     fontFamily: '"Plus Jakarta Sans", "Inter", sans-serif',
@@ -55,135 +69,52 @@ const candidateTheme = createTheme({
 
 export default function CandidatePortal() {
   const navigate = useNavigate();
-  const videoRef = useRef(null);
-
-  const [stream, setStream] = useState(null);
+  const [activeScreen, setActiveScreen] = useState('home'); // home, record, voice, alert, env, upload_progress, upload_success, history, earnings, notifications, profile, settings, help, errors, onboarding
   const [recording, setRecording] = useState(false);
-  const [recordedBlob, setRecordedBlob] = useState(null);
-  const [recordedUrl, setRecordedUrl] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
-  const [selectedTag, setSelectedTag] = useState('Kitchen');
-  const [cameraError, setCameraError] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [selectedEnv, setSelectedEnv] = useState('Kitchen');
+  const [selectedTab, setSelectedTab] = useState(0);
 
-  const mediaRecorderRef = useRef(null);
+  const videoRef = useRef(null);
   const timerRef = useRef(null);
-  const chunksRef = useRef([]);
-
-  const environments = [
-    { label: 'Kitchen', icon: <Kitchen /> },
-    { label: 'Living Room', icon: <Weekend /> },
-    { label: 'Bedroom', icon: <Bed /> },
-    { label: 'Office Desk', icon: <Work /> },
-    { label: 'Outdoor', icon: <Park /> },
-  ];
-
-  const [submissions, setSubmissions] = useState([
-    { id: 'VID-8001', tag: 'Kitchen', duration: '45s', date: '2026-07-28', status: 'Approved' },
-    { id: 'VID-8002', tag: 'Bedroom', duration: '60s', date: '2026-07-28', status: 'Pending QC' },
-  ]);
 
   useEffect(() => {
-    startCamera();
+    if (activeScreen === 'record') {
+      startCamera();
+    }
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [activeScreen]);
 
   const startCamera = async () => {
-    setCameraError(null);
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 },
-        audio: true,
-      });
-      setStream(mediaStream);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+        videoRef.current.srcObject = stream;
       }
-    } catch (err) {
-      console.warn('Camera access error or permission denied:', err);
-      setCameraError('Camera access denied or unavailable. Simulation mode enabled.');
+    } catch (e) {
+      console.warn('Camera access denied or simulation mode:', e);
     }
   };
 
   const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
     }
   };
 
-  const handleStartRecording = () => {
-    chunksRef.current = [];
-    setRecordingTime(0);
+  const handleStartRec = () => {
     setRecording(true);
-    setRecordedUrl('');
-    setRecordedBlob(null);
-
-    timerRef.current = setInterval(() => {
-      setRecordingTime((prev) => prev + 1);
-    }, 1000);
-
-    if (stream) {
-      try {
-        const recorder = new MediaRecorder(stream);
-        recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) chunksRef.current.push(e.data);
-        };
-        recorder.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-          setRecordedBlob(blob);
-          setRecordedUrl(URL.createObjectURL(blob));
-        };
-        recorder.start();
-        mediaRecorderRef.current = recorder;
-      } catch (err) {
-        console.warn('MediaRecorder error:', err);
-      }
-    }
+    setRecordingTime(0);
+    timerRef.current = setInterval(() => setRecordingTime((p) => p + 1), 1000);
   };
 
-  const handleStopRecording = () => {
+  const handleStopRec = () => {
     setRecording(false);
     clearInterval(timerRef.current);
-
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    } else {
-      // Simulation fallback blob
-      const dummyBlob = new Blob(['sample video stream content'], { type: 'video/webm' });
-      setRecordedBlob(dummyBlob);
-      setRecordedUrl('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4');
-    }
-  };
-
-  const handleRetake = () => {
-    setRecordedBlob(null);
-    setRecordedUrl('');
-    setRecordingTime(0);
-    startCamera();
-  };
-
-  const handleSubmitVideo = () => {
-    setUploading(true);
-    setTimeout(() => {
-      setUploading(false);
-      setSubmitSuccess(true);
-      const newSubmission = {
-        id: `VID-${Math.floor(1000 + Math.random() * 9000)}`,
-        tag: selectedTag,
-        duration: `${recordingTime || 45}s`,
-        date: 'Just Now',
-        status: 'Pending QC',
-      };
-      setSubmissions([newSubmission, ...submissions]);
-    }, 1200);
-  };
-
-  const handleSignOut = () => {
-    stopCamera();
-    navigate('/login');
+    setActiveScreen('env');
   };
 
   const formatTime = (seconds) => {
@@ -192,299 +123,450 @@ export default function CandidatePortal() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const environments = [
+    { name: 'Kitchen', icon: <Kitchen color="primary" /> },
+    { name: 'Bedroom', icon: <Bed color="secondary" /> },
+    { name: 'Bathroom', icon: <Bathtub color="info" /> },
+    { name: 'Garden', icon: <LocalFlorist color="success" /> },
+    { name: 'Office', icon: <Work color="action" /> },
+    { name: 'Living Room', icon: <Weekend color="warning" /> },
+    { name: 'Balcony', icon: <Deck color="secondary" /> },
+    { name: 'Garage', icon: <Garage color="error" /> },
+    { name: 'Outdoor', icon: <Park color="success" /> },
+    { name: 'Other', icon: <MoreHoriz color="action" /> },
+  ];
+
   return (
     <ThemeProvider theme={candidateTheme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
-        {/* Header */}
+      <Box sx={{ minHeight: '100vh', bgcolor: '#0f172a', py: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        
+        {/* Top Screen Selector Bar for Reference Image Matching */}
         <Paper
-          elevation={0}
+          elevation={4}
           sx={{
-            py: 2,
-            px: 4,
+            p: 1.5,
+            mb: 3,
             bgcolor: '#1e293b',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            color: '#fff',
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            gap: 1,
+            flexWrap: 'wrap',
+            maxWidth: 1000,
+            justifyContent: 'center',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar sx={{ bgcolor: 'primary.main', fontWeight: 'bold' }}>AJ</Avatar>
-            <Box>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ color: '#fff' }}>
-                Alex Johnson (Candidate)
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Assigned Vendor: Acme Video Solutions • ID: CAND-901
-              </Typography>
-            </Box>
-          </Box>
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<Logout />}
-            onClick={handleSignOut}
-            sx={{ borderRadius: 3, fontWeight: 'bold' }}
-          >
+          <Typography variant="caption" fontWeight="bold" sx={{ color: '#38bdf8', mr: 1 }}>
+            📱 23-SCREEN PPT MOCKUP SWITCHER:
+          </Typography>
+          {[
+            { id: 'onboarding', label: '1-4. Onboarding' },
+            { id: 'home', label: '8. Home Dashboard' },
+            { id: 'record', label: '9. Recording Screen' },
+            { id: 'voice', label: '10. Voice Command' },
+            { id: 'alert', label: '11. 30-Min Alert' },
+            { id: 'env', label: '12. Environment Selection' },
+            { id: 'upload_progress', label: '13. Upload Progress' },
+            { id: 'upload_success', label: '15-16. Upload Success' },
+            { id: 'history', label: '17. Upload History' },
+            { id: 'earnings', label: '18. Payment Summary' },
+            { id: 'notifications', label: '19. Notifications' },
+            { id: 'profile', label: '20. Profile (QR)' },
+            { id: 'settings', label: '21. Settings' },
+            { id: 'help', label: '22. Help Center' },
+            { id: 'errors', label: '23. Error States' },
+          ].map((screen) => (
+            <Button
+              key={screen.id}
+              size="small"
+              variant={activeScreen === screen.id ? 'contained' : 'outlined'}
+              color={activeScreen === screen.id ? 'primary' : 'inherit'}
+              onClick={() => setActiveScreen(screen.id)}
+              sx={{ textTransform: 'none', borderRadius: 2, fontSize: '0.75rem' }}
+            >
+              {screen.label}
+            </Button>
+          ))}
+          <Button size="small" variant="contained" color="error" onClick={() => navigate('/login')} sx={{ textTransform: 'none', borderRadius: 2, fontSize: '0.75rem' }}>
             Sign Out
           </Button>
         </Paper>
 
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
-          {cameraError && (
-            <Alert severity="info" sx={{ mb: 3, borderRadius: 3 }}>
-              {cameraError} You can still record and test video submission using simulation mode!
-            </Alert>
-          )}
-
-          <Grid container spacing={3}>
-            {/* Left Column: Camera Recording Studio */}
-            <Grid item xs={12} md={7}>
-              <Card sx={{ bgcolor: 'background.paper', borderRadius: 4, border: '1px solid rgba(255, 255, 255, 0.08)', p: 2 }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Videocam color="primary" /> Live Video Recording Studio
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Position yourself clearly in frame and record your data collection video sample.
-                </Typography>
-
-                {/* Viewfinder Window */}
-                <Box
-                  sx={{
-                    position: 'relative',
-                    width: '100%',
-                    height: 340,
-                    bgcolor: '#020617',
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: recording ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                >
-                  {recordedUrl ? (
-                    <video
-                      src={recordedUrl}
-                      controls
-                      autoPlay
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  )}
-
-                  {/* Recording Status Overlay */}
-                  {recording && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 16,
-                        left: 16,
-                        bgcolor: 'rgba(239, 68, 68, 0.9)',
-                        color: '#fff',
-                        px: 2,
-                        py: 0.5,
-                        borderRadius: 4,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                      }}
-                    >
-                      <Box sx={{ width: 10, height: 10, bgcolor: '#fff', borderRadius: '50%', animation: 'pulse 1s infinite' }} />
-                      <Typography variant="caption" fontWeight="bold">
-                        REC {formatTime(recordingTime)}
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {/* Location Stamp Overlay */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 12,
-                      left: 12,
-                      bgcolor: 'rgba(15, 23, 42, 0.8)',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                    }}
-                  >
-                    <LocationOn sx={{ fontSize: 14, color: '#10b981' }} />
-                    <Typography variant="caption" color="text.secondary">
-                      GPS: 37.7749, -122.4194 • {selectedTag}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Control Action Buttons */}
-                <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
-                  {!recording && !recordedUrl && (
-                    <Button
-                      variant="contained"
-                      color="error"
-                      size="large"
-                      startIcon={<Videocam />}
-                      onClick={handleStartRecording}
-                      sx={{ py: 1.5, px: 4, fontWeight: 'bold', borderRadius: 3 }}
-                    >
-                      Start Camera Recording
-                    </Button>
-                  )}
-
-                  {recording && (
-                    <Button
-                      variant="contained"
-                      color="error"
-                      size="large"
-                      startIcon={<Stop />}
-                      onClick={handleStopRecording}
-                      sx={{ py: 1.5, px: 4, fontWeight: 'bold', borderRadius: 3 }}
-                    >
-                      Stop & Save Recording
-                    </Button>
-                  )}
-
-                  {recordedUrl && (
-                    <>
-                      <Button
-                        variant="outlined"
-                        color="inherit"
-                        size="large"
-                        startIcon={<Replay />}
-                        onClick={handleRetake}
-                        sx={{ py: 1.5, px: 3, borderRadius: 3 }}
-                      >
-                        Retake
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        size="large"
-                        disabled={uploading}
-                        startIcon={<CloudUpload />}
-                        onClick={handleSubmitVideo}
-                        sx={{ py: 1.5, px: 4, fontWeight: 'bold', borderRadius: 3 }}
-                      >
-                        Submit Video Data
-                      </Button>
-                    </>
-                  )}
-                </Box>
-
-                {uploading && <LinearProgress color="primary" sx={{ mt: 2, borderRadius: 2 }} />}
-              </Card>
-            </Grid>
-
-            {/* Right Column: Environment Tag & Submission Roster */}
-            <Grid item xs={12} md={5}>
-              {/* Environment Tag Selector */}
-              <Card sx={{ bgcolor: 'background.paper', borderRadius: 4, border: '1px solid rgba(255, 255, 255, 0.08)', p: 3, mb: 3 }}>
-                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                  Select Environment Tag
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                  Tag the physical location environment of your recording video.
-                </Typography>
-
-                <Grid container spacing={1.5}>
-                  {environments.map((env) => {
-                    const isSelected = selectedTag === env.label;
-                    return (
-                      <Grid item xs={6} key={env.label}>
-                        <Paper
-                          onClick={() => setSelectedTag(env.label)}
-                          sx={{
-                            p: 2,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1.5,
-                            borderRadius: 3,
-                            cursor: 'pointer',
-                            bgcolor: isSelected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                            border: isSelected ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.08)',
-                            color: isSelected ? '#10b981' : '#f8fafc',
-                            transition: 'all 0.2s ease',
-                          }}
-                        >
-                          {env.icon}
-                          <Typography variant="body2" fontWeight={isSelected ? 'bold' : 'normal'}>
-                            {env.label}
-                          </Typography>
-                        </Paper>
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Card>
-
-              {/* Submissions History Card */}
-              <Card sx={{ bgcolor: 'background.paper', borderRadius: 4, border: '1px solid rgba(255, 255, 255, 0.08)', p: 3 }}>
-                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                  Recent Submitted Videos
-                </Typography>
-                {submissions.map((sub) => (
-                  <Box
-                    key={sub.id}
-                    sx={{
-                      p: 1.5,
-                      mt: 1.5,
-                      borderRadius: 3,
-                      bgcolor: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2" fontWeight="bold">
-                        {sub.id} • {sub.tag}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Duration: {sub.duration} • Submitted: {sub.date}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={sub.status}
-                      size="small"
-                      color={sub.status === 'Approved' ? 'success' : 'warning'}
-                      variant="outlined"
-                    />
-                  </Box>
-                ))}
-              </Card>
-            </Grid>
-          </Grid>
-        </Container>
-
-        {/* Success Modal */}
-        <Dialog open={submitSuccess} onClose={() => setSubmitSuccess(false)} PaperProps={{ style: { borderRadius: 16 } }}>
-          <DialogTitle sx={{ fontWeight: 'bold' }}>
-            <CheckCircle color="success" sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Video Submitted Successfully!
-          </DialogTitle>
-          <DialogContent>
-            <Typography variant="body2" color="text.secondary">
-              Your video collection sample for <strong>{selectedTag}</strong> has been uploaded to the server and submitted to Quality Control (QC) review.
+        {/* Mobile Device Container Frame (Matches Exact PPT Image Dimensions) */}
+        <Box
+          sx={{
+            width: 380,
+            height: 780,
+            bgcolor: activeScreen === 'record' ? '#000' : '#f8fafc',
+            borderRadius: '40px',
+            border: '12px solid #1e293b',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Top Notch Status Bar */}
+          <Box sx={{ height: 28, bgcolor: activeScreen === 'record' ? '#000' : '#fff', px: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+            <Typography variant="caption" fontWeight="bold" color={activeScreen === 'record' ? '#fff' : '#0f172a'}>
+              9:41
             </Typography>
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button variant="contained" color="primary" onClick={() => setSubmitSuccess(false)}>
-              Record Another Video
-            </Button>
-          </DialogActions>
-        </Dialog>
+            <Box sx={{ width: 110, height: 18, bgcolor: '#1e293b', borderRadius: '0 0 10px 10px', mx: 'auto' }} />
+            <Typography variant="caption" color={activeScreen === 'record' ? '#fff' : '#0f172a'}>
+              📶 🔋
+            </Typography>
+          </Box>
+
+          {/* SCREEN CONTENT VIEWPORT */}
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: activeScreen === 'record' ? 0 : 2 }}>
+            
+            {/* 1. ONBOARDING SCREEN (Mockup Screens 2, 3, 4) */}
+            {activeScreen === 'onboarding' && (
+              <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', py: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button size="small" onClick={() => setActiveScreen('home')}>Skip</Button>
+                </Box>
+                <Box>
+                  <Box sx={{ width: 120, height: 120, borderRadius: '50%', bgcolor: 'rgba(37, 99, 235, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                    <Videocam sx={{ fontSize: 60, color: 'primary.main' }} />
+                  </Box>
+                  <Typography variant="h5" fontWeight="bold" gutterBottom>Record Videos Easily</Typography>
+                  <Typography variant="body2" color="text.secondary">Capture high-quality video data samples using your mobile phone.</Typography>
+                </Box>
+                <Button fullWidth variant="contained" size="large" onClick={() => setActiveScreen('home')} sx={{ py: 1.5, borderRadius: 3 }}>
+                  Get Started
+                </Button>
+              </Box>
+            )}
+
+            {/* 8. HOME DASHBOARD (Mockup Screen 8) */}
+            {activeScreen === 'home' && (
+              <Box>
+                {/* Header */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Good Morning,</Typography>
+                    <Typography variant="h6" fontWeight="bold">Vasavi 👋</Typography>
+                  </Box>
+                  <IconButton onClick={() => setActiveScreen('notifications')}>
+                    <Badge badgeContent={1} color="error">
+                      <Notifications />
+                    </Badge>
+                  </IconButton>
+                </Box>
+
+                {/* Today's Progress Banner */}
+                <Paper elevation={0} sx={{ p: 2, bgcolor: '#2563eb', color: '#fff', borderRadius: 4, mb: 3 }}>
+                  <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 'bold' }}>TODAY'S PROGRESS</Typography>
+                  <Box sx={{ display: 'flex', mt: 1.5, justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="caption" sx={{ opacity: 0.8 }}>Videos Uploaded</Typography>
+                      <Typography variant="h5" fontWeight="bold">12 <Chip label="+30%" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', height: 18 }} /></Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ opacity: 0.8 }}>Hours Collected</Typography>
+                      <Typography variant="h5" fontWeight="bold">05:30 <Chip label="+15%" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', height: 18 }} /></Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+
+                {/* Quick Actions Grid */}
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Quick Actions</Typography>
+                <Grid container spacing={1.5} sx={{ mb: 3 }}>
+                  {[
+                    { title: 'Start Recording', sub: 'Camera video', icon: <Videocam color="primary" />, action: () => setActiveScreen('record') },
+                    { title: 'Upload History', sub: 'Submitted logs', icon: <CloudUpload color="secondary" />, action: () => setActiveScreen('history') },
+                    { title: 'Payment Summary', sub: 'Earnings report', icon: <Lock color="success" />, action: () => setActiveScreen('earnings') },
+                    { title: 'Help Center', sub: 'FAQs & Support', icon: <HelpOutlineOutlined color="warning" />, action: () => setActiveScreen('help') },
+                  ].map((act, i) => (
+                    <Grid item xs={6} key={i}>
+                      <Paper onClick={act.action} elevation={0} sx={{ p: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer', '&:hover': { borderColor: '#2563eb' } }}>
+                        <Box sx={{ p: 1, bgcolor: 'rgba(37,99,235,0.08)', borderRadius: 2, width: 'fit-content', mb: 1 }}>{act.icon}</Box>
+                        <Typography variant="body2" fontWeight="bold">{act.title}</Typography>
+                        <Typography variant="caption" color="text.secondary">{act.sub}</Typography>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                {/* Recent Activity */}
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Recent Activity</Typography>
+                <Paper elevation={0} sx={{ p: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Avatar sx={{ bgcolor: 'rgba(37,99,235,0.1)', color: '#2563eb' }}><Kitchen /></Avatar>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">Kitchen Video</Typography>
+                      <Typography variant="caption" color="text.secondary">Uploaded • 2 min ago</Typography>
+                    </Box>
+                  </Box>
+                  <Chip label="Approved" color="success" size="small" />
+                </Paper>
+              </Box>
+            )}
+
+            {/* 9. RECORDING SCREEN (Mockup Screen 9) */}
+            {activeScreen === 'record' && (
+              <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 2, position: 'relative' }}>
+                <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} />
+                
+                {/* Top REC Indicator */}
+                <Box sx={{ position: 'relative', zIndex: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Chip label={`REC ${formatTime(recordingTime)}`} color="error" size="small" sx={{ fontWeight: 'bold' }} />
+                  <Button size="small" variant="contained" color="secondary" onClick={() => setActiveScreen('voice')}>Voice</Button>
+                </Box>
+
+                {/* Bottom Controls */}
+                <Box sx={{ position: 'relative', zIndex: 5, pb: 4, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                  <IconButton onClick={() => setActiveScreen('alert')} sx={{ bgcolor: 'rgba(255,255,255,0.3)', color: '#fff' }}>
+                    <Warning />
+                  </IconButton>
+                  <IconButton onClick={recording ? handleStopRec : handleStartRec} sx={{ bgcolor: '#ef4444', color: '#fff', p: 2.5 }}>
+                    {recording ? <Stop sx={{ fontSize: 36 }} /> : <Videocam sx={{ fontSize: 36 }} />}
+                  </IconButton>
+                  <IconButton onClick={() => setActiveScreen('env')} sx={{ bgcolor: 'rgba(255,255,255,0.3)', color: '#fff' }}>
+                    <CheckCircle />
+                  </IconButton>
+                </Box>
+              </Box>
+            )}
+
+            {/* 10. VOICE COMMAND SCREEN (Mockup Screen 10) */}
+            {activeScreen === 'voice' && (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Voice Command</Typography>
+                <Typography variant="caption" color="text.secondary">Speak a command</Typography>
+                <Box sx={{ width: 120, height: 120, borderRadius: '50%', bgcolor: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', my: 4, boxShadow: '0 0 30px rgba(37,99,235,0.5)' }}>
+                  <Mic sx={{ fontSize: 60 }} />
+                </Box>
+                <Typography variant="body2" color="primary" fontWeight="bold" gutterBottom>Listening...</Typography>
+                <Box sx={{ mt: 4, textAlign: 'left', bgcolor: '#f1f5f9', p: 2, borderRadius: 3 }}>
+                  <Typography variant="caption" fontWeight="bold" color="text.secondary">TRY SAYING:</Typography>
+                  <Typography variant="body2">• Start Recording</Typography>
+                  <Typography variant="body2">• Pause Recording</Typography>
+                  <Typography variant="body2">• Stop Recording</Typography>
+                </Box>
+                <Button sx={{ mt: 3 }} onClick={() => setActiveScreen('record')}>Back to Camera</Button>
+              </Box>
+            )}
+
+            {/* 11. 30-MINUTE ALERT MODAL (Mockup Screen 11) */}
+            {activeScreen === 'alert' && (
+              <Box sx={{ textAlign: 'center', py: 6, px: 2 }}>
+                <Paper elevation={4} sx={{ p: 3, borderRadius: 4 }}>
+                  <Box sx={{ width: 60, height: 60, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+                    <Timer sx={{ fontSize: 36 }} />
+                  </Box>
+                  <Typography variant="h6" fontWeight="bold">30 Minutes Completed</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ my: 1.5 }}>
+                    You have recorded for 30 minutes. Do you want to continue?
+                  </Typography>
+                  <Button fullWidth variant="contained" onClick={() => setActiveScreen('record')} sx={{ mb: 1, py: 1.2 }}>Continue Recording</Button>
+                  <Button fullWidth variant="outlined" color="error" onClick={() => setActiveScreen('upload_progress')}>Stop & Upload</Button>
+                </Paper>
+              </Box>
+            )}
+
+            {/* 12. ENVIRONMENT SELECTION SCREEN (Mockup Screen 12) */}
+            {activeScreen === 'env' && (
+              <Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Select Environment</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  Choose the category that best describes your recording location.
+                </Typography>
+
+                <Grid container spacing={1.5} sx={{ mb: 3 }}>
+                  {environments.map((env) => (
+                    <Grid item xs={6} key={env.name}>
+                      <Paper
+                        onClick={() => setSelectedEnv(env.name)}
+                        elevation={0}
+                        sx={{
+                          p: 1.5,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
+                          borderRadius: 3,
+                          cursor: 'pointer',
+                          bgcolor: selectedEnv === env.name ? 'rgba(37,99,235,0.1)' : '#fff',
+                          border: selectedEnv === env.name ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                        }}
+                      >
+                        {env.icon}
+                        <Typography variant="body2" fontWeight={selectedEnv === env.name ? 'bold' : 'normal'}>{env.name}</Typography>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                <Button fullWidth variant="contained" size="large" onClick={() => setActiveScreen('upload_progress')} sx={{ py: 1.5, borderRadius: 3 }}>
+                  Continue to Upload
+                </Button>
+              </Box>
+            )}
+
+            {/* 13. UPLOADING VIDEO PROGRESS SCREEN (Mockup Screen 13) */}
+            {activeScreen === 'upload_progress' && (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="h6" fontWeight="bold">Uploading Video</Typography>
+                <Typography variant="caption" color="text.secondary">Please don't close the app or lock your screen.</Typography>
+
+                <Box sx={{ position: 'relative', display: 'inline-flex', my: 4 }}>
+                  <CircularProgress variant="determinate" value={85} size={140} thickness={4} />
+                  <Box sx={{ top: 0, left: 0, bottom: 0, right: 0, position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Typography variant="h4" fontWeight="bold">85%</Typography>
+                  </Box>
+                </Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>23.4 MB / 27.5 MB</Typography>
+
+                <Paper elevation={0} sx={{ p: 2, bgcolor: '#f1f5f9', borderRadius: 3, display: 'flex', justifyContent: 'space-around', my: 3 }}>
+                  <Box><Typography variant="caption" color="text.secondary">Speed</Typography><Typography variant="body2" fontWeight="bold">2.4 MB/s</Typography></Box>
+                  <Box><Typography variant="caption" color="text.secondary">Time Left</Typography><Typography variant="body2" fontWeight="bold">00:00:18</Typography></Box>
+                </Paper>
+
+                <Button fullWidth variant="contained" onClick={() => setActiveScreen('upload_success')} sx={{ py: 1.5, borderRadius: 3 }}>Complete Upload</Button>
+              </Box>
+            )}
+
+            {/* 15-16. UPLOAD SUCCESS SCREEN (Mockup Screen 16) */}
+            {activeScreen === 'upload_success' && (
+              <Box sx={{ textAlign: 'center', py: 5 }}>
+                <Box sx={{ width: 90, height: 90, borderRadius: '50%', bgcolor: 'rgba(16,185,129,0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+                  <CheckCircle sx={{ fontSize: 54 }} />
+                </Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Upload Successful!</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>Your video has been uploaded and encrypted in cloud storage.</Typography>
+
+                <Button fullWidth variant="contained" onClick={() => setActiveScreen('history')} sx={{ mb: 1.5, py: 1.5, borderRadius: 3 }}>View Upload History</Button>
+                <Button fullWidth variant="outlined" onClick={() => setActiveScreen('home')} sx={{ py: 1.5, borderRadius: 3 }}>Go to Home</Button>
+              </Box>
+            )}
+
+            {/* 17. UPLOAD HISTORY SCREEN (Mockup Screen 17) */}
+            {activeScreen === 'history' && (
+              <Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Upload History</Typography>
+                <TextField fullWidth placeholder="Search videos..." size="small" sx={{ mb: 2 }} InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }} />
+
+                {[
+                  { title: 'Kitchen Video', time: '12:30 Min • Today, 10:30 AM', status: 'Approved', color: 'success' },
+                  { title: 'Bedroom Video', time: '30:00 Min • Today, 09:15 AM', status: 'Pending', color: 'warning' },
+                  { title: 'Garden Video', time: '15:45 Min • Yesterday, 06:20 PM', status: 'Rejected', color: 'error' },
+                ].map((item, idx) => (
+                  <Paper key={idx} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">{item.title}</Typography>
+                      <Typography variant="caption" color="text.secondary">{item.time}</Typography>
+                    </Box>
+                    <Chip label={item.status} color={item.color} size="small" />
+                  </Paper>
+                ))}
+              </Box>
+            )}
+
+            {/* 18. PAYMENT SUMMARY SCREEN (Mockup Screen 18) */}
+            {activeScreen === 'earnings' && (
+              <Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>My Earnings</Typography>
+                <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#2563eb', color: '#fff', borderRadius: 4, mb: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Approved Hours</Typography><Typography variant="h6" fontWeight="bold">18.50</Typography></Box>
+                    <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Rate</Typography><Typography variant="h6" fontWeight="bold">₹100 / hour</Typography></Box>
+                  </Box>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Total Earnings (This Month)</Typography>
+                  <Typography variant="h4" fontWeight="bold">₹1,850</Typography>
+                </Paper>
+
+                <Button fullWidth variant="contained" startIcon={<Download />} sx={{ py: 1.5, borderRadius: 3 }}>Download Report (CSV)</Button>
+              </Box>
+            )}
+
+            {/* 19. NOTIFICATIONS SCREEN (Mockup Screen 19) */}
+            {activeScreen === 'notifications' && (
+              <Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Notifications</Typography>
+                {[
+                  { title: 'Video Approved', desc: 'Kitchen Video has been approved.', time: '10:30 AM', color: '#10b981' },
+                  { title: 'Upload Complete', desc: 'Bedroom Video upload completed.', time: '09:45 AM', color: '#2563eb' },
+                  { title: 'Payment Updated', desc: 'Monthly earnings updated.', time: 'Yesterday', color: '#8b5cf6' },
+                ].map((item, i) => (
+                  <Paper key={i} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                    <Typography variant="body2" fontWeight="bold" style={{ color: item.color }}>{item.title}</Typography>
+                    <Typography variant="caption" color="text.secondary">{item.desc}</Typography>
+                  </Paper>
+                ))}
+              </Box>
+            )}
+
+            {/* 20. PROFILE SCREEN (Mockup Screen 20) */}
+            {activeScreen === 'profile' && (
+              <Box sx={{ textAlign: 'center' }}>
+                <Avatar sx={{ width: 80, height: 80, bgcolor: '#2563eb', mx: 'auto', mb: 1, fontSize: 32, fontWeight: 'bold' }}>VK</Avatar>
+                <Typography variant="h6" fontWeight="bold">Vasavi Kandula <Chip label="Verified" color="success" size="small" /></Typography>
+                <Typography variant="caption" color="text.secondary">+91 98765 43210</Typography>
+
+                <Paper elevation={0} sx={{ p: 2, mt: 3, border: '1px solid #e2e8f0', borderRadius: 3, textAlign: 'left' }}>
+                  <Typography variant="body2"><strong>Candidate ID:</strong> CAN-2024-001</Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}><strong>Vendor ID:</strong> VEN-001</Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}><strong>Email:</strong> vasavi@example.com</Typography>
+                </Paper>
+                <Box sx={{ mt: 2 }}><QrCode2 sx={{ fontSize: 90, color: 'primary.main' }} /></Box>
+              </Box>
+            )}
+
+            {/* 21. SETTINGS SCREEN (Mockup Screen 21) */}
+            {activeScreen === 'settings' && (
+              <Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Settings</Typography>
+                <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2">Auto Upload</Typography>
+                    <Switch defaultChecked />
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                    <Typography variant="body2">Video Quality</Typography>
+                    <Typography variant="body2" color="primary" fontWeight="bold">1080p</Typography>
+                  </Box>
+                </Paper>
+              </Box>
+            )}
+
+            {/* 22. HELP CENTER SCREEN (Mockup Screen 22) */}
+            {activeScreen === 'help' && (
+              <Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Help Center</Typography>
+                {['How to record a video?', 'How to upload video?', 'How are earnings calculated?'].map((q, i) => (
+                  <Paper key={i} elevation={0} sx={{ p: 1.5, mb: 1, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2">{q}</Typography>
+                    <ArrowForwardIos sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  </Paper>
+                ))}
+              </Box>
+            )}
+
+            {/* 23. ERROR STATES SCREEN (Mockup Screen 23) */}
+            {activeScreen === 'errors' && (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <WifiOff sx={{ fontSize: 60, color: 'error.main', mb: 2 }} />
+                <Typography variant="h6" fontWeight="bold">No Internet Connection</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ my: 1.5 }}>Please check your network settings and try again.</Typography>
+                <Button variant="contained" onClick={() => setActiveScreen('home')}>Try Again</Button>
+              </Box>
+            )}
+
+          </Box>
+
+          {/* Bottom Device Navigation Bar (Matching Screen 8) */}
+          <Box sx={{ height: 56, bgcolor: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
+            <IconButton onClick={() => setActiveScreen('home')} color={activeScreen === 'home' ? 'primary' : 'default'}><Home /></IconButton>
+            <IconButton onClick={() => setActiveScreen('record')} color={activeScreen === 'record' ? 'primary' : 'default'}><Videocam /></IconButton>
+            <IconButton onClick={() => setActiveScreen('history')} color={activeScreen === 'history' ? 'primary' : 'default'}><CloudUpload /></IconButton>
+            <IconButton onClick={() => setActiveScreen('notifications')} color={activeScreen === 'notifications' ? 'primary' : 'default'}><Notifications /></IconButton>
+            <IconButton onClick={() => setActiveScreen('profile')} color={activeScreen === 'profile' ? 'primary' : 'default'}><Person /></IconButton>
+          </Box>
+        </Box>
       </Box>
     </ThemeProvider>
   );
