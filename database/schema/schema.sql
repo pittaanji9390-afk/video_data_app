@@ -34,6 +34,7 @@ CREATE TABLE admins (
 -- ============================================================================
 CREATE TABLE vendors (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vendor_code     VARCHAR(50)   NOT NULL,
     company_name    VARCHAR(200)  NOT NULL,
     contact_person  VARCHAR(200)  NOT NULL,
     email           VARCHAR(255)  NOT NULL,
@@ -45,7 +46,8 @@ CREATE TABLE vendors (
     updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     deleted_at      TIMESTAMPTZ,
 
-    CONSTRAINT uq_vendors_email UNIQUE (email),
+    CONSTRAINT uq_vendors_vendor_code UNIQUE (vendor_code),
+    CONSTRAINT uq_vendors_email       UNIQUE (email),
     CONSTRAINT fk_vendors_created_by FOREIGN KEY (created_by)
         REFERENCES admins (id) ON DELETE SET NULL
 );

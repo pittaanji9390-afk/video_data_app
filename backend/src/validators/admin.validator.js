@@ -1,9 +1,8 @@
 /**
  * Admin Request Validator
- * 
- * Middleware for validating incoming request payloads for Admin management.
- * Checks required fields, formats, and constraints before passing to controller.
  */
+
+const { isValidUUID } = require('../utils/uuid');
 
 function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -11,16 +10,26 @@ function validateEmail(email) {
 }
 
 function validatePhone(phone) {
-  // Allows international format, digits, spaces, hyphens, plus sign (7 to 20 chars)
   const phoneRegex = /^\+?[0-9\s\-]{7,20}$/;
   return typeof phone === 'string' && phoneRegex.test(phone.trim());
+}
+
+function validateIdParam(req, res, next) {
+  const { id } = req.params;
+  if (!isValidUUID(id)) {
+    return res.status(400).json({
+      status: 'error',
+      statusCode: 400,
+      message: 'Invalid UUID format for admin ID',
+    });
+  }
+  next();
 }
 
 function validateCreateAdmin(req, res, next) {
   const { full_name, email, phone, password } = req.body || {};
   const errors = [];
 
-  // Validate full_name
   if (!full_name || typeof full_name !== 'string' || full_name.trim().length < 2) {
     errors.push({
       field: 'full_name',
@@ -28,7 +37,6 @@ function validateCreateAdmin(req, res, next) {
     });
   }
 
-  // Validate email
   if (!email || !validateEmail(email)) {
     errors.push({
       field: 'email',
@@ -36,7 +44,6 @@ function validateCreateAdmin(req, res, next) {
     });
   }
 
-  // Validate phone
   if (!phone || !validatePhone(phone)) {
     errors.push({
       field: 'phone',
@@ -44,7 +51,6 @@ function validateCreateAdmin(req, res, next) {
     });
   }
 
-  // Validate password
   if (!password || typeof password !== 'string' || password.length < 6) {
     errors.push({
       field: 'password',
@@ -52,7 +58,6 @@ function validateCreateAdmin(req, res, next) {
     });
   }
 
-  // Return validation error response if any rules failed
   if (errors.length > 0) {
     return res.status(400).json({
       status: 'error',
@@ -62,7 +67,6 @@ function validateCreateAdmin(req, res, next) {
     });
   }
 
-  // Normalize inputs
   req.body.full_name = full_name.trim();
   req.body.email = email.trim().toLowerCase();
   req.body.phone = phone.trim();
@@ -70,6 +74,56 @@ function validateCreateAdmin(req, res, next) {
   next();
 }
 
+function validateUpdateAdmin(req, res, next) {
+  const { full_name, email, phone, is_active } = req.body || {};
+  const errors = [];
+
+  if (full_name !== undefined && (typeof full_name !== 'string' || full_name.trim().length < 2)) {
+    errors.push({
+      field: 'full_name',
+      message: 'full_name must be at least 2 characters long',
+    });
+  }
+
+  if (email !== undefined && !validateEmail(email)) {
+    errors.push({
+      field: 'email',
+      message: 'A valid email address is required',
+    });
+  }
+
+  if (phone !== undefined && !validatePhone(phone)) {
+    errors.push({
+      field: 'phone',
+      message: 'A valid phone number is required',
+    });
+  }
+
+  if (is_active !== undefined && typeof is_active !== 'boolean') {
+    errors.push({
+      field: 'is_active',
+      message: 'is_active must be a boolean',
+    });
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      status: 'error',
+      statusCode: 400,
+      message: 'Validation Error',
+      errors,
+    });
+  }
+
+  if (full_name) req.body.full_name = full_name.trim();
+  if (email) req.body.email = email.trim().toLowerCase();
+  if (phone) req.body.phone = phone.trim();
+
+  next();
+}
+
 module.exports = {
+  validateIdParam,
   validateCreateAdmin,
+  validateUpdateAdmin,
 };
