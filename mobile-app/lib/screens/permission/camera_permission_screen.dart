@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../config/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 
 class CameraPermissionScreen extends StatefulWidget {
@@ -191,15 +192,10 @@ class _CameraPermissionScreenState extends State<CameraPermissionScreen> {
     if (_status.isGranted) {
       return ElevatedButton.icon(
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Camera ready. (Video recording step in next feature)'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          Navigator.pushReplacementNamed(context, AppRoutes.recordVideo);
         },
         icon: const Icon(Icons.videocam_rounded),
-        label: const Text('Camera Ready (Granted)'),
+        label: const Text('Proceed to Record Video'),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.success,
           foregroundColor: Colors.white,
