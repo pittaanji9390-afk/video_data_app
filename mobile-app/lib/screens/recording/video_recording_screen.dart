@@ -387,7 +387,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                       ],
                     ),
                   ] else ...[
-                    // Re-record Action
+                    // Actions: Record Another Video & Upload to Backend
                     Row(
                       children: [
                         Expanded(
@@ -403,8 +403,35 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                                     });
                                   },
                             icon: const Icon(Icons.videocam_outlined),
-                            label: const Text('Record Another Video'),
+                            label: const Text('Re-record'),
                             style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _isFetchingLocation
+                                ? null
+                                : () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.uploadVideo,
+                                      arguments: {
+                                        'videoPath': _recordedFile!.path,
+                                        'environmentTag': _selectedEnvironmentTag,
+                                      },
+                                    );
+                                  },
+                            icon: const Icon(Icons.cloud_upload_rounded),
+                            label: const Text('Upload API'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),

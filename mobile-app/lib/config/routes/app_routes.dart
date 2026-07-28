@@ -5,6 +5,7 @@ import '../../screens/login/login_screen.dart';
 import '../../screens/permission/camera_permission_screen.dart';
 import '../../screens/recording/video_recording_screen.dart';
 import '../../screens/splash/splash_screen.dart';
+import '../../screens/upload/video_upload_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -45,6 +46,16 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const VideoRecordingScreen());
       case environmentTag:
         return MaterialPageRoute(builder: (_) => const EnvironmentTagScreen());
+      case uploadVideo:
+        final args = settings.arguments as Map<String, dynamic>?;
+        final path = args?['videoPath'] as String? ?? '';
+        final tag = args?['environmentTag'] as String?;
+        return MaterialPageRoute(
+          builder: (_) => VideoUploadScreen(
+            videoPath: path,
+            environmentTag: tag,
+          ),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
