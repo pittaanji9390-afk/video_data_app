@@ -165,8 +165,78 @@ function validateUpdateVideo(req, res, next) {
   next();
 }
 
+function validateUpdateVideoMetadata(req, res, next) {
+  const {
+    duration,
+    latitude,
+    longitude,
+    environment_tag,
+    device_id,
+    recording_date,
+  } = req.body || {};
+
+  const errors = [];
+
+  if (duration !== undefined && (!Number.isInteger(duration) || duration < 0)) {
+    errors.push({
+      field: 'duration',
+      message: 'duration must be a non-negative integer (seconds)',
+    });
+  }
+
+  if (latitude !== undefined && (typeof latitude !== 'number' || latitude < -90 || latitude > 90)) {
+    errors.push({
+      field: 'latitude',
+      message: 'latitude must be a number between -90 and 90',
+    });
+  }
+
+  if (longitude !== undefined && (typeof longitude !== 'number' || longitude < -180 || longitude > 180)) {
+    errors.push({
+      field: 'longitude',
+      message: 'longitude must be a number between -180 and 180',
+    });
+  }
+
+  if (environment_tag !== undefined && typeof environment_tag !== 'string') {
+    errors.push({
+      field: 'environment_tag',
+      message: 'environment_tag must be a string',
+    });
+  }
+
+  if (device_id !== undefined && typeof device_id !== 'string') {
+    errors.push({
+      field: 'device_id',
+      message: 'device_id must be a string',
+    });
+  }
+
+  if (recording_date !== undefined && isNaN(Date.parse(recording_date))) {
+    errors.push({
+      field: 'recording_date',
+      message: 'recording_date must be a valid ISO date string',
+    });
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      status: 'error',
+      statusCode: 400,
+      message: 'Validation Error',
+      errors,
+    });
+  }
+
+  if (environment_tag) req.body.environment_tag = environment_tag.trim();
+  if (device_id) req.body.device_id = device_id.trim();
+
+  next();
+}
+
 module.exports = {
   validateVideoIdParam,
   validateCreateVideo,
   validateUpdateVideo,
+  validateUpdateVideoMetadata,
 };

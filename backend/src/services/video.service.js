@@ -71,6 +71,8 @@ class VideoService {
         environment_tag,
         latitude,
         longitude,
+        device_id,
+        recording_date,
         status,
         created_at,
         updated_at
@@ -99,7 +101,6 @@ class VideoService {
     const relativePath = path.join('uploads', 'videos', file.filename).replace(/\\/g, '/');
 
     if (video_id) {
-      // Update existing video record
       const existing = await this.getVideoById(video_id);
 
       const updateQuery = `
@@ -134,7 +135,6 @@ class VideoService {
 
       return result.rows[0];
     } else if (candidate_id && vendor_id) {
-      // Create new video record upon upload
       const candidateCheck = await db.query(
         'SELECT id FROM candidates WHERE id = $1 AND deleted_at IS NULL',
         [candidate_id]
@@ -196,6 +196,67 @@ class VideoService {
   }
 
   /**
+   * Updates specific technical metadata for a video record.
+   * Updates: duration, latitude, longitude, environment_tag, device_id, recording_date.
+   * Does NOT touch file attributes (file_name, local_path, s3_url).
+   */
+  async updateVideoMetadata(id, { duration, latitude, longitude, environment_tag, device_id, recording_date }) {
+    const existing = await this.getVideoById(id);
+
+    const updatedDuration = duration !== undefined ? duration : existing.duration;
+    const updatedLat = latitude !== undefined ? latitude : existing.latitude;
+    const updatedLong = longitude !== undefined ? longitude : existing.longitude;
+    const updatedEnvTag = environment_tag !== undefined ? environment_tag : existing.environment_tag;
+    const updatedDeviceId = device_id !== undefined ? device_id : existing.device_id;
+    const updatedRecDate = recording_date !== undefined ? recording_date : existing.recording_date;
+
+    const updateQuery = `
+      UPDATE videos
+      SET
+        duration = $1,
+        latitude = $2,
+        longitude = $3,
+        environment_tag = $4,
+        device_id = $5,
+        recording_date = $6,
+        updated_at = NOW()
+      WHERE id = $7 AND deleted_at IS NULL
+      RETURNING
+        id,
+        candidate_id,
+        vendor_id,
+        title,
+        description,
+        duration,
+        environment_tag,
+        latitude,
+        longitude,
+        device_id,
+        recording_date,
+        file_name,
+        local_path,
+        s3_url,
+        file_size,
+        status,
+        upload_date,
+        created_at,
+        updated_at
+    `;
+
+    const result = await db.query(updateQuery, [
+      updatedDuration,
+      updatedLat,
+      updatedLong,
+      updatedEnvTag,
+      updatedDeviceId,
+      updatedRecDate,
+      id,
+    ]);
+
+    return result.rows[0];
+  }
+
+  /**
    * Gets paginated list of active video metadata records with optional filters.
    */
   async getAllVideos({ candidate_id, vendor_id, status, page = 1, limit = 10 }) {
@@ -221,6 +282,8 @@ class VideoService {
         v.environment_tag,
         v.latitude,
         v.longitude,
+        v.device_id,
+        v.recording_date,
         v.status,
         v.created_at,
         v.updated_at
@@ -295,6 +358,8 @@ class VideoService {
         v.environment_tag,
         v.latitude,
         v.longitude,
+        v.device_id,
+        v.recording_date,
         v.status,
         v.created_at,
         v.updated_at
@@ -355,6 +420,8 @@ class VideoService {
         environment_tag,
         latitude,
         longitude,
+        device_id,
+        recording_date,
         status,
         created_at,
         updated_at

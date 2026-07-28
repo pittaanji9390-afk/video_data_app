@@ -46,7 +46,6 @@ class VideoController {
 
   /**
    * POST /api/v1/videos/upload
-   * Handles local MP4 file upload.
    */
   async uploadVideo(req, res, next) {
     try {
@@ -71,6 +70,34 @@ class VideoController {
           status: uploadedVideo.status,
           video_id: uploadedVideo.id,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PUT /api/v1/videos/:id/metadata
+   * Updates specific technical metadata fields without modifying uploaded files.
+   */
+  async updateVideoMetadata(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { duration, latitude, longitude, environment_tag, device_id, recording_date } = req.body;
+
+      const updatedMetadata = await videoService.updateVideoMetadata(id, {
+        duration,
+        latitude,
+        longitude,
+        environment_tag,
+        device_id,
+        recording_date,
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Video metadata updated successfully',
+        data: updatedMetadata,
       });
     } catch (error) {
       next(error);
