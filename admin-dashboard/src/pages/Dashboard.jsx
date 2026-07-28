@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -96,26 +96,29 @@ export default function AdminDashboard() {
     {
       title: 'Total Videos',
       value: '528',
-      unit: 'Uploaded Collections',
+      unit: 'Uploaded Collections (Click to View)',
       icon: <VideocamOutlined sx={{ fontSize: 28 }} />,
       color: '#8b5cf6',
       bgColor: 'rgba(139, 92, 246, 0.15)',
+      onClick: () => navigate('/videos'),
     },
     {
       title: 'Approved Videos',
       value: '410',
-      unit: 'QC Approved (77.6%)',
+      unit: 'QC Approved (Click to Filter)',
       icon: <CheckCircleOutlined sx={{ fontSize: 28 }} />,
       color: '#10b981',
       bgColor: 'rgba(16, 185, 129, 0.15)',
+      onClick: () => navigate('/videos'),
     },
     {
       title: 'Rejected Videos',
       value: '45',
-      unit: 'Requires Re-shoot',
+      unit: 'Requires Re-shoot (Click to Filter)',
       icon: <CancelOutlined sx={{ fontSize: 28 }} />,
       color: '#ef4444',
       bgColor: 'rgba(239, 68, 68, 0.15)',
+      onClick: () => navigate('/videos'),
     },
     {
       title: 'Total Hours Collected',
@@ -203,7 +206,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/vendors')}
                 sx={{ textTransform: 'none', fontWeight: 'bold' }}
               >
-                Manage Vendors
+                Vendors
               </Button>
               <Button
                 variant="contained"
@@ -212,7 +215,16 @@ export default function AdminDashboard() {
                 onClick={() => navigate('/candidates')}
                 sx={{ textTransform: 'none', fontWeight: 'bold' }}
               >
-                Manage Candidates
+                Candidates
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<VideocamOutlined />}
+                onClick={() => navigate('/videos')}
+                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              >
+                Videos
               </Button>
               <Chip
                 avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>}
