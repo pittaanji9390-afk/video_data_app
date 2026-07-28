@@ -32,6 +32,7 @@ import {
   AccessTimeOutlined,
   PaymentsOutlined,
   BarChartOutlined,
+  AssessmentOutlined,
   TrendingUp,
 } from '@mui/icons-material';
 
@@ -247,6 +248,15 @@ export default function AdminDashboard() {
               >
                 Analytics
               </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AssessmentOutlined />}
+                onClick={() => navigate('/reports')}
+                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              >
+                Reports
+              </Button>
               <Chip
                 avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>}
                 label="Super Admin"
@@ -293,7 +303,7 @@ export default function AdminDashboard() {
                 </Typography>
                 <Chip
                   icon={<TrendingUp />}
-                  label="View Full Analytics Charts"
+                  label="View Analytics Charts"
                   color="success"
                   onClick={() => navigate('/analytics')}
                   sx={{ fontWeight: 'bold', cursor: 'pointer' }}
