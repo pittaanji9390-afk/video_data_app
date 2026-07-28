@@ -31,6 +31,7 @@ import {
   CancelOutlined,
   AccessTimeOutlined,
   PaymentsOutlined,
+  BarChartOutlined,
   TrendingUp,
 } from '@mui/icons-material';
 
@@ -237,6 +238,15 @@ export default function AdminDashboard() {
               >
                 Payments
               </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<BarChartOutlined />}
+                onClick={() => navigate('/analytics')}
+                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              >
+                Analytics
+              </Button>
               <Chip
                 avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>}
                 label="Super Admin"
@@ -283,10 +293,10 @@ export default function AdminDashboard() {
                 </Typography>
                 <Chip
                   icon={<TrendingUp />}
-                  label="Live Platform Overview"
+                  label="View Full Analytics Charts"
                   color="success"
-                  size="small"
-                  sx={{ fontWeight: 'bold' }}
+                  onClick={() => navigate('/analytics')}
+                  sx={{ fontWeight: 'bold', cursor: 'pointer' }}
                 />
               </Box>
               <Typography variant="body1" color="text.secondary">

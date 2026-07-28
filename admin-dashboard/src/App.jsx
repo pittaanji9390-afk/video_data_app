@@ -8,6 +8,7 @@ import VideoManagement from './pages/Videos';
 import VideoDetails from './pages/VideoDetails';
 import QCReview from './pages/QCReview';
 import PaymentDashboard from './pages/Payments';
+import AnalyticsDashboard from './pages/Analytics';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/videos/:id" element={<VideoDetails />} />
         <Route path="/qc-review/:id" element={<QCReview />} />
         <Route path="/payments" element={<PaymentDashboard />} />
+        <Route path="/analytics" element={<AnalyticsDashboard />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
