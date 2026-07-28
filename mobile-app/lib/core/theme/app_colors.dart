@@ -3,18 +3,18 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary Palette
-  static const Color primary = Color(0xFF6366F1); // Indigo
-  static const Color primaryDark = Color(0xFF4F46E5);
-  static const Color primaryLight = Color(0xFF818CF8);
+  // Primary Royal Blue Palette (from Reference PPT UI Mockup)
+  static const Color primary = Color(0xFF2563EB); // Vibrant Royal Blue
+  static const Color primaryDark = Color(0xFF1E40AF); // Deep Royal Blue
+  static const Color primaryLight = Color(0xFF3B82F6); // Bright Blue
 
   // Accent & Status
   static const Color secondary = Color(0xFF0EA5E9); // Sky blue
   static const Color success = Color(0xFF10B981); // Emerald green
-  static const Color warning = Color(0xFBF59E0B); // Amber
+  static const Color warning = Color(0xFFF59E0B); // Amber
   static const Color error = Color(0xFFEF4444); // Crimson red
 
-  // Backgrounds
+  // Backgrounds & Surface
   static const Color backgroundLight = Color(0xFFF8FAFC);
   static const Color backgroundDark = Color(0xFF0F172A);
   static const Color surfaceLight = Colors.white;
