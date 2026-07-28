@@ -6,6 +6,7 @@ import VendorManagement from './pages/Vendors';
 import CandidateManagement from './pages/Candidates';
 import VideoManagement from './pages/Videos';
 import VideoDetails from './pages/VideoDetails';
+import QCReview from './pages/QCReview';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/candidates" element={<CandidateManagement />} />
         <Route path="/videos" element={<VideoManagement />} />
         <Route path="/videos/:id" element={<VideoDetails />} />
+        <Route path="/qc-review/:id" element={<QCReview />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

@@ -36,6 +36,7 @@ import {
   FilterList,
   PlayCircleOutlined,
   VisibilityOutlined,
+  FactCheckOutlined,
 } from '@mui/icons-material';
 
 const adminTheme = createTheme({
@@ -183,6 +184,10 @@ export default function VideoManagement() {
 
   const handleOpenDetails = (videoId) => {
     navigate(`/videos/${videoId}`);
+  };
+
+  const handleOpenQCReview = (videoId) => {
+    navigate(`/qc-review/${videoId}`);
   };
 
   return (
@@ -396,15 +401,27 @@ export default function VideoManagement() {
                             />
                           </TableCell>
                           <TableCell align="right">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={<VisibilityOutlined />}
-                              onClick={() => handleOpenDetails(video.id)}
-                              sx={{ textTransform: 'none' }}
-                            >
-                              View Details
-                            </Button>
+                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<VisibilityOutlined />}
+                                onClick={() => handleOpenDetails(video.id)}
+                                sx={{ textTransform: 'none' }}
+                              >
+                                Details
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="warning"
+                                startIcon={<FactCheckOutlined />}
+                                onClick={() => handleOpenQCReview(video.id)}
+                                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                              >
+                                QC Review
+                              </Button>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ))
