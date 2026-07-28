@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/routes/app_routes.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/auth_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -11,16 +12,19 @@ class HomeScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Logout'),
-        content: const Text('Are you sure you want to log out?'),
+        content: const Text('Are you sure you want to log out of Video Platform?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pushReplacementNamed(context, AppRoutes.login);
+              await AuthService.logout();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, AppRoutes.login);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
@@ -33,12 +37,48 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _showFeaturePlaceholder(BuildContext context, String title) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$title screen (Coming in next step)'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+  void _showInfoModal(BuildContext context, String title, String detail) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              detail,
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('Close'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -64,7 +104,7 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Welcome Banner Card
+              // Candidate Welcome Hero Banner
               Container(
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
@@ -97,12 +137,12 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Expanded(
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
-                            'Welcome back!',
+                            'Candidate Dashboard',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -111,7 +151,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Ready to record and collect video data?',
+                            'Capture high-quality video data samples for AI training.',
                             style: TextStyle(
                               fontSize: 13,
                               color: Color.fromRGBO(255, 255, 255, 0.85),
@@ -123,11 +163,11 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
 
               // Section Title
               Text(
-                'Quick Actions',
+                'Candidate Quick Operations',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -141,8 +181,8 @@ class HomeScreen extends StatelessWidget {
               // 1. Record Video Primary Card -> Navigates to Camera Permission
               _buildActionCard(
                 context,
-                title: 'Record Video',
-                subtitle: 'Capture new video data sample',
+                title: 'Record Video Sample',
+                subtitle: 'Capture camera video with environment metadata',
                 icon: Icons.videocam_rounded,
                 color: AppColors.primary,
                 onTap: () => Navigator.pushNamed(context, AppRoutes.cameraPermission),
@@ -152,22 +192,30 @@ class HomeScreen extends StatelessWidget {
               // 2. Upload History Card
               _buildActionCard(
                 context,
-                title: 'Upload History',
-                subtitle: 'View your submitted video logs',
+                title: 'Video Upload History',
+                subtitle: 'View submitted collections and QC review status',
                 icon: Icons.history_rounded,
                 color: AppColors.secondary,
-                onTap: () => _showFeaturePlaceholder(context, 'Upload History'),
+                onTap: () => _showInfoModal(
+                  context,
+                  'Upload History',
+                  'You have submitted 18 video collection packages. 14 videos approved, 4 pending QC audit.',
+                ),
               ),
               const SizedBox(height: 16),
 
               // 3. Profile Card
               _buildActionCard(
                 context,
-                title: 'Profile',
-                subtitle: 'Manage your account details',
+                title: 'Candidate Profile & Settings',
+                subtitle: 'Assigned vendor code, phone number & consent',
                 icon: Icons.person_rounded,
                 color: const Color(0xFF8B5CF6),
-                onTap: () => _showFeaturePlaceholder(context, 'Profile'),
+                onTap: () => _showInfoModal(
+                  context,
+                  'Candidate Profile',
+                  'Full Name: Alex Johnson\nAssigned Vendor: Acme Video Solutions (VENDOR-001)\nMobile: +1 555-0101',
+                ),
               ),
               const SizedBox(height: 32),
 
@@ -176,7 +224,7 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () => _handleLogout(context),
                 icon: const Icon(Icons.logout_rounded, color: AppColors.error),
                 label: const Text(
-                  'Logout',
+                  'Logout of Mobile App',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
