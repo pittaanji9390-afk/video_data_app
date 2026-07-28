@@ -1,15 +1,146 @@
 # Database Documentation
 
-This directory manages PostgreSQL database artifacts, migrations, seed data, and schema definitions.
+## Overview
 
-## Folder Overview
+PostgreSQL database for the Video Data Collection & Vendor Management Platform.
+Contains 11 tables covering admins, vendors, candidates, video management, quality control, payments, and audit logging.
 
-- `migrations/`: Contains sequential database migration files (DDL scripts for table creation, updates, and indexing).
-- `seeds/`: Contains seed data files for local development and initial lookup data.
-- `schema/`: Contains raw SQL schema definitions and entity relationship references.
+---
 
-## Database Guidelines
+## Entity Relationship Diagram
 
-1. **No direct manual database modifications**: All changes must be made via version-controlled migration files in `migrations/`.
-2. **Local PostgreSQL connection**: Configured via environment variables (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`).
-3. **AWS RDS Compatibility**: Ensure SQL scripts adhere to standard PostgreSQL syntax compatible with AWS RDS PostgreSQL instances.
+```
+┌──────────────┐
+│    admins     │
+│──────────────│
+│ PK: id (UUID)│
+│ username      │
+│ email         │
+│ password_hash │
+└──────┬───────┘
+       │ reviews (qc_reviews.reviewer_id)
+       │ creates (vendors.created_by)
+       │
+       ▼
+┌──────────────┐       1:N        ┌────────────────┐
+│  qc_reviews  │◄────────────────│     videos      │
+│──────────────│                  │────────────────│
+│ FK: video_id │                  │ FK: candidate_id │
+│ FK: reviewer_id                 │ FK: vendor_id    │
+└──────────────┘                  │ s3_url, status   │
+                                  └───┬──────┬──────┘
+                                      │      │
+                          ┌───────────┘      └───────────┐
+                          ▼                              ▼
+                 ┌────────────────┐            ┌──────────────────┐
+                 │  candidates    │            │ video_locations   │
+                 │────────────────│            │──────────────────│
+                 │ FK: vendor_id  │            │ FK: video_id      │
+                 └──┬─────┬──────┘            └──────────────────┘
+                    │     │
+          ┌─────────┘     └──────────┐
+          ▼                          ▼
+  ┌──────────────┐          ┌────────────────┐
+  │   otp_logs   │          │ user_sessions  │
+  │──────────────│          │────────────────│
+  │ FK: candidate_id        │ FK: candidate_id │
+  └──────────────┘          └────────────────┘
+
+┌──────────────┐       1:N        ┌──────────────────────┐
+│   vendors    │─────────────────►│     payments          │
+│──────────────│                  │──────────────────────│
+│ PK: id       │                  │ FK: vendor_id          │
+└──────────────┘                  └──────────┬───────────┘
+                                             │ 1:N
+                                             ▼
+                                  ┌──────────────────────┐
+                                  │ payment_transactions  │
+                                  │──────────────────────│
+                                  │ FK: payment_id         │
+                                  └──────────────────────┘
+
+┌──────────────┐
+│  audit_logs  │  (standalone — polymorphic actor reference)
+└──────────────┘
+```
+
+---
+
+## Tables
+
+| # | Table | Description |
+|---|-------|-------------|
+| 1 | `admins` | Platform administrators |
+| 2 | `vendors` | Companies/individuals managing video collection |
+| 3 | `candidates` | Individuals recording/uploading videos |
+| 4 | `otp_logs` | OTP codes sent to candidates |
+| 5 | `user_sessions` | Active login sessions for candidates |
+| 6 | `videos` | Video metadata (S3 URL, duration, status, GPS) |
+| 7 | `video_locations` | Extended location metadata per video |
+| 8 | `qc_reviews` | Quality control reviews by admins |
+| 9 | `payments` | Aggregated payment records per vendor |
+| 10 | `payment_transactions` | Individual transactions per payment |
+| 11 | `audit_logs` | System-wide audit trail |
+
+---
+
+## Common Column Conventions
+
+Every table includes:
+- `id` — UUID primary key (`uuid_generate_v4()`)
+- `created_at` — Record creation timestamp
+- `updated_at` — Last update timestamp
+- `deleted_at` — Soft delete timestamp (NULL = active)
+
+---
+
+## Folder Structure
+
+```
+database/
+├── migrations/
+│   └── 001_initial_schema.sql   # Full DDL: tables, FKs, indexes, constraints
+├── seeds/
+│   └── 001_seed_admin.sql       # Default admin account
+├── schema/
+│   ├── schema.sql               # Reference copy of the full schema
+│   └── verify.sql               # Verification queries
+└── README.md                    # This file
+```
+
+---
+
+## How to Run
+
+### Prerequisites
+- PostgreSQL 14+ installed and running locally
+- `psql` CLI available on PATH
+
+### Step 1: Create Database
+```bash
+psql -U postgres -c "CREATE DATABASE videoplatform;"
+```
+
+### Step 2: Run Migration
+```bash
+psql -U postgres -d videoplatform -f database/migrations/001_initial_schema.sql
+```
+
+### Step 3: Run Seed Data
+```bash
+psql -U postgres -d videoplatform -f database/seeds/001_seed_admin.sql
+```
+
+### Step 4: Verify
+```bash
+psql -U postgres -d videoplatform -f database/schema/verify.sql
+```
+
+---
+
+## Migration Guidelines
+
+1. **Never modify an existing migration file** — create a new numbered file instead (e.g., `002_add_column.sql`).
+2. **All schema changes must go through migrations** — no direct manual `ALTER TABLE` in production.
+3. **Test migrations locally** before applying to staging/production.
+4. **Use standard PostgreSQL syntax** — must be compatible with AWS RDS PostgreSQL.
