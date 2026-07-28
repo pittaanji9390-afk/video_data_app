@@ -30,6 +30,7 @@ import {
   CheckCircleOutlined,
   CancelOutlined,
   AccessTimeOutlined,
+  PaymentsOutlined,
   TrendingUp,
 } from '@mui/icons-material';
 
@@ -123,10 +124,11 @@ export default function AdminDashboard() {
     {
       title: 'Total Hours Collected',
       value: '185.50',
-      unit: 'Hours of Video Data',
+      unit: 'Hours (Click for Payment Summary)',
       icon: <AccessTimeOutlined sx={{ fontSize: 28 }} />,
       color: '#f59e0b',
       bgColor: 'rgba(245, 158, 11, 0.15)',
+      onClick: () => navigate('/payments'),
     },
   ];
 
@@ -225,6 +227,15 @@ export default function AdminDashboard() {
                 sx={{ textTransform: 'none', fontWeight: 'bold' }}
               >
                 Videos
+              </Button>
+              <Button
+                variant="contained"
+                color="warning"
+                startIcon={<PaymentsOutlined />}
+                onClick={() => navigate('/payments')}
+                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              >
+                Payments
               </Button>
               <Chip
                 avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>}
