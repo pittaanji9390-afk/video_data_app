@@ -26,10 +26,6 @@ import {
   CssBaseline,
   ThemeProvider,
   createTheme,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
 import {
   AdminPanelSettings,
@@ -160,9 +156,6 @@ export default function VideoManagement() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  // Preview Dialog State
-  const [previewVideo, setPreviewVideo] = useState(null);
-
   // Filter Logic: Candidate Name, Status, and Vendor Filters
   const filteredVideos = videos.filter((video) => {
     const matchesSearch = video.candidate_name
@@ -186,6 +179,10 @@ export default function VideoManagement() {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleOpenDetails = (videoId) => {
+    navigate(`/videos/${videoId}`);
   };
 
   return (
@@ -372,7 +369,7 @@ export default function VideoManagement() {
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                                 cursor: 'pointer',
                               }}
-                              onClick={() => setPreviewVideo(video)}
+                              onClick={() => handleOpenDetails(video.id)}
                             >
                               <PlayCircleOutlined sx={{ fontSize: 24 }} />
                             </Box>
@@ -403,10 +400,10 @@ export default function VideoManagement() {
                               size="small"
                               variant="outlined"
                               startIcon={<VisibilityOutlined />}
-                              onClick={() => setPreviewVideo(video)}
+                              onClick={() => handleOpenDetails(video.id)}
                               sx={{ textTransform: 'none' }}
                             >
-                              Preview
+                              View Details
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -429,46 +426,6 @@ export default function VideoManagement() {
             />
           </Paper>
         </Container>
-
-        {/* Video Preview Dialog */}
-        <Dialog open={Boolean(previewVideo)} onClose={() => setPreviewVideo(null)} maxWidth="sm" fullWidth>
-          <DialogTitle sx={{ fontWeight: 'bold' }}>
-            Video Preview ({previewVideo?.id})
-          </DialogTitle>
-          <DialogContent dividers sx={{ pt: 2 }}>
-            {previewVideo && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: 240,
-                    borderRadius: 3,
-                    bgcolor: previewVideo.thumbnail_color,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                  }}
-                >
-                  <PlayCircleOutlined sx={{ fontSize: 64, mb: 1 }} />
-                  <Typography variant="subtitle2">Static Video Stream Simulation</Typography>
-                </Box>
-
-                <Typography variant="body2"><strong>Candidate:</strong> {previewVideo.candidate_name}</Typography>
-                <Typography variant="body2"><strong>Vendor:</strong> {previewVideo.vendor_name}</Typography>
-                <Typography variant="body2"><strong>Environment:</strong> {previewVideo.environment_tag}</Typography>
-                <Typography variant="body2"><strong>Duration:</strong> {previewVideo.duration}</Typography>
-                <Typography variant="body2"><strong>Status:</strong> {previewVideo.status}</Typography>
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setPreviewVideo(null)} color="primary" variant="contained">
-              Close Preview
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
     </ThemeProvider>
   );
