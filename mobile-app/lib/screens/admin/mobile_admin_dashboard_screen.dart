@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../config/routes/app_routes.dart';
+import '../../services/auth_service.dart';
 
 class MobileAdminDashboardScreen extends StatefulWidget {
   const MobileAdminDashboardScreen({super.key});
@@ -10,7 +11,11 @@ class MobileAdminDashboardScreen extends StatefulWidget {
 }
 
 class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen> {
-  int _selectedIndex = 0;
+  Future<void> _handleLogout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, AppRoutes.login);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +39,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: AppColors.error),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, AppRoutes.login);
-            },
+            onPressed: _handleLogout,
           ),
         ],
       ),
@@ -108,7 +111,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
               children: [
                 _buildMetricCard('Total Vendors', '24', 'Active Partners', Icons.storefront_rounded, AppColors.primary),
                 _buildMetricCard('Candidates', '142', 'Registered', Icons.groups_rounded, AppColors.secondary),
-                _buildMetricCard('Total Videos', '528', 'Uploaded', Icons.videocam_rounded, Colors.purple),
+                _buildMetricCard('Total Videos', '528', 'Uploaded', Icons.purple),
                 _buildMetricCard('Approved QC', '410', '77.6% Approved', Icons.check_circle_rounded, AppColors.success),
                 _buildMetricCard('Rejected QC', '45', 'Re-shoots Required', Icons.cancel_rounded, AppColors.error),
                 _buildMetricCard('Total Hours', '185.50 hrs', 'Collected Data', Icons.access_time_rounded, Colors.amber.shade800),
@@ -169,7 +172,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     );
   }
 
-  Widget _buildMetricCard(String title, String value, String subtitle, IconData icon, Color color) {
+  Widget _buildMetricCard(String title, String value, String subtitle, IconData icon, [Color color = AppColors.primary]) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../config/routes/app_routes.dart';
+import '../../services/auth_service.dart';
 
 class MobileVendorDashboardScreen extends StatefulWidget {
   const MobileVendorDashboardScreen({super.key});
@@ -16,6 +17,12 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
     {'name': 'David Kim', 'phone': '+1 555-0103', 'videos': '12', 'status': 'Pending'},
     {'name': 'Emma Watson', 'phone': '+1 555-0104', 'videos': '30', 'status': 'Active'},
   ];
+
+  Future<void> _handleLogout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, AppRoutes.login);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +46,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: AppColors.error),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, AppRoutes.login);
-            },
+            onPressed: _handleLogout,
           ),
         ],
       ),
