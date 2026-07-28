@@ -87,10 +87,11 @@ export default function AdminDashboard() {
     {
       title: 'Total Candidates',
       value: '142',
-      unit: 'Registered Subjects',
+      unit: 'Registered Subjects (Click to Manage)',
       icon: <GroupOutlined sx={{ fontSize: 28 }} />,
       color: '#0ea5e9',
       bgColor: 'rgba(14, 165, 233, 0.15)',
+      onClick: () => navigate('/candidates'),
     },
     {
       title: 'Total Videos',
@@ -148,7 +149,7 @@ export default function AdminDashboard() {
     },
     {
       id: 'VID-9023',
-      vendor: 'Global Data Corp',
+      vendor: 'Global Vision Media',
       candidate: 'Michael Brown (CND-112)',
       environment: 'Office',
       duration: '60 mins',
@@ -194,7 +195,7 @@ export default function AdminDashboard() {
               </Typography>
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -203,6 +204,15 @@ export default function AdminDashboard() {
                 sx={{ textTransform: 'none', fontWeight: 'bold' }}
               >
                 Manage Vendors
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<GroupOutlined />}
+                onClick={() => navigate('/candidates')}
+                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              >
+                Manage Candidates
               </Button>
               <Chip
                 avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>}
