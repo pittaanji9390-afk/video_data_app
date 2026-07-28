@@ -1,10 +1,11 @@
 /**
  * Video Service
  * 
- * Business logic and database operations for Video entity (Metadata store).
+ * Business logic and database operations for Video entity (Metadata & Local Upload).
  */
 
 const db = require('../database/connection');
+const path = require('path');
 
 class VideoService {
   /**
@@ -21,7 +22,6 @@ class VideoService {
     longitude,
     status = 'pending',
   }) {
-    // 1. Verify candidate exists and is active
     const candidateCheck = await db.query(
       'SELECT id FROM candidates WHERE id = $1 AND deleted_at IS NULL',
       [candidate_id]
@@ -33,7 +33,6 @@ class VideoService {
       throw error;
     }
 
-    // 2. Verify vendor exists and is active
     const vendorCheck = await db.query(
       'SELECT id FROM vendors WHERE id = $1 AND deleted_at IS NULL',
       [vendor_id]
@@ -45,7 +44,6 @@ class VideoService {
       throw error;
     }
 
-    // 3. Insert video metadata
     const insertQuery = `
       INSERT INTO videos (
         candidate_id,
@@ -67,6 +65,7 @@ class VideoService {
         description,
         s3_url,
         file_name,
+        local_path,
         file_size,
         duration,
         environment_tag,
@@ -93,6 +92,110 @@ class VideoService {
   }
 
   /**
+   * Handles local file upload for a video.
+   * Updates an existing video record (if video_id provided) or creates a new one.
+   */
+  async uploadVideo({ video_id, candidate_id, vendor_id, file }) {
+    const relativePath = path.join('uploads', 'videos', file.filename).replace(/\\/g, '/');
+
+    if (video_id) {
+      // Update existing video record
+      const existing = await this.getVideoById(video_id);
+
+      const updateQuery = `
+        UPDATE videos
+        SET
+          file_name = $1,
+          local_path = $2,
+          file_size = $3,
+          upload_date = NOW(),
+          status = 'uploaded',
+          updated_at = NOW()
+        WHERE id = $4 AND deleted_at IS NULL
+        RETURNING
+          id,
+          candidate_id,
+          vendor_id,
+          title,
+          file_name,
+          local_path,
+          file_size,
+          upload_date,
+          status,
+          updated_at
+      `;
+
+      const result = await db.query(updateQuery, [
+        file.originalname,
+        relativePath,
+        file.size,
+        video_id,
+      ]);
+
+      return result.rows[0];
+    } else if (candidate_id && vendor_id) {
+      // Create new video record upon upload
+      const candidateCheck = await db.query(
+        'SELECT id FROM candidates WHERE id = $1 AND deleted_at IS NULL',
+        [candidate_id]
+      );
+      if (candidateCheck.rowCount === 0) {
+        const error = new Error('Candidate not found or inactive');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const vendorCheck = await db.query(
+        'SELECT id FROM vendors WHERE id = $1 AND deleted_at IS NULL',
+        [vendor_id]
+      );
+      if (vendorCheck.rowCount === 0) {
+        const error = new Error('Vendor not found or inactive');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const insertQuery = `
+        INSERT INTO videos (
+          candidate_id,
+          vendor_id,
+          file_name,
+          local_path,
+          file_size,
+          upload_date,
+          status
+        )
+        VALUES ($1, $2, $3, $4, $5, NOW(), 'uploaded')
+        RETURNING
+          id,
+          candidate_id,
+          vendor_id,
+          file_name,
+          local_path,
+          file_size,
+          upload_date,
+          status,
+          created_at,
+          updated_at
+      `;
+
+      const result = await db.query(insertQuery, [
+        candidate_id,
+        vendor_id,
+        file.originalname,
+        relativePath,
+        file.size,
+      ]);
+
+      return result.rows[0];
+    } else {
+      const error = new Error('Either video_id or both candidate_id and vendor_id must be provided');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  /**
    * Gets paginated list of active video metadata records with optional filters.
    */
   async getAllVideos({ candidate_id, vendor_id, status, page = 1, limit = 10 }) {
@@ -112,6 +215,7 @@ class VideoService {
         v.description,
         v.s3_url,
         v.file_name,
+        v.local_path,
         v.file_size,
         v.duration,
         v.environment_tag,
@@ -185,6 +289,7 @@ class VideoService {
         v.description,
         v.s3_url,
         v.file_name,
+        v.local_path,
         v.file_size,
         v.duration,
         v.environment_tag,
@@ -244,6 +349,7 @@ class VideoService {
         description,
         s3_url,
         file_name,
+        local_path,
         file_size,
         duration,
         environment_tag,

@@ -127,6 +127,7 @@ CREATE TABLE videos (
     description     TEXT,
     s3_url          VARCHAR(1000),
     file_name       VARCHAR(500),
+    local_path      VARCHAR(1000),
     file_size       BIGINT,
     duration        INTEGER,
     recording_date  TIMESTAMPTZ,

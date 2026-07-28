@@ -6,11 +6,15 @@
 const express = require('express');
 const router = express.Router();
 const videoController = require('../controllers/video.controller');
+const uploadVideoMiddleware = require('../middleware/upload.middleware');
 const {
   validateVideoIdParam,
   validateCreateVideo,
   validateUpdateVideo,
 } = require('../validators/video.validator');
+
+// POST /api/v1/videos/upload - Local MP4 Video File Upload
+router.post('/upload', uploadVideoMiddleware, (req, res, next) => videoController.uploadVideo(req, res, next));
 
 // POST /api/v1/videos - Create Video Metadata
 router.post('/', validateCreateVideo, (req, res, next) => videoController.createVideo(req, res, next));

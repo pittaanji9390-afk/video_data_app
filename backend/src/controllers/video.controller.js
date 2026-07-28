@@ -45,6 +45,39 @@ class VideoController {
   }
 
   /**
+   * POST /api/v1/videos/upload
+   * Handles local MP4 file upload.
+   */
+  async uploadVideo(req, res, next) {
+    try {
+      const { video_id, candidate_id, vendor_id } = req.body;
+      const file = req.file;
+
+      const uploadedVideo = await videoService.uploadVideo({
+        video_id,
+        candidate_id,
+        vendor_id,
+        file,
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Video file uploaded successfully',
+        data: {
+          file_name: uploadedVideo.file_name,
+          local_path: uploadedVideo.local_path,
+          file_size: uploadedVideo.file_size,
+          upload_date: uploadedVideo.upload_date || uploadedVideo.updated_at,
+          status: uploadedVideo.status,
+          video_id: uploadedVideo.id,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * GET /api/v1/videos
    */
   async getAllVideos(req, res, next) {
