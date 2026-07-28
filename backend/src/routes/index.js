@@ -12,12 +12,33 @@ const paymentRoutes = require('./payment.routes');
 // GET /
 router.get('/', (req, res) => {
   res.status(200).json({
-    message: 'Video Platform Backend Running',
+    status: 'success',
+    message: 'Video Data Collection Platform Backend Running',
+    version: '1.0.0',
+    documentation: '/api/v1',
   });
 });
 
 // GET /health
 router.use('/health', healthRoutes);
+
+// GET /api/v1 Root Route
+router.get('/api/v1', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Video Platform REST API v1 Service Ready',
+    endpoints: {
+      health: '/health',
+      auth_login: 'POST /api/v1/auth/login',
+      auth_refresh: 'POST /api/v1/auth/refresh',
+      vendors: 'GET /api/v1/vendors',
+      candidates: 'GET /api/v1/candidates',
+      videos: 'GET /api/v1/videos',
+      qc_reviews: 'POST /api/v1/qc-reviews',
+      payments: 'GET /api/v1/payments/vendor/:vendorId',
+    },
+  });
+});
 
 // API v1 Routes
 router.use('/api/v1/auth', authRoutes);
