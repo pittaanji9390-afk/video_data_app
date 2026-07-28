@@ -7,6 +7,7 @@ import VendorDashboardPage from './pages/VendorDashboardPage';
 import CandidatesPage from './pages/CandidatesPage';
 import UploadsPage from './pages/UploadsPage';
 import EarningsPage from './pages/EarningsPage';
+import LoginPage from './pages/LoginPage';
 
 const vendorTheme = createTheme({
   palette: {
@@ -49,7 +50,7 @@ const vendorTheme = createTheme({
   },
 });
 
-function App() {
+function VendorDashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {
@@ -57,27 +58,36 @@ function App() {
   };
 
   return (
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Sidebar mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} />
+
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', width: { md: `calc(100% - 260px)` } }}>
+        <Header handleDrawerToggle={handleDrawerToggle} />
+
+        <Box component="main" sx={{ flexGrow: 1 }}>
+          <Routes>
+            <Route path="/" element={<VendorDashboardPage />} />
+            <Route path="/candidates" element={<CandidatesPage />} />
+            <Route path="/uploads" element={<UploadsPage />} />
+            <Route path="/earnings" element={<EarningsPage />} />
+            <Route path="/settings" element={<VendorDashboardPage />} />
+            <Route path="*" element={<VendorDashboardPage />} />
+          </Routes>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+function App() {
+  return (
     <ThemeProvider theme={vendorTheme}>
       <CssBaseline />
       <Router>
-        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-          <Sidebar mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} />
-
-          <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', width: { md: `calc(100% - 260px)` } }}>
-            <Header handleDrawerToggle={handleDrawerToggle} />
-
-            <Box component="main" sx={{ flexGrow: 1 }}>
-              <Routes>
-                <Route path="/" element={<VendorDashboardPage />} />
-                <Route path="/candidates" element={<CandidatesPage />} />
-                <Route path="/uploads" element={<UploadsPage />} />
-                <Route path="/earnings" element={<EarningsPage />} />
-                <Route path="/settings" element={<VendorDashboardPage />} />
-                <Route path="*" element={<VendorDashboardPage />} />
-              </Routes>
-            </Box>
-          </Box>
-        </Box>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/*" element={<VendorDashboardLayout />} />
+        </Routes>
       </Router>
     </ThemeProvider>
   );

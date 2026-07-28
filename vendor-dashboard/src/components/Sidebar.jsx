@@ -29,6 +29,12 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleSignOut = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardOutlined />, path: '/' },
     { text: 'Candidates', icon: <GroupOutlined />, path: '/candidates' },
@@ -100,8 +106,8 @@ export default function Sidebar({ mobileOpen, handleDrawerToggle }) {
       <Box sx={{ p: 2 }}>
         <Chip label="Partner Code: VENDOR-001" size="small" variant="outlined" color="info" sx={{ width: '100%', mb: 1.5, fontFamily: 'monospace' }} />
         <ListItemButton
-          onClick={() => navigate('/login')}
-          sx={{ borderRadius: 3, color: '#ef4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+          onClick={handleSignOut}
+          sx={{ borderRadius: 3, color: '#ef4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.15)' } }}
         >
           <ListItemIcon sx={{ color: '#ef4444', minWidth: 40 }}>
             <LogoutOutlined />
