@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -12,12 +12,13 @@ import {
   Chip,
   IconButton,
   Divider,
+  CircularProgress,
+  Alert,
   CssBaseline,
   ThemeProvider,
   createTheme,
 } from '@mui/material';
 import {
-  AdminPanelSettings,
   LogoutOutlined,
   ArrowBack,
   VideocamOutlined,
@@ -30,7 +31,9 @@ import {
   CheckCircleOutlined,
   CancelOutlined,
   HourglassEmptyOutlined,
+  Refresh,
 } from '@mui/icons-material';
+import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
@@ -67,64 +70,32 @@ const adminTheme = createTheme({
   },
 });
 
-// Static Dummy Video Data Repository
-const DUMMY_VIDEO_DETAILS = {
-  'VID-9001': {
-    id: 'VID-9001',
-    candidate_name: 'John Doe',
-    candidate_code: 'CND-001',
-    vendor_name: 'Acme Video Solutions',
-    vendor_code: 'VENDOR-001',
-    environment_tag: 'Kitchen',
-    duration: '45 mins 12 secs',
-    upload_date: '2026-07-28 14:30:22 EST',
-    recording_date: '2026-07-28 10:15:00 EST',
-    latitude: '37.774900',
-    longitude: '-122.419400',
-    status: 'Approved',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-  },
-  'VID-9002': {
-    id: 'VID-9002',
-    candidate_name: 'Sarah Smith',
-    candidate_code: 'CND-002',
-    vendor_name: 'Apex Data Services',
-    vendor_code: 'VENDOR-002',
-    environment_tag: 'Bedroom',
-    duration: '30 mins 05 secs',
-    upload_date: '2026-07-28 12:00:10 EST',
-    recording_date: '2026-07-28 09:45:00 EST',
-    latitude: '40.712800',
-    longitude: '-74.006000',
-    status: 'Rejected',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-  },
-};
-
-// Default fallback video data if ID is not matched
-const DEFAULT_VIDEO = {
-  id: 'VID-9001',
-  candidate_name: 'John Doe',
-  candidate_code: 'CND-001',
-  vendor_name: 'Acme Video Solutions',
-  vendor_code: 'VENDOR-001',
-  environment_tag: 'Kitchen',
-  duration: '45 mins 12 secs',
-  upload_date: '2026-07-28 14:30:22 EST',
-  recording_date: '2026-07-28 10:15:00 EST',
-  latitude: '37.774900',
-  longitude: '-122.419400',
-  status: 'Approved',
-  video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-};
-
 export default function VideoDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const video = DUMMY_VIDEO_DETAILS[id] || { ...DEFAULT_VIDEO, id: id || 'VID-9001' };
+  const [video, setVideo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const getStatusChip = (status) => {
+  const fetchDetails = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await apiService.getVideoById(id);
+      setVideo(res.data || res);
+    } catch (err) {
+      setError(err.message || `Failed to fetch video details for ID: ${id}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDetails();
+  }, [id]);
+
+  const getStatusChip = (status = '') => {
     switch (status.toUpperCase()) {
       case 'APPROVED':
         return <Chip icon={<CheckCircleOutlined />} label="APPROVED" color="success" sx={{ fontWeight: 'bold' }} />;
@@ -140,14 +111,7 @@ export default function VideoDetails() {
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
         {/* Navigation Header */}
-        <AppBar
-          position="static"
-          elevation={0}
-          sx={{
-            bgcolor: 'background.paper',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          }}
-        >
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <IconButton color="inherit" onClick={() => navigate('/videos')} sx={{ mr: 1 }}>
               <ArrowBack />
@@ -155,211 +119,132 @@ export default function VideoDetails() {
             <VideocamOutlined sx={{ mr: 1.5, color: 'primary.main', fontSize: 32 }} />
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="h6" fontWeight="bold">
-                Video Details ({video.id})
+                Video Details ({id})
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Read-only candidate recording and geolocation metadata preview
+                Read-only metadata connected to backend REST API
               </Typography>
             </Box>
 
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<LogoutOutlined />}
-              onClick={() => navigate('/login')}
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-            >
+            <IconButton color="primary" onClick={fetchDetails} sx={{ mr: 1 }}>
+              <Refresh />
+            </IconButton>
+
+            <Button variant="outlined" color="error" startIcon={<LogoutOutlined />} onClick={() => navigate('/login')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
               Sign Out
             </Button>
           </Toolbar>
         </AppBar>
 
-        {/* Main Content Area */}
         <Container maxWidth="xl" sx={{ mt: 4 }}>
-          {/* Header Action Banner */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              mb: 4,
-              borderRadius: 4,
-              bgcolor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 2,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Button
-                variant="outlined"
-                color="inherit"
-                startIcon={<ArrowBack />}
-                onClick={() => navigate('/videos')}
-                sx={{ textTransform: 'none' }}
-              >
-                Back to Video Management
-              </Button>
-              <Typography variant="h5" fontWeight="bold">
-                Video File: {video.id}
-              </Typography>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 12, gap: 2 }}>
+              <CircularProgress color="primary" />
+              <Typography color="text.secondary">Loading video details from API...</Typography>
             </Box>
+          ) : error ? (
+            <Alert severity="error" action={<Button color="inherit" size="small" onClick={fetchDetails}>Retry</Button>} sx={{ mb: 4, borderRadius: 3 }}>
+              {error}
+            </Alert>
+          ) : !video ? (
+            <Alert severity="warning" sx={{ mb: 4, borderRadius: 3 }}>
+              Video record not found on backend.
+            </Alert>
+          ) : (
+            <>
+              <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Button variant="outlined" color="inherit" startIcon={<ArrowBack />} onClick={() => navigate('/videos')} sx={{ textTransform: 'none' }}>
+                    Back to Videos
+                  </Button>
+                  <Typography variant="h5" fontWeight="bold">
+                    Video ID: {video.id}
+                  </Typography>
+                </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                QC Status:
-              </Typography>
-              {getStatusChip(video.status)}
-            </Box>
-          </Paper>
-
-          {/* 2-Column Responsive Grid */}
-          <Grid container spacing={4}>
-            {/* Left Column: HTML5 Video Player */}
-            <Grid item xs={12} lg={7}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  overflow: 'hidden',
-                }}
-              >
-                <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                  Video Media Playback
-                </Typography>
-
-                {/* HTML5 Video Element */}
-                <Box
-                  sx={{
-                    width: '100%',
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    bgcolor: '#000',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-                  }}
-                >
-                  <video
-                    controls
-                    width="100%"
-                    height="auto"
-                    poster=""
-                    style={{ display: 'block', maxHeight: '480px' }}
-                  >
-                    <source src={video.video_url} type="video/mp4" />
-                    Your browser does not support HTML5 video playback.
-                  </video>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Typography variant="subtitle2" color="text.secondary">QC Status:</Typography>
+                  {getStatusChip(video.status || 'Pending')}
                 </Box>
               </Paper>
-            </Grid>
 
-            {/* Right Column: Read-Only Metadata Summary */}
-            <Grid item xs={12} lg={5}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3.5,
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                }}
-              >
-                <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                  Metadata Summary (Read-Only)
-                </Typography>
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                  {/* Candidate Name */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <PersonOutlined sx={{ color: 'primary.main', fontSize: 24 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight="600">
-                        CANDIDATE NAME
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {video.candidate_name} ({video.candidate_code})
-                      </Typography>
+              <Grid container spacing={4}>
+                <Grid item xs={12} lg={7}>
+                  <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Video Media Playback</Typography>
+                    <Box sx={{ width: '100%', borderRadius: 3, overflow: 'hidden', bgcolor: '#000', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
+                      <video controls width="100%" height="auto" style={{ display: 'block', maxHeight: '480px' }}>
+                        <source src={video.file_path || video.video_url || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'} type="video/mp4" />
+                        Your browser does not support HTML5 video playback.
+                      </video>
                     </Box>
-                  </Box>
-                  <Divider />
+                  </Paper>
+                </Grid>
 
-                  {/* Vendor Name */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <StorefrontOutlined sx={{ color: 'secondary.main', fontSize: 24 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight="600">
-                        ASSIGNED VENDOR
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {video.vendor_name} ({video.vendor_code})
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Divider />
+                <Grid item xs={12} lg={5}>
+                  <Paper elevation={0} sx={{ p: 3.5, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>Backend Metadata Summary</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <PersonOutlined sx={{ color: 'primary.main', fontSize: 24 }} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight="600">CANDIDATE ID</Typography>
+                          <Typography variant="body1" fontWeight="bold">{video.candidate_name || video.candidate_id || 'N/A'}</Typography>
+                        </Box>
+                      </Box>
+                      <Divider />
 
-                  {/* Environment Tag */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <SellOutlined sx={{ color: 'warning.main', fontSize: 24 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight="600" sx={{ mb: 0.5, display: 'block' }}>
-                        ENVIRONMENT TAG
-                      </Typography>
-                      <Chip label={video.environment_tag} color="primary" variant="outlined" sx={{ fontWeight: 'bold' }} />
-                    </Box>
-                  </Box>
-                  <Divider />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <StorefrontOutlined sx={{ color: 'secondary.main', fontSize: 24 }} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight="600">VENDOR</Typography>
+                          <Typography variant="body1" fontWeight="bold">{video.vendor_name || video.vendor_id || 'N/A'}</Typography>
+                        </Box>
+                      </Box>
+                      <Divider />
 
-                  {/* Duration */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <AccessTimeOutlined sx={{ color: 'info.main', fontSize: 24 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight="600">
-                        DURATION
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {video.duration}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Divider />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <SellOutlined sx={{ color: 'warning.main', fontSize: 24 }} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight="600" sx={{ mb: 0.5, display: 'block' }}>ENVIRONMENT TAG</Typography>
+                          <Chip label={video.environment_tag || 'Dataset'} color="primary" variant="outlined" sx={{ fontWeight: 'bold' }} />
+                        </Box>
+                      </Box>
+                      <Divider />
 
-                  {/* Upload Date & Recording Date */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <CalendarTodayOutlined sx={{ color: 'success.main', fontSize: 24 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight="600">
-                        UPLOAD & RECORDING DATES
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>Upload Date:</strong> {video.upload_date}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>Recording Date:</strong> {video.recording_date}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Divider />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <AccessTimeOutlined sx={{ color: 'info.main', fontSize: 24 }} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight="600">DURATION</Typography>
+                          <Typography variant="body1" fontWeight="bold">{video.duration_seconds ? `${video.duration_seconds} secs` : video.duration || 'N/A'}</Typography>
+                        </Box>
+                      </Box>
+                      <Divider />
 
-                  {/* GPS Coordinates */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <LocationOnOutlined sx={{ color: 'error.main', fontSize: 24 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight="600">
-                        GPS COORDINATES
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold" sx={{ color: 'primary.light', fontFamily: 'monospace' }}>
-                        Lat: {video.latitude}, Long: {video.longitude}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <CalendarTodayOutlined sx={{ color: 'success.main', fontSize: 24 }} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight="600">CREATED AT</Typography>
+                          <Typography variant="body2">{video.created_at ? new Date(video.created_at).toLocaleString() : 'N/A'}</Typography>
+                        </Box>
+                      </Box>
+                      <Divider />
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <LocationOnOutlined sx={{ color: 'error.main', fontSize: 24 }} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight="600">GPS COORDINATES</Typography>
+                          <Typography variant="body1" fontWeight="bold" sx={{ color: 'primary.light', fontFamily: 'monospace' }}>
+                            Lat: {video.latitude || video.gps_latitude || '0.0'}, Long: {video.longitude || video.gps_longitude || '0.0'}
+                          </Typography>
+                        </Box>
+                      </Box>
                     </Box>
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
-          </Grid>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </>
+          )}
         </Container>
       </Box>
     </ThemeProvider>

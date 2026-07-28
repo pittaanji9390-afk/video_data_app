@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -24,12 +24,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
+  Alert,
   CssBaseline,
   ThemeProvider,
   createTheme,
 } from '@mui/material';
 import {
-  AdminPanelSettings,
   LogoutOutlined,
   Search,
   ArrowBack,
@@ -38,7 +39,9 @@ import {
   AccountBalanceWalletOutlined,
   AccessTimeOutlined,
   FilterList,
+  Refresh,
 } from '@mui/icons-material';
+import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
@@ -75,85 +78,75 @@ const adminTheme = createTheme({
   },
 });
 
-// Static Dummy Payment Summary Dataset
-const INITIAL_PAYMENTS = [
-  {
-    id: 'PAY-001',
-    vendor_name: 'Acme Video Solutions',
-    vendor_code: 'VENDOR-001',
-    approved_hours: 45.50,
-    hourly_rate: 50.00,
-    total_amount: 2275.00,
-    payment_status: 'Paid',
-    payment_date: '2026-07-28',
-  },
-  {
-    id: 'PAY-002',
-    vendor_name: 'Apex Data Services',
-    vendor_code: 'VENDOR-002',
-    approved_hours: 32.00,
-    hourly_rate: 60.00,
-    total_amount: 1920.00,
-    payment_status: 'Pending',
-    payment_date: '2026-07-28',
-  },
-  {
-    id: 'PAY-003',
-    vendor_name: 'Global Vision Media',
-    vendor_code: 'VENDOR-003',
-    approved_hours: 68.25,
-    hourly_rate: 55.00,
-    total_amount: 3753.75,
-    payment_status: 'Paid',
-    payment_date: '2026-07-25',
-  },
-  {
-    id: 'PAY-004',
-    vendor_name: 'Starlight Analytics',
-    vendor_code: 'VENDOR-004',
-    approved_hours: 22.00,
-    hourly_rate: 45.00,
-    total_amount: 990.00,
-    payment_status: 'Processing',
-    payment_date: '2026-07-27',
-  },
-  {
-    id: 'PAY-005',
-    vendor_name: 'NextGen AI Labs',
-    vendor_code: 'VENDOR-005',
-    approved_hours: 15.75,
-    hourly_rate: 70.00,
-    total_amount: 1102.50,
-    payment_status: 'Pending',
-    payment_date: '2026-07-26',
-  },
-  {
-    id: 'PAY-006',
-    vendor_name: 'Quantum Datasets',
-    vendor_code: 'VENDOR-006',
-    approved_hours: 80.00,
-    hourly_rate: 52.50,
-    total_amount: 4200.00,
-    payment_status: 'Paid',
-    payment_date: '2026-07-24',
-  },
-];
-
 export default function PaymentDashboard() {
   const navigate = useNavigate();
 
   // State Management
-  const [payments] = useState(INITIAL_PAYMENTS);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  // Search & Status Filter Logic
+  const fetchPayments = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const vendorRes = await apiService.getVendors(1, 100);
+      const vendorList = vendorRes.data?.items || vendorRes.data || vendorRes || [];
+
+      // Calculate payments for each vendor via API
+      if (Array.isArray(vendorList) && vendorList.length > 0) {
+        const paymentPromises = vendorList.map(async (vendor) => {
+          try {
+            const payRes = await apiService.getVendorPayment(vendor.id, 50);
+            const data = payRes.data || payRes;
+            return {
+              id: `PAY-${vendor.vendor_code || vendor.id.substring(0, 6)}`,
+              vendor_name: vendor.company_name,
+              vendor_code: vendor.vendor_code,
+              approved_hours: parseFloat(data.approved_hours || data.approved_seconds / 3600 || 0),
+              hourly_rate: parseFloat(data.hourly_rate || 50.00),
+              total_amount: parseFloat(data.total_payment || data.total_amount || 0),
+              payment_status: data.payment_status || 'Pending',
+              payment_date: new Date().toISOString().split('T')[0],
+            };
+          } catch (e) {
+            return {
+              id: `PAY-${vendor.vendor_code || vendor.id.substring(0, 6)}`,
+              vendor_name: vendor.company_name,
+              vendor_code: vendor.vendor_code,
+              approved_hours: 0,
+              hourly_rate: 50.00,
+              total_amount: 0.00,
+              payment_status: 'Pending',
+              payment_date: new Date().toISOString().split('T')[0],
+            };
+          }
+        });
+
+        const results = await Promise.all(paymentPromises);
+        setPayments(results);
+      } else {
+        setPayments([]);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to fetch vendor payment data from backend');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
   const filteredPayments = payments.filter((p) => {
     const matchesSearch =
-      p.vendor_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.vendor_code.toLowerCase().includes(searchQuery.toLowerCase());
+      (p.vendor_name && p.vendor_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (p.vendor_code && p.vendor_code.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesStatus =
       statusFilter === 'ALL' || p.payment_status.toUpperCase() === statusFilter.toUpperCase();
@@ -161,7 +154,6 @@ export default function PaymentDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate Metrics Summary
   const totalDisbursed = payments
     .filter((p) => p.payment_status === 'Paid')
     .reduce((acc, p) => acc + p.total_amount, 0);
@@ -172,7 +164,6 @@ export default function PaymentDashboard() {
 
   const totalApprovedHours = payments.reduce((acc, p) => acc + p.approved_hours, 0);
 
-  // Pagination Handler
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -198,14 +189,7 @@ export default function PaymentDashboard() {
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
         {/* Navigation Header */}
-        <AppBar
-          position="static"
-          elevation={0}
-          sx={{
-            bgcolor: 'background.paper',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          }}
-        >
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <IconButton color="inherit" onClick={() => navigate('/dashboard')} sx={{ mr: 1 }}>
               <ArrowBack />
@@ -213,45 +197,31 @@ export default function PaymentDashboard() {
             <PaymentsOutlined sx={{ mr: 1.5, color: 'success.main', fontSize: 32 }} />
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="h6" fontWeight="bold">
-                Vendor Payment Dashboard
+                Vendor Payment Dashboard (API Powered)
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Approved video hour calculation, rates, and payment settlement summary
+                Payment calculations connected to REST API
               </Typography>
             </Box>
 
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<LogoutOutlined />}
-              onClick={() => navigate('/login')}
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-            >
+            <IconButton color="success" onClick={fetchPayments} sx={{ mr: 1 }}>
+              <Refresh />
+            </IconButton>
+
+            <Button variant="outlined" color="error" startIcon={<LogoutOutlined />} onClick={() => navigate('/login')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
               Sign Out
             </Button>
           </Toolbar>
         </AppBar>
 
-        {/* Content Area */}
         <Container maxWidth="xl" sx={{ mt: 4 }}>
-          {/* Summary Metric Cards Header */}
+          {/* Summary Metric Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={4}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  backgroundImage: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(30, 41, 59, 1) 100%)',
-                }}
-              >
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <AttachMoney sx={{ color: 'success.main', mr: 1 }} />
-                  <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">
-                    TOTAL PAID DISBURSED
-                  </Typography>
+                  <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">TOTAL PAID DISBURSED</Typography>
                 </Box>
                 <Typography variant="h4" fontWeight="bold" color="success.main">
                   ${totalDisbursed.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -260,21 +230,10 @@ export default function PaymentDashboard() {
             </Grid>
 
             <Grid item xs={12} sm={4}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  backgroundImage: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(30, 41, 59, 1) 100%)',
-                }}
-              >
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <AccountBalanceWalletOutlined sx={{ color: 'warning.main', mr: 1 }} />
-                  <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">
-                    PENDING SETTLEMENTS
-                  </Typography>
+                  <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">PENDING SETTLEMENTS</Typography>
                 </Box>
                 <Typography variant="h4" fontWeight="bold" color="warning.main">
                   ${totalPending.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -283,21 +242,10 @@ export default function PaymentDashboard() {
             </Grid>
 
             <Grid item xs={12} sm={4}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                  backgroundImage: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(30, 41, 59, 1) 100%)',
-                }}
-              >
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <AccessTimeOutlined sx={{ color: 'primary.main', mr: 1 }} />
-                  <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">
-                    APPROVED VIDEO HOURS
-                  </Typography>
+                  <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">APPROVED VIDEO HOURS</Typography>
                 </Box>
                 <Typography variant="h4" fontWeight="bold" color="primary.light">
                   {totalApprovedHours.toFixed(2)} hrs
@@ -306,27 +254,11 @@ export default function PaymentDashboard() {
             </Grid>
           </Grid>
 
-          {/* Action & Filter Bar */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              mb: 3,
-              borderRadius: 4,
-              bgcolor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 2,
-            }}
-          >
+          <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', flexGrow: 1 }}>
-              {/* Search by Vendor Name or Code */}
               <TextField
                 id="payment-vendor-search"
-                placeholder="Search by vendor name or code..."
+                placeholder="Search by vendor..."
                 variant="outlined"
                 size="small"
                 value={searchQuery}
@@ -344,12 +276,10 @@ export default function PaymentDashboard() {
                 }}
               />
 
-              {/* Filter by Payment Status */}
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <InputLabel id="payment-status-filter-label">Filter Status</InputLabel>
                 <Select
                   labelId="payment-status-filter-label"
-                  id="payment-status-filter-select"
                   value={statusFilter}
                   label="Filter Status"
                   onChange={(e) => {
@@ -371,66 +301,62 @@ export default function PaymentDashboard() {
             </Box>
           </Paper>
 
-          {/* Payment Summary Table Paper */}
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: 4,
-              bgcolor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              overflow: 'hidden',
-            }}
-          >
-            <TableContainer>
-              <Table sx={{ minWidth: 800 }} aria-label="vendor payment summary table">
-                <TableHead>
-                  <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VENDOR NAME</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>APPROVED HOURS</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>HOURLY RATE</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>TOTAL AMOUNT</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>PAYMENT STATUS</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>PAYMENT DATE</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredPayments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                        No payment records found matching "{searchQuery}"
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredPayments
-                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((row) => (
-                        <TableRow
-                          key={row.id}
-                          sx={{
-                            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' },
-                          }}
-                        >
-                          <TableCell sx={{ fontWeight: 'bold' }}>
-                            {row.vendor_name}{' '}
-                            <Typography component="span" variant="caption" color="text.secondary">
-                              ({row.vendor_code})
-                            </Typography>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: '600' }}>{row.approved_hours.toFixed(2)} hrs</TableCell>
-                          <TableCell>${row.hourly_rate.toFixed(2)} / hr</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.05rem' }}>
-                            ${row.total_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </TableCell>
-                          <TableCell>{getStatusChip(row.payment_status)}</TableCell>
-                          <TableCell align="right">{row.payment_date}</TableCell>
-                        </TableRow>
-                      ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+          {/* Error Banner */}
+          {error && (
+            <Alert severity="error" action={<Button color="inherit" size="small" onClick={fetchPayments}>Retry</Button>} sx={{ mb: 3, borderRadius: 3 }}>
+              {error}
+            </Alert>
+          )}
 
-            {/* Pagination Controls */}
+          {/* Table Container */}
+          <Paper elevation={0} sx={{ borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, gap: 2 }}>
+                <CircularProgress color="success" />
+                <Typography color="text.secondary">Calculating vendor payments from API...</Typography>
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table sx={{ minWidth: 800 }}>
+                  <TableHead>
+                    <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VENDOR NAME</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>APPROVED HOURS</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>HOURLY RATE</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>TOTAL AMOUNT</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>PAYMENT STATUS</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>PAYMENT DATE</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredPayments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                          <Typography variant="body1" fontWeight="bold">No Payment Records Found</Typography>
+                          <Typography variant="caption">No vendor payment calculations available.</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredPayments
+                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((row) => (
+                          <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' } }}>
+                            <TableCell sx={{ fontWeight: 'bold' }}>{row.vendor_name} ({row.vendor_code})</TableCell>
+                            <TableCell sx={{ fontWeight: '600' }}>{row.approved_hours.toFixed(2)} hrs</TableCell>
+                            <TableCell>${row.hourly_rate.toFixed(2)} / hr</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.05rem' }}>
+                              ${row.total_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell>{getStatusChip(row.payment_status)}</TableCell>
+                            <TableCell align="right">{row.payment_date}</TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
               component="div"

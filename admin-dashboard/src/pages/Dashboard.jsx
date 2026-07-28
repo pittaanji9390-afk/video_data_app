@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -17,6 +17,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  CircularProgress,
+  Alert,
+  IconButton,
   CssBaseline,
   ThemeProvider,
   createTheme,
@@ -34,27 +37,28 @@ import {
   BarChartOutlined,
   AssessmentOutlined,
   TrendingUp,
+  Refresh,
 } from '@mui/icons-material';
+import { apiService } from '../services/api';
 
-// Tailored Modern Dark Theme
 const adminTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#6366f1', // Indigo
+      main: '#6366f1',
       light: '#818cf8',
     },
     secondary: {
-      main: '#0ea5e9', // Sky Blue
+      main: '#0ea5e9',
     },
     success: {
-      main: '#10b981', // Emerald Green
+      main: '#10b981',
     },
     error: {
-      main: '#ef4444', // Red
+      main: '#ef4444',
     },
     warning: {
-      main: '#f59e0b', // Amber
+      main: '#f59e0b',
     },
     background: {
       default: '#0f172a',
@@ -76,11 +80,64 @@ const adminTheme = createTheme({
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
-  // Static Dummy Data for Dashboard Metrics
+  // State Management
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    vendors: 0,
+    candidates: 0,
+    videos: 0,
+    approved: 0,
+    rejected: 0,
+    totalHours: '0.00',
+  });
+  const [recentActivities, setRecentActivities] = useState([]);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [vendorRes, candRes, videoRes] = await Promise.all([
+        apiService.getVendors(1, 100).catch(() => ({ data: [] })),
+        apiService.getCandidates({ page: 1, limit: 100 }).catch(() => ({ data: [] })),
+        apiService.getVideos({ page: 1, limit: 100 }).catch(() => ({ data: [] })),
+      ]);
+
+      const vendorList = vendorRes.data?.items || vendorRes.data || vendorRes || [];
+      const candList = candRes.data?.items || candRes.data || candRes || [];
+      const videoList = videoRes.data?.items || videoRes.data || videoRes || [];
+
+      const vList = Array.isArray(videoList) ? videoList : [];
+      const approvedCount = vList.filter((v) => v.status === 'approved' || v.status === 'Approved').length;
+      const rejectedCount = vList.filter((v) => v.status === 'rejected' || v.status === 'Rejected').length;
+
+      const totalSecs = vList.reduce((acc, v) => acc + (parseFloat(v.duration_seconds) || 0), 0);
+
+      setStats({
+        vendors: Array.isArray(vendorList) ? vendorList.length : 0,
+        candidates: Array.isArray(candList) ? candList.length : 0,
+        videos: vList.length,
+        approved: approvedCount,
+        rejected: rejectedCount,
+        totalHours: (totalSecs / 3600).toFixed(2),
+      });
+
+      setRecentActivities(vList.slice(0, 5));
+    } catch (err) {
+      setError(err.message || 'Failed to fetch dashboard overview metrics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
   const metrics = [
     {
       title: 'Total Vendors',
-      value: '24',
+      value: stats.vendors,
       unit: 'Active Partners (Click to Manage)',
       icon: <StorefrontOutlined sx={{ fontSize: 28 }} />,
       color: '#6366f1',
@@ -89,7 +146,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Total Candidates',
-      value: '142',
+      value: stats.candidates,
       unit: 'Registered Subjects (Click to Manage)',
       icon: <GroupOutlined sx={{ fontSize: 28 }} />,
       color: '#0ea5e9',
@@ -98,7 +155,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Total Videos',
-      value: '528',
+      value: stats.videos,
       unit: 'Uploaded Collections (Click to View)',
       icon: <VideocamOutlined sx={{ fontSize: 28 }} />,
       color: '#8b5cf6',
@@ -107,7 +164,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Approved Videos',
-      value: '410',
+      value: stats.approved,
       unit: 'QC Approved (Click to Filter)',
       icon: <CheckCircleOutlined sx={{ fontSize: 28 }} />,
       color: '#10b981',
@@ -116,7 +173,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Rejected Videos',
-      value: '45',
+      value: stats.rejected,
       unit: 'Requires Re-shoot (Click to Filter)',
       icon: <CancelOutlined sx={{ fontSize: 28 }} />,
       color: '#ef4444',
@@ -125,7 +182,7 @@ export default function AdminDashboard() {
     },
     {
       title: 'Total Hours Collected',
-      value: '185.50',
+      value: `${stats.totalHours}`,
       unit: 'Hours (Click for Payment Summary)',
       icon: <AccessTimeOutlined sx={{ fontSize: 28 }} />,
       color: '#f59e0b',
@@ -134,188 +191,59 @@ export default function AdminDashboard() {
     },
   ];
 
-  // Static Dummy Data for Recent Activity Log
-  const recentActivities = [
-    {
-      id: 'VID-9021',
-      vendor: 'Acme Video Solutions',
-      candidate: 'John Doe (CND-042)',
-      environment: 'Kitchen',
-      duration: '45 mins',
-      status: 'Approved',
-      reviewer: 'Alice Auditor',
-    },
-    {
-      id: 'VID-9022',
-      vendor: 'Apex Data Services',
-      candidate: 'Sarah Smith (CND-089)',
-      environment: 'Bedroom',
-      duration: '30 mins',
-      status: 'Rejected',
-      reviewer: 'Bob Reviewer',
-    },
-    {
-      id: 'VID-9023',
-      vendor: 'Global Vision Media',
-      candidate: 'Michael Brown (CND-112)',
-      environment: 'Office',
-      duration: '60 mins',
-      status: 'Approved',
-      reviewer: 'Alice Auditor',
-    },
-    {
-      id: 'VID-9024',
-      vendor: 'Acme Video Solutions',
-      candidate: 'Emily Davis (CND-055)',
-      environment: 'Garden',
-      duration: '50 mins',
-      status: 'Pending',
-      reviewer: 'Unassigned',
-    },
-  ];
-
-  const handleLogout = () => {
-    navigate('/login');
-  };
-
   return (
     <ThemeProvider theme={adminTheme}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
-        {/* Navigation Bar */}
-        <AppBar
-          position="static"
-          elevation={0}
-          sx={{
-            bgcolor: 'background.paper',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          }}
-        >
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <AdminPanelSettings sx={{ mr: 1.5, color: 'primary.main', fontSize: 32 }} />
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="h6" fontWeight="bold">
-                Admin Control Dashboard
+                Admin Control Dashboard (API Powered)
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Video Data Collection Platform Management
+                Video Data Collection Platform Connected to Backend API
               </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<StorefrontOutlined />}
-                onClick={() => navigate('/vendors')}
-                sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              >
+              <IconButton color="primary" onClick={fetchDashboardData} sx={{ mr: 1 }}>
+                <Refresh />
+              </IconButton>
+              <Button variant="contained" color="primary" startIcon={<StorefrontOutlined />} onClick={() => navigate('/vendors')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
                 Vendors
               </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<GroupOutlined />}
-                onClick={() => navigate('/candidates')}
-                sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              >
+              <Button variant="contained" color="secondary" startIcon={<GroupOutlined />} onClick={() => navigate('/candidates')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
                 Candidates
               </Button>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<VideocamOutlined />}
-                onClick={() => navigate('/videos')}
-                sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              >
+              <Button variant="contained" color="success" startIcon={<VideocamOutlined />} onClick={() => navigate('/videos')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
                 Videos
               </Button>
-              <Button
-                variant="contained"
-                color="warning"
-                startIcon={<PaymentsOutlined />}
-                onClick={() => navigate('/payments')}
-                sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              >
+              <Button variant="contained" color="warning" startIcon={<PaymentsOutlined />} onClick={() => navigate('/payments')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
                 Payments
               </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<BarChartOutlined />}
-                onClick={() => navigate('/analytics')}
-                sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              >
+              <Button variant="contained" color="secondary" startIcon={<BarChartOutlined />} onClick={() => navigate('/analytics')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
                 Analytics
               </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AssessmentOutlined />}
-                onClick={() => navigate('/reports')}
-                sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              >
+              <Button variant="contained" color="primary" startIcon={<AssessmentOutlined />} onClick={() => navigate('/reports')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
                 Reports
               </Button>
-              <Chip
-                avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>}
-                label="Super Admin"
-                variant="outlined"
-                color="primary"
-              />
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<LogoutOutlined />}
-                onClick={handleLogout}
-                sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              >
+              <Chip avatar={<Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>A</Avatar>} label="Super Admin" variant="outlined" color="primary" />
+              <Button variant="outlined" color="error" startIcon={<LogoutOutlined />} onClick={() => navigate('/login')} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
                 Sign Out
               </Button>
             </Box>
           </Toolbar>
         </AppBar>
 
-        {/* Dashboard Content Container */}
         <Container maxWidth="xl" sx={{ mt: 4 }}>
-          {/* Welcome & Overview Header */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              mb: 4,
-              borderRadius: 4,
-              bgcolor: 'background.paper',
-              backgroundImage:
-                'linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                <Typography variant="h4" fontWeight="bold">
-                  Platform Metrics & Analytics
-                </Typography>
-                <Chip
-                  icon={<TrendingUp />}
-                  label="View Analytics Charts"
-                  color="success"
-                  onClick={() => navigate('/analytics')}
-                  sx={{ fontWeight: 'bold', cursor: 'pointer' }}
-                />
-              </Box>
-              <Typography variant="body1" color="text.secondary">
-                Overview of vendors, candidate dataset collection, quality control approvals, and hours.
-              </Typography>
-            </Box>
-          </Paper>
+          {error && (
+            <Alert severity="error" action={<Button color="inherit" size="small" onClick={fetchDashboardData}>Retry</Button>} sx={{ mb: 3, borderRadius: 3 }}>
+              {error}
+            </Alert>
+          )}
 
-          {/* 6 Metric Cards Grid */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {metrics.map((card, index) => (
               <Grid item xs={12} sm={6} md={4} key={index}>
@@ -328,42 +256,25 @@ export default function AdminDashboard() {
                     bgcolor: 'background.paper',
                     border: '1px solid rgba(255, 255, 255, 0.08)',
                     cursor: card.onClick ? 'pointer' : 'default',
-                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: `0 12px 24px -8px ${card.bgColor}`,
-                      borderColor: card.color,
-                    },
+                    transition: 'transform 0.2s ease-in-out',
+                    '&:hover': { transform: 'translateY(-4px)', borderColor: card.color },
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                    }}
-                  >
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                     <Typography variant="subtitle2" color="text.secondary" fontWeight="700">
                       {card.title.toUpperCase()}
                     </Typography>
-                    <Box
-                      sx={{
-                        p: 1.2,
-                        borderRadius: 3,
-                        bgcolor: card.bgColor,
-                        color: card.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
+                    <Box sx={{ p: 1.2, borderRadius: 3, bgcolor: card.bgColor, color: card.color }}>
                       {card.icon}
                     </Box>
                   </Box>
-                  <Typography variant="h3" fontWeight="bold" sx={{ color: card.color, mb: 0.5 }}>
-                    {card.value}
-                  </Typography>
+                  {loading ? (
+                    <CircularProgress size={24} sx={{ my: 1 }} />
+                  ) : (
+                    <Typography variant="h3" fontWeight="bold" sx={{ color: card.color, mb: 0.5 }}>
+                      {card.value}
+                    </Typography>
+                  )}
                   <Typography variant="caption" color="text.secondary" fontWeight="500">
                     {card.unit}
                   </Typography>
@@ -372,71 +283,52 @@ export default function AdminDashboard() {
             ))}
           </Grid>
 
-          {/* Recent Video Collections Table Summary */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              bgcolor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
+          {/* Recent Activities */}
+          <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-              Recent Video Collection Submissions
+              Recent Video Submissions (API)
             </Typography>
 
-            <TableContainer>
-              <Table sx={{ minWidth: 650 }} aria-label="recent videos table">
-                <TableHead>
-                  <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VIDEO ID</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VENDOR</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>CANDIDATE</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ENVIRONMENT</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>DURATION</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>STATUS</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>REVIEWER</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {recentActivities.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      sx={{
-                        '&:last-child td, &:last-child th': { border: 0 },
-                        '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' },
-                      }}
-                    >
-                      <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
-                        {row.id}
-                      </TableCell>
-                      <TableCell>{row.vendor}</TableCell>
-                      <TableCell>{row.candidate}</TableCell>
-                      <TableCell>
-                        <Chip label={row.environment} size="small" variant="outlined" />
-                      </TableCell>
-                      <TableCell>{row.duration}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={row.status}
-                          size="small"
-                          color={
-                            row.status === 'Approved'
-                              ? 'success'
-                              : row.status === 'Rejected'
-                              ? 'error'
-                              : 'warning'
-                          }
-                          sx={{ fontWeight: 'bold' }}
-                        />
-                      </TableCell>
-                      <TableCell>{row.reviewer}</TableCell>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4, gap: 2 }}>
+                <CircularProgress color="primary" />
+                <Typography color="text.secondary">Fetching recent videos...</Typography>
+              </Box>
+            ) : recentActivities.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+                <Typography variant="body1">No Recent Video Submissions</Typography>
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table sx={{ minWidth: 650 }}>
+                  <TableHead>
+                    <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VIDEO ID</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ENVIRONMENT</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>DURATION</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>STATUS</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {recentActivities.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell sx={{ fontWeight: 'bold', fontFamily: 'monospace' }}>{row.id}</TableCell>
+                        <TableCell><Chip label={row.environment_tag || 'Dataset'} size="small" variant="outlined" /></TableCell>
+                        <TableCell>{row.duration_seconds ? `${row.duration_seconds}s` : '0s'}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={row.status || 'Pending'}
+                            size="small"
+                            color={row.status === 'approved' || row.status === 'Approved' ? 'success' : row.status === 'rejected' || row.status === 'Rejected' ? 'error' : 'warning'}
+                            sx={{ fontWeight: 'bold' }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Paper>
         </Container>
       </Box>

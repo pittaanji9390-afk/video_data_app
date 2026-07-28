@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -23,13 +23,14 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
+  Alert,
   CssBaseline,
   ThemeProvider,
   createTheme,
   Tooltip,
 } from '@mui/material';
 import {
-  AdminPanelSettings,
   LogoutOutlined,
   Add,
   Search,
@@ -37,7 +38,9 @@ import {
   DeleteOutlined,
   StorefrontOutlined,
   ArrowBack,
+  Refresh,
 } from '@mui/icons-material';
+import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
@@ -71,82 +74,20 @@ const adminTheme = createTheme({
   },
 });
 
-// Initial Static Dummy Vendor Dataset
-const INITIAL_VENDORS = [
-  {
-    id: 'v0000000-0000-0000-0000-000000000001',
-    vendor_code: 'VENDOR-001',
-    company_name: 'Acme Video Solutions',
-    contact_person: 'John Vendor',
-    email: 'john@acmevideos.com',
-    phone: '+1-555-0192',
-    is_active: true,
-    created_at: '2026-07-20',
-  },
-  {
-    id: 'v0000000-0000-0000-0000-000000000002',
-    vendor_code: 'VENDOR-002',
-    company_name: 'Apex Data Services',
-    contact_person: 'Sarah Connor',
-    email: 'sarah@apexdata.io',
-    phone: '+1-555-0283',
-    is_active: true,
-    created_at: '2026-07-21',
-  },
-  {
-    id: 'v0000000-0000-0000-0000-000000000003',
-    vendor_code: 'VENDOR-003',
-    company_name: 'Global Vision Media',
-    contact_person: 'Michael Scott',
-    email: 'm.scott@globalvision.com',
-    phone: '+1-555-0374',
-    is_active: true,
-    created_at: '2026-07-22',
-  },
-  {
-    id: 'v0000000-0000-0000-0000-000000000004',
-    vendor_code: 'VENDOR-004',
-    company_name: 'Starlight Analytics',
-    contact_person: 'Elena Rostova',
-    email: 'elena@starlight.org',
-    phone: '+1-555-0465',
-    is_active: true,
-    created_at: '2026-07-23',
-  },
-  {
-    id: 'v0000000-0000-0000-0000-000000000005',
-    vendor_code: 'VENDOR-005',
-    company_name: 'NextGen AI Labs',
-    contact_person: 'David Miller',
-    email: 'david@nextgenlabs.ai',
-    phone: '+1-555-0556',
-    is_active: false,
-    created_at: '2026-07-24',
-  },
-  {
-    id: 'v0000000-0000-0000-0000-000000000006',
-    vendor_code: 'VENDOR-006',
-    company_name: 'Quantum Datasets',
-    contact_person: 'Lisa Vance',
-    email: 'lisa@quantumdata.com',
-    phone: '+1-555-0647',
-    is_active: true,
-    created_at: '2026-07-25',
-  },
-];
-
 export default function VendorManagement() {
   const navigate = useNavigate();
 
   // State Management
-  const [vendors, setVendors] = useState(INITIAL_VENDORS);
+  const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' | 'edit'
+  const [modalMode, setModalMode] = useState('add');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [targetVendor, setTargetVendor] = useState(null);
 
@@ -160,13 +101,32 @@ export default function VendorManagement() {
   });
   const [formErrors, setFormErrors] = useState({});
 
+  // Fetch Vendors from Backend API
+  const fetchVendors = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await apiService.getVendors(1, 100, searchQuery);
+      const dataList = res.data?.items || res.data || res || [];
+      setVendors(Array.isArray(dataList) ? dataList : []);
+    } catch (err) {
+      setError(err.message || 'Failed to connect to backend vendors API');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVendors();
+  }, []);
+
   // Search Filter Logic
   const filteredVendors = vendors.filter(
     (v) =>
-      v.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.vendor_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.contact_person.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.email.toLowerCase().includes(searchQuery.toLowerCase())
+      (v.company_name && v.company_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (v.vendor_code && v.vendor_code.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (v.contact_person && v.contact_person.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (v.email && v.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Pagination Handler
@@ -198,11 +158,11 @@ export default function VendorManagement() {
     setModalMode('edit');
     setTargetVendor(vendor);
     setFormData({
-      company_name: vendor.company_name,
-      contact_person: vendor.contact_person,
-      email: vendor.email,
-      phone: vendor.phone,
-      is_active: vendor.is_active,
+      company_name: vendor.company_name || '',
+      contact_person: vendor.contact_person || '',
+      email: vendor.email || '',
+      phone: vendor.phone || '',
+      is_active: vendor.is_active !== undefined ? vendor.is_active : true,
     });
     setFormErrors({});
     setModalOpen(true);
@@ -233,46 +193,44 @@ export default function VendorManagement() {
   };
 
   // Save Add / Edit
-  const handleSaveVendor = () => {
+  const handleSaveVendor = async () => {
     if (!validateForm()) return;
 
-    if (modalMode === 'add') {
-      const nextIdNum = vendors.length + 1;
-      const newVendor = {
-        id: `v0000000-0000-0000-0000-0000000000${nextIdNum.toString().padStart(2, '0')}`,
-        vendor_code: `VENDOR-${nextIdNum.toString().padStart(3, '0')}`,
-        company_name: formData.company_name.trim(),
-        contact_person: formData.contact_person.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        is_active: formData.is_active,
-        created_at: new Date().toISOString().split('T')[0],
-      };
-      setVendors([newVendor, ...vendors]);
-    } else if (modalMode === 'edit' && targetVendor) {
-      setVendors(
-        vendors.map((v) =>
-          v.id === targetVendor.id
-            ? {
-                ...v,
-                company_name: formData.company_name.trim(),
-                contact_person: formData.contact_person.trim(),
-                email: formData.email.trim(),
-                phone: formData.phone.trim(),
-                is_active: formData.is_active,
-              }
-            : v
-        )
-      );
-    }
+    try {
+      if (modalMode === 'add') {
+        await apiService.createVendor({
+          company_name: formData.company_name.trim(),
+          contact_person: formData.contact_person.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          is_active: formData.is_active,
+        });
+      } else if (modalMode === 'edit' && targetVendor) {
+        await apiService.updateVendor(targetVendor.id, {
+          company_name: formData.company_name.trim(),
+          contact_person: formData.contact_person.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          is_active: formData.is_active,
+        });
+      }
 
-    setModalOpen(false);
+      setModalOpen(false);
+      fetchVendors();
+    } catch (err) {
+      alert(`API Error: ${err.message}`);
+    }
   };
 
   // Confirm Delete
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (targetVendor) {
-      setVendors(vendors.filter((v) => v.id !== targetVendor.id));
+      try {
+        await apiService.deleteVendor(targetVendor.id);
+        fetchVendors();
+      } catch (err) {
+        alert(`Failed to delete vendor: ${err.message}`);
+      }
     }
     setDeleteDialogOpen(false);
   };
@@ -297,12 +255,16 @@ export default function VendorManagement() {
             <StorefrontOutlined sx={{ mr: 1.5, color: 'primary.main', fontSize: 32 }} />
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="h6" fontWeight="bold">
-                Vendor Management
+                Vendor Management (API Powered)
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Manage vendor profiles, status, and partner organizations
+                Manage vendor profiles connected to REST API
               </Typography>
             </Box>
+
+            <IconButton color="primary" onClick={fetchVendors} sx={{ mr: 1 }}>
+              <Refresh />
+            </IconButton>
 
             <Button
               variant="outlined"
@@ -318,7 +280,7 @@ export default function VendorManagement() {
 
         {/* Content Area */}
         <Container maxWidth="xl" sx={{ mt: 4 }}>
-          {/* Action Bar: Search Input & Add Vendor Button */}
+          {/* Action Bar */}
           <Paper
             elevation={0}
             sx={{
@@ -365,12 +327,26 @@ export default function VendorManagement() {
                 py: 1,
                 px: 2.5,
                 textTransform: 'none',
-                boxShadow: '0 4px 14px 0 rgba(99, 102, 241, 0.4)',
               }}
             >
               Add Vendor
             </Button>
           </Paper>
+
+          {/* Error Banner */}
+          {error && (
+            <Alert
+              severity="error"
+              action={
+                <Button color="inherit" size="small" onClick={fetchVendors}>
+                  Retry
+                </Button>
+              }
+              sx={{ mb: 3, borderRadius: 3 }}
+            >
+              {error}
+            </Alert>
+          )}
 
           {/* Vendors Table Paper */}
           <Paper
@@ -382,82 +358,73 @@ export default function VendorManagement() {
               overflow: 'hidden',
             }}
           >
-            <TableContainer>
-              <Table sx={{ minWidth: 750 }} aria-label="vendor management table">
-                <TableHead>
-                  <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VENDOR CODE</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>COMPANY NAME</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>CONTACT PERSON</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>EMAIL</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>PHONE</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>STATUS</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>CREATED AT</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ACTIONS</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredVendors.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                        No vendors found matching "{searchQuery}"
-                      </TableCell>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, gap: 2 }}>
+                <CircularProgress color="primary" />
+                <Typography color="text.secondary">Fetching vendors from backend...</Typography>
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table sx={{ minWidth: 750 }} aria-label="vendor management table">
+                  <TableHead>
+                    <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VENDOR CODE</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>COMPANY NAME</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>CONTACT PERSON</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>EMAIL</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>PHONE</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>STATUS</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ACTIONS</TableCell>
                     </TableRow>
-                  ) : (
-                    filteredVendors
-                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((vendor) => (
-                        <TableRow
-                          key={vendor.id}
-                          sx={{
-                            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' },
-                          }}
-                        >
-                          <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', fontFamily: 'monospace', color: 'primary.light' }}>
-                            {vendor.vendor_code}
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>{vendor.company_name}</TableCell>
-                          <TableCell>{vendor.contact_person}</TableCell>
-                          <TableCell>{vendor.email}</TableCell>
-                          <TableCell>{vendor.phone}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={vendor.is_active ? 'Active' : 'Inactive'}
-                              size="small"
-                              color={vendor.is_active ? 'success' : 'default'}
-                              sx={{ fontWeight: 'bold' }}
-                            />
-                          </TableCell>
-                          <TableCell>{vendor.created_at}</TableCell>
-                          <TableCell align="right">
-                            <Tooltip title="Edit Vendor">
-                              <IconButton
-                                color="primary"
+                  </TableHead>
+                  <TableBody>
+                    {filteredVendors.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                          <Typography variant="body1" fontWeight="bold">No Vendors Found</Typography>
+                          <Typography variant="caption">There are no vendors registered in the database matching your criteria.</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredVendors
+                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((vendor) => (
+                          <TableRow key={vendor.id} sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' } }}>
+                            <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', fontFamily: 'monospace', color: 'primary.light' }}>
+                              {vendor.vendor_code}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>{vendor.company_name}</TableCell>
+                            <TableCell>{vendor.contact_person}</TableCell>
+                            <TableCell>{vendor.email}</TableCell>
+                            <TableCell>{vendor.phone}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={vendor.is_active ? 'Active' : 'Inactive'}
                                 size="small"
-                                onClick={() => handleOpenEditModal(vendor)}
-                                sx={{ mr: 1 }}
-                              >
-                                <EditOutlined fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete Vendor">
-                              <IconButton
-                                color="error"
-                                size="small"
-                                onClick={() => handleOpenDeleteDialog(vendor)}
-                              >
-                                <DeleteOutlined fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                                color={vendor.is_active ? 'success' : 'default'}
+                                sx={{ fontWeight: 'bold' }}
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Tooltip title="Edit Vendor">
+                                <IconButton color="primary" size="small" onClick={() => handleOpenEditModal(vendor)} sx={{ mr: 1 }}>
+                                  <EditOutlined fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete Vendor">
+                                <IconButton color="error" size="small" onClick={() => handleOpenDeleteDialog(vendor)}>
+                                  <DeleteOutlined fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
 
-            {/* Pagination Controls */}
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
               component="div"
@@ -479,7 +446,6 @@ export default function VendorManagement() {
           <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 2 }}>
             <TextField
               label="Company Name"
-              placeholder="e.g. Acme Video Solutions"
               value={formData.company_name}
               onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
               error={Boolean(formErrors.company_name)}
@@ -488,7 +454,6 @@ export default function VendorManagement() {
             />
             <TextField
               label="Contact Person"
-              placeholder="e.g. John Doe"
               value={formData.contact_person}
               onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
               error={Boolean(formErrors.contact_person)}
@@ -497,7 +462,6 @@ export default function VendorManagement() {
             />
             <TextField
               label="Email Address"
-              placeholder="contact@company.com"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -507,7 +471,6 @@ export default function VendorManagement() {
             />
             <TextField
               label="Phone Number"
-              placeholder="+1-555-0192"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               error={Boolean(formErrors.phone)}
@@ -532,7 +495,7 @@ export default function VendorManagement() {
           </DialogTitle>
           <DialogContent>
             <Typography variant="body1">
-              Are you sure you want to soft delete vendor <strong>{targetVendor?.company_name}</strong> ({targetVendor?.vendor_code})?
+              Are you sure you want to soft delete vendor <strong>{targetVendor?.company_name}</strong>?
             </Typography>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
