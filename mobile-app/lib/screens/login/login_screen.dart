@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../config/routes/app_routes.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
@@ -13,35 +12,23 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _phoneController = TextEditingController(text: '9876543210');
-  final TextEditingController _emailController = TextEditingController(text: 'admin@videoplatform.com');
+  final TextEditingController _identifierController = TextEditingController(text: 'admin@videoplatform.com');
   final TextEditingController _passwordController = TextEditingController(text: 'password123');
-
-  String _selectedRole = 'candidate'; // 'candidate', 'vendor', 'admin'
 
   @override
   void dispose() {
-    _phoneController.dispose();
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
-    FocusScope.of(context).unfocus();
+  void _handleSingleLogin() {
+    if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedRole == 'candidate') {
-      if (_formKey.currentState!.validate()) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Candidate Authenticated (+91 ${_phoneController.text.trim()})'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-      }
-    } else if (_selectedRole == 'vendor') {
+    FocusScope.of(context).unfocus();
+    final input = _identifierController.text.trim().toLowerCase();
+
+    if (input.contains('vendor') || input.contains('acme')) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vendor Authenticated! Opening Mobile Vendor Dashboard...'),
@@ -50,27 +37,25 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
       Navigator.pushReplacementNamed(context, AppRoutes.vendorDashboard);
-    } else if (_selectedRole == 'admin') {
+    } else if (input.contains('admin')) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Admin Authenticated! Opening Mobile Admin Dashboard...'),
+          content: Text('Admin Authenticated! Opening Mobile Admin Control Portal...'),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
         ),
       );
       Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Candidate Authenticated! Opening Mobile Candidate App...'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     }
-  }
-
-  String? _validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Please enter your mobile number';
-    }
-    final cleanPhone = value.trim();
-    if (cleanPhone.length < 10) {
-      return 'Mobile number must be at least 10 digits';
-    }
-    return null;
   }
 
   @override
@@ -94,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Top Hero Icon
+                    // Single Top Hero Icon
                     Container(
                       height: 90,
                       width: 90,
@@ -102,19 +87,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.primary.withAlpha(30),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        _selectedRole == 'admin'
-                            ? Icons.admin_panel_settings_rounded
-                            : _selectedRole == 'vendor'
-                                ? Icons.storefront_rounded
-                                : Icons.phone_android_rounded,
+                      child: const Icon(
+                        Icons.vpn_key_rounded,
                         size: 46,
                         color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    // App Title & Role Subtitle
+                    // Title & Subtitle
                     Text(
                       'Welcome to ${AppConstants.appName}',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -127,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Select your account role to proceed into the mobile app',
+                      'Single Unified Login for Admin, Vendor, & Candidate Accounts',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: isDarkMode
                                 ? AppColors.textSecondaryDark
@@ -135,112 +116,65 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
-                    // Role Selector Tabs (Candidate / Vendor / Admin)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDarkMode ? AppColors.surfaceDark : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildRoleChip('Candidate', 'candidate', Icons.person_rounded),
-                          ),
-                          Expanded(
-                            child: _buildRoleChip('Vendor', 'vendor', Icons.storefront_rounded),
-                          ),
-                          Expanded(
-                            child: _buildRoleChip('Admin', 'admin', Icons.admin_panel_settings_rounded),
-                          ),
-                        ],
+                    // Single Form Field: Email / Username / Phone
+                    Text(
+                      'Email, Username, or Mobile Phone',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _identifierController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter email address or mobile number',
+                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Please enter your login email or mobile number';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 18),
 
-                    // Inputs based on selected role
-                    if (_selectedRole == 'candidate') ...[
-                      Text(
-                        'Candidate Mobile Number',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                        ),
+                    // Password Field
+                    Text(
+                      'Password',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                       ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(10),
-                        ],
-                        decoration: InputDecoration(
-                          hintText: 'Enter 10-digit mobile number',
-                          prefixIcon: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 14.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.call_outlined, color: AppColors.primary, size: 20),
-                                SizedBox(width: 8),
-                                Text('+91', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.primary)),
-                              ],
-                            ),
-                          ),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        validator: _validatePhone,
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        hintText: 'Enter password',
+                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                    ] else ...[
-                      Text(
-                        'Email Address',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          hintText: 'Enter email address',
-                          prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      Text(
-                        'Password',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          hintText: 'Enter password',
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ],
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        return null;
+                      },
+                    ),
 
                     const SizedBox(height: 28),
 
-                    // Login Button
+                    // Single Login Button
                     ElevatedButton(
-                      onPressed: _handleLogin,
+                      onPressed: _handleSingleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
@@ -250,14 +184,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
-                        _selectedRole == 'admin'
-                            ? 'Open Admin Mobile Dashboard'
-                            : _selectedRole == 'vendor'
-                                ? 'Open Vendor Mobile Dashboard'
-                                : 'Continue to Candidate Mobile App',
-                        style: const TextStyle(
-                          fontSize: 15,
+                      child: const Text(
+                        'Sign In to Dashboard',
+                        style: TextStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -279,44 +209,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoleChip(String label, String roleKey, IconData icon) {
-    final isSelected = _selectedRole == roleKey;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedRole = roleKey;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : Colors.grey,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.white : Colors.grey,
-              ),
-            ),
-          ],
         ),
       ),
     );
