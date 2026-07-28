@@ -123,13 +123,15 @@ CREATE TABLE videos (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     candidate_id    UUID          NOT NULL,
     vendor_id       UUID          NOT NULL,
+    title           VARCHAR(255),
+    description     TEXT,
     s3_url          VARCHAR(1000),
-    file_name       VARCHAR(500)  NOT NULL,
+    file_name       VARCHAR(500),
     file_size       BIGINT,
     duration        INTEGER,
     recording_date  TIMESTAMPTZ,
     upload_date     TIMESTAMPTZ,
-    status          VARCHAR(50)   NOT NULL DEFAULT 'uploaded',
+    status          VARCHAR(50)   NOT NULL DEFAULT 'pending',
     environment_tag VARCHAR(100),
     latitude        DECIMAL(10, 8),
     longitude       DECIMAL(11, 8),
@@ -140,7 +142,7 @@ CREATE TABLE videos (
 
     CONSTRAINT chk_videos_file_size CHECK (file_size IS NULL OR file_size >= 0),
     CONSTRAINT chk_videos_duration  CHECK (duration IS NULL OR duration >= 0),
-    CONSTRAINT chk_videos_status    CHECK (status IN ('uploaded', 'under_review', 'approved', 'rejected')),
+    CONSTRAINT chk_videos_status    CHECK (status IN ('pending', 'uploaded', 'under_review', 'approved', 'rejected')),
     CONSTRAINT fk_videos_candidate  FOREIGN KEY (candidate_id)
         REFERENCES candidates (id) ON DELETE CASCADE,
     CONSTRAINT fk_videos_vendor     FOREIGN KEY (vendor_id)
