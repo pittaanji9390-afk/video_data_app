@@ -138,14 +138,14 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // 1. Record Video Primary Card
+              // 1. Record Video Primary Card -> Navigates to Camera Permission
               _buildActionCard(
                 context,
                 title: 'Record Video',
                 subtitle: 'Capture new video data sample',
                 icon: Icons.videocam_rounded,
                 color: AppColors.primary,
-                onTap: () => _showFeaturePlaceholder(context, 'Record Video'),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.cameraPermission),
               ),
               const SizedBox(height: 16),
 
@@ -166,7 +166,7 @@ class HomeScreen extends StatelessWidget {
                 title: 'Profile',
                 subtitle: 'Manage your account details',
                 icon: Icons.person_rounded,
-                color: const Color(0xFF8B5CF6), // Purple
+                color: const Color(0xFF8B5CF6),
                 onTap: () => _showFeaturePlaceholder(context, 'Profile'),
               ),
               const SizedBox(height: 32),

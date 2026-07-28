@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/login/login_screen.dart';
+import '../../screens/permission/camera_permission_screen.dart';
 import '../../screens/splash/splash_screen.dart';
 
 class AppRoutes {
@@ -10,6 +11,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String home = '/home';
+  static const String cameraPermission = '/camera-permission';
   static const String recordVideo = '/record-video';
   static const String uploadVideo = '/upload-video';
 
@@ -19,6 +21,7 @@ class AppRoutes {
       splash: (context) => const SplashScreen(),
       login: (context) => const LoginScreen(),
       home: (context) => const HomeScreen(),
+      cameraPermission: (context) => const CameraPermissionScreen(),
     };
   }
 
@@ -31,6 +34,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const LoginScreen());
       case home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
+      case cameraPermission:
+        return MaterialPageRoute(builder: (_) => const CameraPermissionScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
