@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/camera_service.dart';
+import '../../services/location_service.dart';
 
 class VideoRecordingScreen extends StatefulWidget {
   const VideoRecordingScreen({super.key});
@@ -20,6 +22,11 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   XFile? _recordedFile;
   int _recordedFileSize = 0;
 
+  // GPS Location Data
+  Position? _currentPosition;
+  bool _isFetchingLocation = false;
+  String? _locationErrorMessage;
+
   // Recording Timer
   Timer? _timer;
   int _elapsedSeconds = 0;
@@ -31,7 +38,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _initializeCamera() async {
-    // Request Camera and Microphone permissions
     final cameraStatus = await Permission.camera.request();
     final micStatus = await Permission.microphone.request();
 
@@ -94,6 +100,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       setState(() {
         _isRecording = true;
         _recordedFile = null;
+        _currentPosition = null;
+        _locationErrorMessage = null;
       });
     } catch (e) {
       if (mounted) {
@@ -109,25 +117,36 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
 
     try {
       _stopTimer();
+      setState(() => _isFetchingLocation = true);
+
       final file = await _controller!.stopVideoRecording();
       final fileSize = await File(file.path).length();
+
+      // Capture GPS Location
+      final position = await LocationService.instance.getCurrentPosition();
 
       setState(() {
         _isRecording = false;
         _recordedFile = file;
         _recordedFileSize = fileSize;
+        _currentPosition = position;
+        _isFetchingLocation = false;
+        if (position == null) {
+          _locationErrorMessage = 'GPS Location Permission Denied or Disabled';
+        }
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Video recording saved locally!'),
+            content: Text('Video recording & GPS coordinates saved locally!'),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
     } catch (e) {
+      setState(() => _isFetchingLocation = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to stop recording: $e')),
@@ -231,8 +250,9 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               ),
             ),
 
-            // Saved Video Local Summary Card
-            if (_recordedFile != null) _buildSavedVideoSummaryCard(isDarkMode),
+            // Saved Video & GPS Location Summary Card
+            if (_recordedFile != null || _isFetchingLocation)
+              _buildSavedVideoSummaryCard(isDarkMode),
 
             // Bottom Controls Area
             Container(
@@ -255,7 +275,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (_recordedFile == null) ...[
+                  if (_recordedFile == null && !_isFetchingLocation) ...[
                     // Record Controls
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -302,12 +322,16 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                       children: [
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _recordedFile = null;
-                                _elapsedSeconds = 0;
-                              });
-                            },
+                            onPressed: _isFetchingLocation
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _recordedFile = null;
+                                      _currentPosition = null;
+                                      _locationErrorMessage = null;
+                                      _elapsedSeconds = 0;
+                                    });
+                                  },
                             icon: const Icon(Icons.videocam_outlined),
                             label: const Text('Record Another Video'),
                             style: OutlinedButton.styleFrom(
@@ -341,7 +365,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       return CameraPreview(_controller!);
     }
 
-    // Fallback UI (e.g. Simulator or Camera unsupported)
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -362,6 +385,25 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Widget _buildSavedVideoSummaryCard(bool isDarkMode) {
+    if (_isFetchingLocation) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Fetching GPS Coordinates...', style: TextStyle(fontSize: 14)),
+          ],
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       padding: const EdgeInsets.all(16.0),
@@ -409,6 +451,41 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               Text(
                 'Size: ${_formatFileSize(_recordedFileSize)}',
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+
+          // GPS Coordinates Section
+          Row(
+            children: [
+              const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 18),
+              const SizedBox(width: 6),
+              const Text(
+                'GPS Coordinates:',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _currentPosition != null
+                    ? Text(
+                        'Lat: ${_currentPosition!.latitude.toStringAsFixed(6)}, Long: ${_currentPosition!.longitude.toStringAsFixed(6)}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    : Text(
+                        _locationErrorMessage ?? 'GPS Permission Denied',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.warning,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
               ),
             ],
           ),
