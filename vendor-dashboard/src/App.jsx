@@ -36,7 +36,13 @@ const vendorTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Plus Jakarta Sans", "Inter", "Roboto", "Helvetica", sans-serif',
+    h1: { fontWeight: 800 },
+    h2: { fontWeight: 800 },
+    h3: { fontWeight: 700 },
+    h4: { fontWeight: 700 },
+    h5: { fontWeight: 700 },
+    h6: { fontWeight: 700 },
   },
   shape: {
     borderRadius: 14,
@@ -55,10 +61,8 @@ function App() {
       <CssBaseline />
       <Router>
         <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-          {/* Sidebar Navigation */}
           <Sidebar mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} />
 
-          {/* Main Content Area */}
           <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', width: { md: `calc(100% - 260px)` } }}>
             <Header handleDrawerToggle={handleDrawerToggle} />
 
