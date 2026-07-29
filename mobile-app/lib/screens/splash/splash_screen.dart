@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../../config/routes/app_routes.dart';
 
@@ -19,7 +17,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkSessionAndNavigate() async {
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
@@ -44,49 +42,72 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primary,
-              AppColors.primaryDark,
+      backgroundColor: const Color(0xFF1D4ED8),
+      body: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(50),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.videocam_rounded,
+                  size: 52,
+                  color: Color(0xFF1D4ED8),
+                ),
+              ),
+              const SizedBox(height: 28),
+              const Text(
+                'Video Data\nCollection Platform',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Collect. Upload. Earn.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white70,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              const SizedBox(height: 60),
+              const Text(
+                'Loading...',
+                style: TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 140,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: const LinearProgressIndicator(
+                    backgroundColor: Colors.white24,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    minHeight: 4,
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.videocam_rounded,
-              size: 80,
-              color: Colors.white,
-            ),
-            SizedBox(height: 24),
-            Text(
-              AppConstants.appName,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1.2,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Video Data Collection Platform',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color.fromRGBO(255, 255, 255, 0.8),
-              ),
-            ),
-            SizedBox(height: 48),
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ],
         ),
       ),
     );

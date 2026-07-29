@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../config/routes/app_routes.dart';
-import '../../core/theme/app_colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -16,17 +15,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, dynamic>> _pages = [
     {
       'title': 'Record Videos Easily',
-      'subtitle': 'Capture high-quality video data samples using your mobile phone.',
+      'subtitle': 'Capture high-quality videos using your phone.',
       'icon': Icons.videocam_rounded,
     },
     {
       'title': 'Secure Upload & Storage',
-      'subtitle': 'Your videos are end-to-end encrypted and safely stored in cloud storage.',
+      'subtitle': 'Your videos are encrypted and stored securely.',
       'icon': Icons.cloud_upload_rounded,
     },
     {
       'title': 'Earn More with Transparency',
-      'subtitle': 'Track your approved hours, view earnings breakdowns, and get paid on time.',
+      'subtitle': 'Track your earnings and get paid on time.',
       'icon': Icons.account_balance_wallet_rounded,
     },
   ];
@@ -47,13 +46,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
-            child: const Text('Skip', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-          ),
+          if (_currentPage < _pages.length - 1)
+            TextButton(
+              onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
+              child: const Text(
+                'Skip',
+                style: TextStyle(
+                  color: Color(0xFF2563EB),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ),
         ],
       ),
       body: SafeArea(
@@ -67,18 +74,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (ctx, idx) {
                   final item = _pages[idx];
                   return Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          width: 140,
-                          height: 140,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withAlpha(20),
+                          width: 160,
+                          height: 160,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFDBEAFE),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(item['icon'], size: 70, color: AppColors.primary),
+                          child: Icon(item['icon'], size: 80, color: const Color(0xFF2563EB)),
                         ),
                         const SizedBox(height: 40),
                         Text(
@@ -86,7 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimaryLight,
+                            color: Color(0xFF0F172A),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -95,8 +102,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           item['subtitle'],
                           style: const TextStyle(
                             fontSize: 14,
-                            color: AppColors.textSecondaryLight,
-                            height: 1.5,
+                            color: Color(0xFF64748B),
+                            height: 1.4,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -107,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Page Dots & Bottom Buttons
+            // Page Dots & Bottom Next/Get Started Button (Exact match to Screens 2-4)
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -116,29 +123,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
                       _pages.length,
-                      (idx) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                      (idx) => Container(
                         margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentPage == idx ? 24 : 8,
-                        height: 8,
+                        width: 10,
+                        height: 10,
                         decoration: BoxDecoration(
-                          color: _currentPage == idx ? AppColors.primary : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(4),
+                          color: _currentPage == idx ? const Color(0xFF2563EB) : const Color(0xFFCBD5E1),
+                          shape: BoxShape.circle,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   SizedBox(
                     width: double.infinity,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: _onNext,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: const Color(0xFF2563EB),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
                       ),
                       child: Text(
                         _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',

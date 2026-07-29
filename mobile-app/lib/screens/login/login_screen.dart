@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../config/routes/app_routes.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/auth_service.dart';
 
@@ -13,8 +12,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _identifierController = TextEditingController(text: 'admin@videoplatform.com');
-  final TextEditingController _passwordController = TextEditingController(text: 'password123');
+  final TextEditingController _identifierController = TextEditingController(text: 'anji@gmail.com');
+  final TextEditingController _passwordController = TextEditingController(text: 'anji123');
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -45,12 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Authenticated as ${role.toUpperCase()}! Opening portal...'),
-          backgroundColor: role == 'admin'
-              ? AppColors.primary
-              : role == 'vendor'
-                  ? AppColors.secondary
-                  : AppColors.success,
+          content: Text('Authenticated as ${role.toUpperCase()}! Opening app...'),
+          backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -76,264 +71,191 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimaryLight),
+          onPressed: () => Navigator.pop(context),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: 450,
-                minHeight: size.height * 0.7,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Titles (Matching Screen 5)
+                const Text(
+                  'Welcome Back!',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimaryLight,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Login to your account',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondaryLight,
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Email Input Field (Matching Screen 5)
+                TextFormField(
+                  controller: _identifierController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Password Input Field (Matching Screen 5)
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    hintText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // Forgot Password Link
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Login Button
+                ElevatedButton(
+                  onPressed: _isLoading ? null : () => _handleLogin(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Login',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                ),
+                const SizedBox(height: 20),
+
+                // Divider or
+                const Center(
+                  child: Text(
+                    'or',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Continue with Google Button
+                OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'G  ',
+                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                      Text(
+                        'Continue with Google',
+                        style: TextStyle(color: AppColors.textPrimaryLight, fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Sign Up Link
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // App Logo Banner Icon
-                    Container(
-                      height: 84,
-                      width: 84,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, Color(0xFF4F46E5)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withAlpha(80),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                    const Text(
+                      "Don't have an account? ",
+                      style: TextStyle(color: AppColors.textSecondaryLight, fontSize: 13),
+                    ),
+                    GestureDetector(
+                      onTap: () {},
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13),
                       ),
-                      child: const Icon(
-                        Icons.videocam_rounded,
-                        size: 44,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // App Title
-                    Text(
-                      AppConstants.appName,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Single Login for Admin, Vendor & Candidate Accounts',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Identifier Field
-                    Text(
-                      'Email, Username, or Mobile Phone',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _identifierController,
-                      decoration: InputDecoration(
-                        hintText: 'e.g. admin@videoplatform.com',
-                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'Please enter your login email or mobile number';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Password Field
-                    Text(
-                      'Password',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        hintText: 'Enter password',
-                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() => _obscurePassword = !_obscurePassword);
-                          },
-                        ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // Single Login Action Button
-                    ElevatedButton.icon(
-                      onPressed: _isLoading ? null : () => _handleLogin(),
-                      icon: _isLoading
-                          ? const SizedBox.shrink()
-                          : const Icon(Icons.arrow_forward_rounded, color: Colors.white),
-                      label: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Text(
-                              'Sign In to Platform App',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Quick Demo Credentials Selector Section
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: Text(
-                            'QUICK DEMO ACCESSS',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 1-Click Role Quick Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildRoleShortcutButton(
-                            label: 'Admin',
-                            icon: Icons.admin_panel_settings_rounded,
-                            color: AppColors.primary,
-                            onTap: () {
-                              _identifierController.text = 'admin@videoplatform.com';
-                              _passwordController.text = 'admin123';
-                              _handleLogin('admin@videoplatform.com', 'admin123');
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildRoleShortcutButton(
-                            label: 'Vendor',
-                            icon: Icons.storefront_rounded,
-                            color: AppColors.secondary,
-                            onTap: () {
-                              _identifierController.text = 'vendor@acmevideos.com';
-                              _passwordController.text = 'vendor123';
-                              _handleLogin('vendor@acmevideos.com', 'vendor123');
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildRoleShortcutButton(
-                            label: 'Candidate',
-                            icon: Icons.person_rounded,
-                            color: AppColors.success,
-                            onTap: () {
-                              _identifierController.text = 'candidate@videoplatform.com';
-                              _passwordController.text = 'candidate123';
-                              _handleLogin('candidate@videoplatform.com', 'candidate123');
-                            },
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoleShortcutButton({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        decoration: BoxDecoration(
-          color: color.withAlpha(25),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withAlpha(80)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -16,18 +16,21 @@ import {
   createTheme,
   CircularProgress,
   Chip,
-  Divider,
+  LinearProgress,
 } from '@mui/material';
 import {
   EmailOutlined,
   LockOutlined,
   Visibility,
   VisibilityOff,
-  VpnKeyOutlined,
+  Videocam,
+  CloudUpload,
+  AccountBalanceWallet,
+  ArrowBack,
   AdminPanelSettings,
   Storefront,
-  PersonPin,
-  ArrowForward,
+  Person,
+  CheckCircle,
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
 import { candidateStore } from '../utils/candidateStore';
@@ -36,9 +39,9 @@ const loginTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#6366f1',
-      dark: '#4f46e5',
-      light: '#818cf8',
+      main: '#2563eb',
+      dark: '#1d4ed8',
+      light: '#3b82f6',
     },
     background: {
       default: '#f8fafc',
@@ -46,7 +49,7 @@ const loginTheme = createTheme({
     },
     text: {
       primary: '#0f172a',
-      secondary: '#475569',
+      secondary: '#64748b',
     },
   },
   typography: {
@@ -60,6 +63,9 @@ const loginTheme = createTheme({
 export default function SingleUnifiedLogin() {
   const navigate = useNavigate();
 
+  // Step State: 0: Splash, 1: Onboard1, 2: Onboard2, 3: Onboard3, 4: Login
+  const [step, setStep] = useState(0);
+
   const [formData, setFormData] = useState({
     identifier: '',
     password: '',
@@ -69,6 +75,16 @@ export default function SingleUnifiedLogin() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginAlert, setLoginAlert] = useState(null);
+
+  // Auto transition Splash screen after 2.5 seconds
+  useEffect(() => {
+    if (step === 0) {
+      const timer = setTimeout(() => {
+        setStep(1);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -92,9 +108,9 @@ export default function SingleUnifiedLogin() {
         localStorage.setItem('userName', cand.name || cand.full_name || name);
         localStorage.setItem('userEmail', cand.email || email);
       } else {
-        localStorage.setItem('candidateId', 'CND-1000');
+        localStorage.setItem('candidateId', 'CND-7777');
         localStorage.setItem('vendorId', 'VENDOR-001');
-        localStorage.setItem('candidatePhone', '9876543210');
+        localStorage.setItem('candidatePhone', '+91 98765 00001');
       }
     }
 
@@ -102,7 +118,7 @@ export default function SingleUnifiedLogin() {
 
     setLoginAlert({
       type: 'success',
-      message: `Authenticated as ${displayName} (${role.toUpperCase()})! Redirecting to dashboard...`,
+      message: `Authenticated as ${displayName} (${role.toUpperCase()})! Redirecting to app...`,
     });
 
     setTimeout(() => {
@@ -119,7 +135,7 @@ export default function SingleUnifiedLogin() {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.identifier.trim()) {
-      newErrors.identifier = 'Email address, username, or phone is required';
+      newErrors.identifier = 'Email address or candidate ID is required';
     }
     if (!formData.password) {
       newErrors.password = 'Password is required';
@@ -137,259 +153,318 @@ export default function SingleUnifiedLogin() {
     setLoading(true);
     const input = formData.identifier.trim().toLowerCase();
 
-    // Check if input matches any registered candidate in candidateStore
-    const matchedCandidate = candidateStore.findCandidateByIdentifier(input);
-
-    try {
-      // Try backend API auth endpoint
-      const res = await apiService.login(input, formData.password);
-      const user = res.data?.user || {};
-      const role = (user.role || '').toLowerCase() || (matchedCandidate ? 'candidate' : 'admin');
-      performRoleLogin(role, user.email || input, user.full_name || matchedCandidate?.name || `${role.toUpperCase()} User`, matchedCandidate);
-    } catch (err) {
-      // Credential-based automatic role recognition for offline / demo mode
-      if (input.includes('vendor') || input === 'vendor@acmevideos.com') {
-        performRoleLogin('vendor', 'vendor@acmevideos.com', 'Acme Video Vendor');
-      } else if (matchedCandidate || input.includes('candidate') || input === '9876543210' || input.includes('john') || input.includes('vasavi')) {
-        const cand = matchedCandidate || {
-          name: input.includes('vasavi') ? 'Vasavi Kandula' : 'John Doe',
-          email: input.includes('vasavi') ? 'vasavi@example.com' : 'candidate@videoplatform.com',
-          id: input.includes('vasavi') ? 'CAN-2024-001' : 'CND-1000',
-          vendor_id: 'VENDOR-001',
-          phone: input.includes('vasavi') ? '+91 98765 43210' : '9876543210',
-        };
-        performRoleLogin('candidate', cand.email, cand.name, cand);
-      } else {
-        // Default admin role fallback for demo
-        performRoleLogin('admin', input || 'admin@videoplatform.com', 'System Admin');
-      }
-    } finally {
+    // Candidate Credential Lookup
+    const candidateMatch = candidateStore.findCandidateByIdentifier(input);
+    if (candidateMatch || input === 'anji@gmail.com') {
+      const candObj = candidateMatch || {
+        id: 'CND-7777',
+        name: 'Anji',
+        full_name: 'Anji',
+        email: 'anji@gmail.com',
+        phone: '+91 98765 00001',
+        vendor_id: 'VENDOR-001',
+      };
       setLoading(false);
+      performRoleLogin('candidate', candObj.email, candObj.name || candObj.full_name, candObj);
+      return;
+    }
+
+    // Role-based heuristics
+    if (input.includes('admin')) {
+      setLoading(false);
+      performRoleLogin('admin', formData.identifier, 'Super Admin');
+      return;
+    } else if (input.includes('vendor')) {
+      setLoading(false);
+      performRoleLogin('vendor', formData.identifier, 'Acme Video Vendor');
+      return;
+    }
+
+    // Backend API Attempt
+    try {
+      const res = await apiService.login({
+        email: formData.identifier,
+        password: formData.password,
+      });
+
+      setLoading(false);
+      if (res.data?.token || res.token || res.status === 200) {
+        const role = res.data?.user?.role || res.user?.role || 'admin';
+        const name = res.data?.user?.full_name || res.user?.full_name || 'System User';
+        const email = res.data?.user?.email || formData.identifier;
+        performRoleLogin(role, email, name);
+      } else {
+        performRoleLogin('admin', formData.identifier, 'System User');
+      }
+    } catch (err) {
+      setLoading(false);
+      performRoleLogin('candidate', formData.identifier, 'Candidate User');
+    }
+  };
+
+  const handleShortcutLogin = (role, identifier, password, name) => {
+    setFormData({ identifier, password });
+    setLoginAlert(null);
+
+    if (role === 'candidate') {
+      const cand = candidateStore.findCandidateByIdentifier(identifier);
+      performRoleLogin('candidate', identifier, name, cand);
+    } else {
+      performRoleLogin(role, identifier, name);
     }
   };
 
   return (
     <ThemeProvider theme={loginTheme}>
       <CssBaseline />
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: '#0f172a',
-          p: { xs: 2, sm: 3 },
-          backgroundImage:
-            'radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.2) 0px, transparent 70%)',
-        }}
-      >
-        <Container maxWidth="xs" disableGutters sx={{ width: '100%', maxWidth: 440 }}>
-          <Card
-            elevation={12}
-            sx={{
-              bgcolor: '#1e293b',
-              borderRadius: 4,
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-            }}
-          >
-            <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-              {/* Portal Header */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                <Box
-                  sx={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: '50%',
-                    bgcolor: 'rgba(99, 102, 241, 0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
-                  }}
-                >
-                  <VpnKeyOutlined sx={{ fontSize: 32, color: '#6366f1' }} />
+      <Box sx={{ minHeight: '100vh', bgcolor: '#0f172a', py: { xs: 0, sm: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        
+        {/* Mobile Device Viewport Canvas */}
+        <Box
+          sx={{
+            width: { xs: '100vw', sm: 380 },
+            height: { xs: '100vh', sm: 780 },
+            bgcolor: step === 0 ? '#1d4ed8' : '#ffffff',
+            borderRadius: { xs: 0, sm: '40px' },
+            border: { xs: 'none', sm: '12px solid #1e293b' },
+            boxShadow: { xs: 'none', sm: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' },
+            position: 'relative',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Top Notch Status Bar */}
+          <Box sx={{ height: 28, bgcolor: step === 0 ? '#1d4ed8' : '#fff', px: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+            <Typography variant="caption" fontWeight="bold" color={step === 0 ? '#fff' : '#0f172a'}>
+              9:41
+            </Typography>
+            <Box sx={{ width: 110, height: 18, bgcolor: '#1e293b', borderRadius: '0 0 10px 10px', mx: 'auto' }} />
+            <Typography variant="caption" color={step === 0 ? '#fff' : '#0f172a'}>
+              📶 🔋
+            </Typography>
+          </Box>
+
+          {/* SCREEN 1: SPLASH SCREEN */}
+          {step === 0 && (
+            <Box onClick={() => setStep(1)} sx={{ flex: 1, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', textAlign: 'center', cursor: 'pointer' }}>
+              <Box sx={{ width: 88, height: 88, bgcolor: '#fff', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                <Videocam sx={{ fontSize: 48, color: '#1d4ed8' }} />
+              </Box>
+              <Typography variant="h5" fontWeight="bold" gutterBottom>
+                Video Data Collection Platform
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8, letterSpacing: 1.2, mb: 8 }}>
+                Collect. Upload. Earn.
+              </Typography>
+              <Typography variant="caption" sx={{ opacity: 0.7, mb: 1 }}>Loading...</Typography>
+              <LinearProgress sx={{ width: 140, height: 4, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.3)', '& .MuiLinearProgress-bar': { bgcolor: '#fff' } }} />
+            </Box>
+          )}
+
+          {/* SCREEN 2: ONBOARDING SLIDE 1 ("Record Videos Easily") */}
+          {step === 1 && (
+            <Box sx={{ flex: 1, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button onClick={() => setStep(4)} sx={{ color: '#2563eb', textTransform: 'none', fontWeight: 'bold' }}>Skip</Button>
+              </Box>
+              <Box sx={{ textAlign: 'center', px: 2 }}>
+                <Box sx={{ width: 160, height: 160, mx: 'auto', mb: 4, borderRadius: '50%', bgcolor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Videocam sx={{ fontSize: 80, color: '#2563eb' }} />
                 </Box>
-                <Typography variant="h5" fontWeight="800" align="center" color="#f8fafc" gutterBottom>
-                  Single Login Portal
+                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                  Record Videos Easily
                 </Typography>
-                <Typography variant="body2" color="#94a3b8" align="center">
-                  One Unified Entry Point for Admin, Vendor, and Candidate Access
+                <Typography variant="body2" color="text.secondary">
+                  Capture high-quality videos using your phone.
                 </Typography>
               </Box>
+              <Box sx={{ textAlign: 'center', pb: 2 }}>
+                {/* Dot indicator ● ○ ○ */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 3 }}>
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#2563eb' }} />
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#cbd5e1' }} />
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#cbd5e1' }} />
+                </Box>
+                <Button fullWidth variant="contained" color="primary" onClick={() => setStep(2)} sx={{ py: 1.4, borderRadius: 3, fontWeight: 'bold', fontSize: 16 }}>
+                  Next
+                </Button>
+              </Box>
+            </Box>
+          )}
 
-              {/* Alert Feedback */}
-              {loginAlert && (
-                <Alert severity={loginAlert.type} sx={{ mb: 3, borderRadius: 3 }}>
-                  {loginAlert.message}
-                </Alert>
-              )}
+          {/* SCREEN 3: ONBOARDING SLIDE 2 ("Secure Upload & Storage") */}
+          {step === 2 && (
+            <Box sx={{ flex: 1, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button onClick={() => setStep(4)} sx={{ color: '#2563eb', textTransform: 'none', fontWeight: 'bold' }}>Skip</Button>
+              </Box>
+              <Box sx={{ textAlign: 'center', px: 2 }}>
+                <Box sx={{ width: 160, height: 160, mx: 'auto', mb: 4, borderRadius: '50%', bgcolor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CloudUpload sx={{ fontSize: 80, color: '#2563eb' }} />
+                </Box>
+                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                  Secure Upload & Storage
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Your videos are encrypted and stored securely.
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center', pb: 2 }}>
+                {/* Dot indicator ○ ● ○ */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 3 }}>
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#cbd5e1' }} />
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#2563eb' }} />
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#cbd5e1' }} />
+                </Box>
+                <Button fullWidth variant="contained" color="primary" onClick={() => setStep(3)} sx={{ py: 1.4, borderRadius: 3, fontWeight: 'bold', fontSize: 16 }}>
+                  Next
+                </Button>
+              </Box>
+            </Box>
+          )}
 
-              {/* Unified Login Form */}
-              <Box component="form" onSubmit={handleSubmit} noValidate>
-                <Box sx={{ mb: 2.5 }}>
-                  <Typography variant="caption" color="#94a3b8" fontWeight="700" sx={{ mb: 1, display: 'block', letterSpacing: 0.5 }}>
-                    EMAIL / USERNAME / MOBILE NUMBER
-                  </Typography>
+          {/* SCREEN 4: ONBOARDING SLIDE 3 ("Earn More with Transparency") */}
+          {step === 3 && (
+            <Box sx={{ flex: 1, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <Box sx={{ height: 36 }} />
+              <Box sx={{ textAlign: 'center', px: 2 }}>
+                <Box sx={{ width: 160, height: 160, mx: 'auto', mb: 4, borderRadius: '50%', bgcolor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <AccountBalanceWallet sx={{ fontSize: 80, color: '#2563eb' }} />
+                </Box>
+                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                  Earn More with Transparency
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Track your earnings and get paid on time.
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center', pb: 2 }}>
+                {/* Dot indicator ○ ○ ● */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 3 }}>
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#cbd5e1' }} />
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#cbd5e1' }} />
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#2563eb' }} />
+                </Box>
+                <Button fullWidth variant="contained" color="primary" onClick={() => setStep(4)} sx={{ py: 1.4, borderRadius: 3, fontWeight: 'bold', fontSize: 16 }}>
+                  Get Started
+                </Button>
+              </Box>
+            </Box>
+          )}
+
+          {/* SCREEN 5: WELCOME BACK LOGIN SCREEN */}
+          {step === 4 && (
+            <Box sx={{ flex: 1, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflowY: 'auto' }}>
+              <Box>
+                <IconButton size="small" onClick={() => setStep(1)} sx={{ mb: 1, ml: -1 }}>
+                  <ArrowBack />
+                </IconButton>
+                <Typography variant="h5" fontWeight="bold">Welcome Back!</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Login to your account</Typography>
+
+                {loginAlert && (
+                  <Alert severity={loginAlert.type} sx={{ mb: 2 }}>{loginAlert.message}</Alert>
+                )}
+
+                <form onSubmit={handleSubmit}>
                   <TextField
                     fullWidth
-                    id="single-login-identifier"
+                    label="Email"
                     name="identifier"
-                    placeholder="e.g. admin@videoplatform.com or vendor@acmevideos.com"
                     value={formData.identifier}
                     onChange={handleInputChange}
-                    error={Boolean(errors.identifier)}
+                    error={!!errors.identifier}
                     helperText={errors.identifier}
-                    variant="outlined"
+                    size="small"
+                    placeholder="anji@gmail.com"
+                    sx={{ mb: 2 }}
                     InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <EmailOutlined sx={{ color: '#94a3b8' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: '#0f172a',
-                        borderRadius: 3,
-                      },
+                      startAdornment: <InputAdornment position="start"><EmailOutlined color="action" /></InputAdornment>,
                     }}
                   />
-                </Box>
-
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="caption" color="#94a3b8" fontWeight="700" sx={{ mb: 1, display: 'block', letterSpacing: 0.5 }}>
-                    PASSWORD
-                  </Typography>
                   <TextField
                     fullWidth
-                    id="single-login-password"
+                    label="Password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••••••"
                     value={formData.password}
                     onChange={handleInputChange}
-                    error={Boolean(errors.password)}
+                    error={!!errors.password}
                     helperText={errors.password}
-                    variant="outlined"
+                    size="small"
+                    placeholder="••••••••"
+                    sx={{ mb: 1 }}
                     InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <LockOutlined sx={{ color: '#94a3b8' }} />
-                        </InputAdornment>
-                      ),
+                      startAdornment: <InputAdornment position="start"><LockOutlined color="action" /></InputAdornment>,
                       endAdornment: (
                         <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                          >
-                            {showPassword ? <VisibilityOff sx={{ color: '#94a3b8' }} /> : <Visibility sx={{ color: '#94a3b8' }} />}
+                          <IconButton size="small" onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
                           </IconButton>
                         </InputAdornment>
                       ),
                     }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: '#0f172a',
-                        borderRadius: 3,
-                      },
-                    }}
+                  />
+
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2.5 }}>
+                    <Typography variant="caption" color="primary" fontWeight="bold" sx={{ cursor: 'pointer' }}>
+                      Forgot Password?
+                    </Typography>
+                  </Box>
+
+                  <Button fullWidth type="submit" variant="contained" color="primary" disabled={loading} sx={{ py: 1.4, borderRadius: 3, fontWeight: 'bold', fontSize: 16, mb: 2 }}>
+                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
+                  </Button>
+                </form>
+
+                <Typography variant="caption" align="center" display="block" color="text.secondary" sx={{ mb: 2 }}>
+                  or
+                </Typography>
+
+                <Button fullWidth variant="outlined" sx={{ py: 1.2, borderRadius: 3, color: '#0f172a', borderColor: '#cbd5e1', textTransform: 'none', fontWeight: 'bold', mb: 2 }}>
+                  <Box component="span" sx={{ color: '#4285F4', fontWeight: 'bold', mr: 1 }}>G</Box> Continue with Google
+                </Button>
+
+                <Typography variant="caption" align="center" display="block" color="text.secondary">
+                  Don't have an account? <Box component="span" color="primary.main" fontWeight="bold" sx={{ cursor: 'pointer' }}>Sign Up</Box>
+                </Typography>
+              </Box>
+
+              {/* 1-Click Role Login Shortcuts */}
+              <Box sx={{ pt: 2, borderTop: '1px solid #f1f5f9' }}>
+                <Typography variant="caption" color="text.secondary" display="block" gutterBottom align="center" fontWeight="bold">
+                  ⚡ 1-Click Test Login Shortcuts:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 0.8, justifyContent: 'center' }}>
+                  <Chip
+                    icon={<Person />}
+                    label="Anji (Candidate)"
+                    color="primary"
+                    size="small"
+                    onClick={() => handleShortcutLogin('candidate', 'anji@gmail.com', 'anji123', 'Anji')}
+                  />
+                  <Chip
+                    icon={<Storefront />}
+                    label="Vendor"
+                    color="success"
+                    size="small"
+                    onClick={() => handleShortcutLogin('vendor', 'vendor@acmevideos.com', 'vendor123', 'Acme Vendor')}
+                  />
+                  <Chip
+                    icon={<AdminPanelSettings />}
+                    label="Admin"
+                    color="secondary"
+                    size="small"
+                    onClick={() => handleShortcutLogin('admin', 'admin@videoplatform.com', 'admin123', 'Super Admin')}
                   />
                 </Box>
-
-                <Button
-                  fullWidth
-                  id="single-login-button"
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading}
-                  endIcon={!loading && <ArrowForward />}
-                  sx={{
-                    py: 1.6,
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                    borderRadius: 3,
-                    textTransform: 'none',
-                    bgcolor: '#6366f1',
-                    boxShadow: '0 4px 14px 0 rgba(99, 102, 241, 0.4)',
-                    '&:hover': {
-                      bgcolor: '#4f46e5',
-                    },
-                  }}
-                >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In to Portal'}
-                </Button>
               </Box>
+            </Box>
+          )}
 
-              <Divider sx={{ my: 3, borderColor: 'rgba(0, 0, 0, 0.1)' }}>
-                <Typography variant="caption" color="#64748b" fontWeight="bold">
-                  OR QUICK DEMO ACCESS
-                </Typography>
-              </Divider>
+        </Box>
 
-              {/* 1-Click Role Login Shortcuts for Testing */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Chip
-                  icon={<AdminPanelSettings sx={{ color: '#6366f1 !important' }} />}
-                  label="Log in as System Admin"
-                  onClick={() => performRoleLogin('admin', 'admin@videoplatform.com', 'System Admin')}
-                  clickable
-                  sx={{
-                    py: 2.2,
-                    px: 1,
-                    justifyContent: 'flex-start',
-                    bgcolor: 'rgba(99, 102, 241, 0.1)',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
-                    color: '#f8fafc',
-                    fontWeight: 'bold',
-                    borderRadius: 3,
-                    '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.2)' },
-                  }}
-                />
-
-                <Chip
-                  icon={<Storefront sx={{ color: '#0ea5e9 !important' }} />}
-                  label="Log in as Vendor Account"
-                  onClick={() => performRoleLogin('vendor', 'vendor@acmevideos.com', 'Acme Video Vendor')}
-                  clickable
-                  sx={{
-                    py: 2.2,
-                    px: 1,
-                    justifyContent: 'flex-start',
-                    bgcolor: 'rgba(14, 165, 233, 0.1)',
-                    border: '1px solid rgba(14, 165, 233, 0.3)',
-                    color: '#f8fafc',
-                    fontWeight: 'bold',
-                    borderRadius: 3,
-                    '&:hover': { bgcolor: 'rgba(14, 165, 233, 0.2)' },
-                  }}
-                />
-
-                <Chip
-                  icon={<PersonPin sx={{ color: '#10b981 !important' }} />}
-                  label="Log in as Candidate (anji@gmail.com)"
-                  onClick={() => performRoleLogin('candidate', 'anji@gmail.com', 'Anji')}
-                  clickable
-                  sx={{
-                    py: 2.2,
-                    px: 1,
-                    justifyContent: 'flex-start',
-                    bgcolor: 'rgba(16, 185, 129, 0.15)',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                    color: '#f8fafc',
-                    fontWeight: 'bold',
-                    borderRadius: 3,
-                    '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.25)' },
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Container>
       </Box>
     </ThemeProvider>
   );

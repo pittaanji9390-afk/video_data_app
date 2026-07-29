@@ -121,85 +121,17 @@ export default function VendorPortal() {
   return (
     <ThemeProvider theme={vendorTheme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', bgcolor: '#0f172a', py: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#0f172a', py: { xs: 0, sm: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         
-        {/* Top App Role Switcher Bar */}
-        <Paper
-          elevation={4}
-          sx={{
-            p: 1.5,
-            mb: 2,
-            bgcolor: '#0f172a',
-            color: '#fff',
-            borderRadius: 3,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            flexWrap: 'wrap',
-            maxWidth: 1000,
-            justifyContent: 'center',
-          }}
-        >
-          <Typography variant="caption" fontWeight="bold" sx={{ color: '#38bdf8' }}>
-            📱 SWITCH MOBILE APP VIEW:
-          </Typography>
-          <Button size="small" variant="outlined" sx={{ color: '#38bdf8', borderColor: '#38bdf8', textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }} onClick={() => navigate('/candidate-portal')}>
-            👤 Candidate App
-          </Button>
-          <Button size="small" variant="contained" color="success" sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}>
-            🏪 Vendor App
-          </Button>
-          <Button size="small" variant="outlined" sx={{ color: '#818cf8', borderColor: '#818cf8', textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }} onClick={() => navigate('/admin-portal')}>
-            🛡️ Admin App
-          </Button>
-        </Paper>
-
-        {/* Top PPT Screen Switcher Bar */}
-        <Paper
-          elevation={4}
-          sx={{
-            p: 1.5,
-            mb: 3,
-            bgcolor: '#1e293b',
-            color: '#fff',
-            borderRadius: 3,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            flexWrap: 'wrap',
-            maxWidth: 1000,
-            justifyContent: 'center',
-          }}
-        >
-          <Typography variant="caption" fontWeight="bold" sx={{ color: '#34d399', mr: 1 }}>
-            📑 VENDOR MOCKUP SWITCHER:
-          </Typography>
-          {vendorScreens.map((screen) => (
-            <Button
-              key={screen.id}
-              size="small"
-              variant={activeScreen === screen.id ? 'contained' : 'outlined'}
-              color={activeScreen === screen.id ? 'success' : 'inherit'}
-              onClick={() => setActiveScreen(screen.id)}
-              sx={{ textTransform: 'none', borderRadius: 2, fontSize: '0.75rem' }}
-            >
-              {screen.label}
-            </Button>
-          ))}
-          <Button size="small" variant="contained" color="error" onClick={() => navigate('/login')} sx={{ textTransform: 'none', borderRadius: 2, fontSize: '0.75rem' }}>
-            Sign Out
-          </Button>
-        </Paper>
-
-        {/* Mobile Device Container Frame (Matches Exact PPT Design Frame) */}
+        {/* Mobile Device Container Frame (Clean Mobile UI) */}
         <Box
           sx={{
-            width: 380,
-            height: 780,
+            width: { xs: '100vw', sm: 380 },
+            height: { xs: '100vh', sm: 780 },
             bgcolor: activeScreen === 'login' ? '#f0fdf4' : '#f8fafc',
-            borderRadius: '40px',
-            border: '12px solid #1e293b',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            borderRadius: { xs: 0, sm: '40px' },
+            border: { xs: 'none', sm: '12px solid #1e293b' },
+            boxShadow: { xs: 'none', sm: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' },
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
