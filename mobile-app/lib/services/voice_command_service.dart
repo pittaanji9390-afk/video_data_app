@@ -24,6 +24,15 @@ class VoiceCommandService {
     _isListening = true;
 
     if (kIsWeb) {
+      // First request microphone permission from browser
+      try {
+        html.window.navigator.mediaDevices?.getUserMedia({'audio': true}).then((stream) {
+          debugPrint('Microphone permission granted for Speech Recognition');
+        }).catchError((err) {
+          debugPrint('Microphone access note: $err');
+        });
+      } catch (_) {}
+
       try {
         if (html.SpeechRecognition.supported) {
           _webSpeechRecognition = html.SpeechRecognition()
@@ -36,25 +45,51 @@ class VoiceCommandService {
             if (results != null && results.isNotEmpty) {
               for (var i = 0; i < results.length; i++) {
                 final transcript = results[i][0].transcript?.toLowerCase() ?? '';
-                _onSpeechRecognized?.call('Recognized: "$transcript"');
+                _onSpeechRecognized?.call('Recognized Speech: "$transcript"');
 
-                if (transcript.contains('start') || transcript.contains('record') || transcript.contains('begin')) {
+                if (transcript.contains('start') ||
+                    transcript.contains('record') ||
+                    transcript.contains('begin') ||
+                    transcript.contains('go') ||
+                    transcript.contains('action')) {
                   _onCommandDetected?.call(VoiceCommand.start);
-                } else if (transcript.contains('stop') || transcript.contains('end') || transcript.contains('finish')) {
+                } else if (transcript.contains('stop') ||
+                    transcript.contains('end') ||
+                    transcript.contains('finish') ||
+                    transcript.contains('cut') ||
+                    transcript.contains('pause')) {
                   _onCommandDetected?.call(VoiceCommand.stop);
                 }
               }
             }
           });
 
+          // Auto-restart speech recognition if browser stops after silence
+          _webSpeechRecognition.onEnd.listen((_) {
+            if (_isListening) {
+              try {
+                _webSpeechRecognition.start();
+              } catch (_) {}
+            }
+          });
+
+          _webSpeechRecognition.onError.listen((e) {
+            debugPrint('Web Speech Error: $e');
+            if (_isListening) {
+              try {
+                _webSpeechRecognition.start();
+              } catch (_) {}
+            }
+          });
+
           _webSpeechRecognition.start();
-          _onSpeechRecognized?.call('🎤 Listening for voice commands ("Start", "Stop")...');
+          _onSpeechRecognized?.call('🎤 Listening continuously for "Start" or "Stop"...');
         } else {
-          _onSpeechRecognized?.call('🎤 Voice Recognition Active ("Start" / "Stop")');
+          _onSpeechRecognized?.call('🎤 Voice Control Active — Use "Say Start" or "Say Stop" buttons');
         }
       } catch (e) {
-        debugPrint('Web Speech API Error: $e');
-        _onSpeechRecognized?.call('🎤 Voice Control Active ("Start" / "Stop")');
+        debugPrint('Web Speech API Init Exception: $e');
+        _onSpeechRecognized?.call('🎤 Voice Control Active — Use "Say Start" or "Say Stop" buttons');
       }
     }
   }
@@ -64,7 +99,7 @@ class VoiceCommandService {
     if (!_isListening) return;
 
     final lower = text.trim().toLowerCase();
-    _onSpeechRecognized?.call('Voice Command: "$text"');
+    _onSpeechRecognized?.call('Voice Trigger: "$text"');
 
     if (lower.contains('start') || lower.contains('record') || lower.contains('begin')) {
       _onCommandDetected?.call(VoiceCommand.start);
