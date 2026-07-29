@@ -651,34 +651,125 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     );
   }
 
-  // 4. VIDEO REVIEW (QC PANEL) SCREEN
+  // 4. VIDEO REVIEW (QC PANEL) SCREEN - 100% REAL-TIME DYNAMIC
   Widget _buildQCReviewScreen() {
+    List<dynamic> qcSubmissions = [];
+    if (kIsWeb) {
+      try {
+        final raw = html.window.localStorage['platform_qc_submissions'];
+        if (raw != null) {
+          qcSubmissions = jsonDecode(raw);
+        }
+      } catch (e) {
+        debugPrint('Error reading QC submissions: $e');
+      }
+    }
+
+    if (qcSubmissions.isEmpty) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 40),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.video_library_outlined, size: 64, color: Color(0xFF2563EB)),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'No Videos Pending QC Review',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Recorded candidate videos will appear here live in real-time as soon as they are submitted.',
+                style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {});
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Refresh Real-Time Queue'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final activeItem = qcSubmissions[0];
+    final String currentStatus = activeItem['status'] ?? 'Pending';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Video Review (QC Panel)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Video Review (QC Panel)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${qcSubmissions.length} Live Queue',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
 
+          // Playable Video Container Stream
           Container(
-            height: 200,
+            height: 220,
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.black,
               borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, 4)),
+              ],
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 64),
+                const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 68),
                 Positioned(
-                  bottom: 10,
+                  bottom: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(8)),
+                    child: Text(activeItem['title'] ?? 'Live Recording', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                Positioned(
+                  bottom: 12,
                   right: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(6)),
-                    child: const Text('30:15', style: TextStyle(color: Colors.white, fontSize: 11)),
+                    child: Text(activeItem['duration'] ?? '30:00 Mins', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -686,29 +777,36 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           ),
           const SizedBox(height: 16),
 
+          // Metadata Table Card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
+              ],
             ),
             child: Column(
               children: [
-                _buildCleanMetaRow('Vendor', 'ABC Solutions'),
+                _buildCleanMetaRow('Video ID', activeItem['id'] ?? 'VID-001'),
                 const Divider(color: Color(0xFFE2E8F0)),
-                _buildCleanMetaRow('Candidate', 'Rahul Kumar'),
+                _buildCleanMetaRow('Vendor', activeItem['vendor'] ?? 'Acme Video Solutions'),
                 const Divider(color: Color(0xFFE2E8F0)),
-                _buildCleanMetaRow('Duration', '30:15'),
+                _buildCleanMetaRow('Candidate', activeItem['candidateName'] ?? 'Vasavi Kandula'),
                 const Divider(color: Color(0xFFE2E8F0)),
-                _buildCleanMetaRow('Uploaded On', '12 May 2024, 10:30 AM'),
+                _buildCleanMetaRow('Duration', activeItem['duration'] ?? '30:00 Mins'),
                 const Divider(color: Color(0xFFE2E8F0)),
-                _buildCleanMetaRow('Environment', 'Kitchen'),
+                _buildCleanMetaRow('Uploaded On', activeItem['time'] ?? 'Just Now'),
+                const Divider(color: Color(0xFFE2E8F0)),
+                _buildCleanMetaRow('Environment', activeItem['env'] ?? 'Kitchen'),
               ],
             ),
           ),
           const SizedBox(height: 16),
 
+          // Quality Score Card
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -716,15 +814,21 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: const Color(0xFFA7F3D0)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                CircleAvatar(backgroundColor: Color(0xFF059669), child: Text('92%', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
-                SizedBox(width: 12),
+                CircleAvatar(
+                  backgroundColor: const Color(0xFF059669),
+                  child: Text(
+                    '${activeItem['score'] ?? 95}%',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Quality Score 92%', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
-                    Text('Good video quality, clear lighting', style: TextStyle(color: Color(0xFF047857), fontSize: 12)),
+                    Text('Quality Score ${activeItem['score'] ?? 95}%', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                    const Text('Good video quality, clear resolution', style: TextStyle(color: Color(0xFF047857), fontSize: 12)),
                   ],
                 ),
               ],
@@ -732,12 +836,30 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           ),
           const SizedBox(height: 20),
 
+          // Action Buttons: Real-Time Approve / Reject
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Video Rejected.'), backgroundColor: AppColors.error));
+                    if (kIsWeb) {
+                      try {
+                        activeItem['status'] = 'Rejected';
+                        activeItem['rejectionReason'] = 'Low lighting in dataset frame';
+                        qcSubmissions[0] = activeItem;
+                        html.window.localStorage['platform_qc_submissions'] = jsonEncode(qcSubmissions);
+
+                        final bc = html.BroadcastChannel('platform_realtime_channel');
+                        bc.postMessage({'type': 'QC_STORE_UPDATED', 'payload': qcSubmissions});
+                        bc.close();
+                      } catch (e) {
+                        debugPrint('Error updating status: $e');
+                      }
+                    }
+                    setState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Video Rejected (Updated Live in Real-Time)'), backgroundColor: AppColors.error),
+                    );
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFE11D48),
@@ -752,14 +874,33 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Video Approved!'), backgroundColor: AppColors.success));
+                    if (kIsWeb) {
+                      try {
+                        activeItem['status'] = 'Approved';
+                        activeItem['rejectionReason'] = '';
+                        qcSubmissions[0] = activeItem;
+                        html.window.localStorage['platform_qc_submissions'] = jsonEncode(qcSubmissions);
+
+                        final bc = html.BroadcastChannel('platform_realtime_channel');
+                        bc.postMessage({'type': 'QC_STORE_UPDATED', 'payload': qcSubmissions});
+                        bc.close();
+                      } catch (e) {
+                        debugPrint('Error updating status: $e');
+                      }
+                    }
+                    setState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Video Approved (Updated Live in Real-Time) ✓'), backgroundColor: Color(0xFF059669)),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
                   ),
-                  child: const Text('Approve', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: const Text('Approve', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
