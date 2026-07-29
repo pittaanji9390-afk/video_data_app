@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui_web' as ui_web;
+import 'dart:html' as html;
 
 class WebLiveCameraView extends StatefulWidget {
   final bool isRecording;
@@ -15,96 +17,78 @@ class WebLiveCameraView extends StatefulWidget {
   State<WebLiveCameraView> createState() => _WebLiveCameraViewState();
 }
 
-class _WebLiveCameraViewState extends State<WebLiveCameraView> with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
-
-  final List<String> _sampleVideoFrames = [
-    'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&auto=format&fit=crop&q=80', // Kitchen frame
-    'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&auto=format&fit=crop&q=80', // Bedroom frame
-    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop&q=80', // Living room frame
-  ];
+class _WebLiveCameraViewState extends State<WebLiveCameraView> {
+  late String _viewTypeId;
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat(reverse: true);
-  }
+    _viewTypeId = 'real-webcam-stream-${DateTime.now().microsecondsSinceEpoch}';
 
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
+    if (kIsWeb) {
+      ui_web.platformViewRegistry.registerViewFactory(_viewTypeId, (int viewId) {
+        final container = html.DivElement()
+          ..style.width = '100%'
+          ..style.height = '100%'
+          ..style.position = 'absolute'
+          ..style.top = '0'
+          ..style.left = '0'
+          ..style.overflow = 'hidden'
+          ..style.backgroundColor = '#000000';
+
+        final videoElement = html.VideoElement()
+          ..id = 'live-webcam-element'
+          ..style.width = '100%'
+          ..style.height = '100%'
+          ..style.objectFit = 'cover'
+          ..autoplay = true
+          ..muted = true;
+
+        videoElement.setAttribute('playsinline', 'true');
+
+        container.append(videoElement);
+
+        // Request real physical webcam stream
+        try {
+          html.window.navigator.mediaDevices?.getUserMedia({
+            'video': {
+              'facingMode': 'user',
+              'width': {'ideal': 1280},
+              'height': {'ideal': 720}
+            },
+            'audio': true,
+          }).then((stream) {
+            videoElement.srcObject = stream;
+            videoElement.play();
+          }).catchError((err) {
+            debugPrint('Trying video-only stream: $err');
+            html.window.navigator.mediaDevices?.getUserMedia({'video': true}).then((stream) {
+              videoElement.srcObject = stream;
+              videoElement.play();
+            }).catchError((err2) {
+              debugPrint('Webcam permission error: $err2');
+            });
+          });
+        } catch (e) {
+          debugPrint('getUserMedia error: $e');
+        }
+
+        return container;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    String currentImage = _sampleVideoFrames[0];
-    if (widget.environmentTag == 'Bedroom') {
-      currentImage = _sampleVideoFrames[1];
-    } else if (widget.environmentTag == 'Garden' || widget.environmentTag == 'Office') {
-      currentImage = _sampleVideoFrames[2];
+    if (kIsWeb) {
+      return HtmlElementView(viewType: _viewTypeId);
     }
 
-    return AnimatedBuilder(
-      animation: _animController,
-      builder: (context, child) {
-        final scale = 1.0 + (_animController.value * 0.08); // Live subtle camera pan/zoom motion effect
-
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            // Live Moving Camera Feed Image
-            Transform.scale(
-              scale: scale,
-              child: Image.network(
-                currentImage,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: const Color(0xFF0F172A),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: const Color(0xFF1E293B),
-                    child: const Center(
-                      child: Icon(Icons.videocam_rounded, size: 64, color: Colors.white38),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // Live Camera Viewfinder Overlay Tint
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: widget.isRecording
-                      ? [
-                          Colors.red.withValues(alpha: 0.25),
-                          Colors.transparent,
-                          Colors.red.withValues(alpha: 0.35),
-                        ]
-                      : [
-                          Colors.black.withValues(alpha: 0.3),
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
-                        ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+    return Container(
+      color: Colors.black,
+      child: const Center(
+        child: Icon(Icons.videocam_rounded, size: 64, color: Colors.white54),
+      ),
     );
   }
 }

@@ -745,82 +745,46 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
             ),
           ),
 
-          // Live Camera Gridlines Overlay
+          // Rule-of-Thirds Gridlines Overlay
           Positioned.fill(
             child: CustomPaint(
               painter: _CameraGridPainter(isRecording: _isRecording),
             ),
           ),
 
-          // Central Live Viewfinder / Video Stream Focus Ring
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF2563EB)).withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF38BDF8),
-                      width: _isRecording ? 3 : 2,
+          // Top Stream Status Badge
+          Positioned(
+            top: 20,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white30),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                      shape: BoxShape.circle,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF2563EB)).withValues(alpha: 0.35),
-                        blurRadius: 20,
-                        spreadRadius: 4,
-                      ),
-                    ],
                   ),
-                  child: Icon(
-                    _isRecording ? Icons.videocam_rounded : Icons.camera_alt_rounded,
-                    size: 48,
-                    color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF38BDF8),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isRecording ? '🔴 REC - RECORDING LIVE WEBCAM' : '🟢 WEBCAM FEED ACTIVE',
+                    style: TextStyle(
+                      color: _isRecording ? const Color(0xFFFF6B6B) : const Color(0xFF34D399),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.6,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _isRecording ? 'REC 🔴 LIVE STREAMING MP4' : '📷 LIVE CAMERA FEED ACTIVE',
-                        style: TextStyle(
-                          color: _isRecording ? const Color(0xFFFF6B6B) : const Color(0xFF34D399),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _selectedEnvironmentTag != null
-                      ? 'Environment: $_selectedEnvironmentTag'
-                      : 'Target Dataset: General Collection',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
