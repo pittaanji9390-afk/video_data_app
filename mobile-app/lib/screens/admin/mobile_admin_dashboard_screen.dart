@@ -12,10 +12,10 @@ class MobileAdminDashboardScreen extends StatefulWidget {
 }
 
 class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen> {
-  int _activeNavIndex = 0; // 0: Dashboard, 1: Vendors, 2: Candidates, 3: QC Review, 4: Payments/Reports
+  int _activeNavIndex = 0; // 0: Dashboard, 1: Vendors, 2: Candidates, 3: QC Review, 4: Payments
 
   // Vendors state
-  List<Map<String, dynamic>> _vendors = [
+  final List<Map<String, dynamic>> _vendors = [
     {
       'id': 'VEN-001',
       'name': 'ABC Solutions',
@@ -49,7 +49,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
   ];
 
   // Candidates state
-  List<Map<String, dynamic>> _candidates = [
+  final List<Map<String, dynamic>> _candidates = [
     {'id': 'CND-001', 'name': 'Rahul Kumar', 'vendor': 'ABC Solutions', 'videos': 15, 'status': 'Active'},
     {'id': 'CND-002', 'name': 'Priya Sharma', 'vendor': 'ABC Solutions', 'videos': 12, 'status': 'Active'},
     {'id': 'CND-003', 'name': 'Kiran Patel', 'vendor': 'PQR Enterprises', 'videos': 8, 'status': 'Active'},
@@ -78,23 +78,40 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add New Vendor', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('Add New Vendor', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: _vendorNameCtrl, decoration: const InputDecoration(labelText: 'Company / Vendor Name')),
+              TextField(
+                controller: _vendorNameCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(labelText: 'Company / Vendor Name', labelStyle: TextStyle(color: Colors.grey)),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _contactPersonCtrl, decoration: const InputDecoration(labelText: 'Contact Person')),
+              TextField(
+                controller: _contactPersonCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(labelText: 'Contact Person', labelStyle: TextStyle(color: Colors.grey)),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _vendorEmailCtrl, decoration: const InputDecoration(labelText: 'Email Address')),
+              TextField(
+                controller: _vendorEmailCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(labelText: 'Email Address', labelStyle: TextStyle(color: Colors.grey)),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _vendorPhoneCtrl, decoration: const InputDecoration(labelText: 'Phone Number')),
+              TextField(
+                controller: _vendorPhoneCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(labelText: 'Phone Number', labelStyle: TextStyle(color: Colors.grey)),
+              ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () {
               if (_vendorNameCtrl.text.trim().isEmpty) return;
@@ -115,7 +132,8 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                 SnackBar(content: Text('Vendor "${_vendorNameCtrl.text.trim()}" created successfully!'), backgroundColor: AppColors.success),
               );
             },
-            child: const Text('Create Vendor'),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
+            child: const Text('Create Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -125,21 +143,42 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0F172A), // Dark slate theme
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0F172A),
+        elevation: 0,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Admin Platform', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text('Operations & QC Control', style: TextStyle(fontSize: 11, color: Colors.grey)),
+            Text('Admin Platform', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text('Operations & QC Control', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Notifications: 3 pending QC video reviews'), backgroundColor: Color(0xFF6366F1)),
+                  );
+                },
+              ),
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
+                ),
+              ),
+            ],
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: AppColors.error),
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
             onPressed: _handleLogout,
           ),
         ],
@@ -154,53 +193,89 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           _buildPaymentsAndReportsScreen(),
         ],
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const PoweredByFooter(),
-          BottomNavigationBar(
-            currentIndex: _activeNavIndex,
-            onTap: (idx) => setState(() => _activeNavIndex = idx),
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: Colors.grey,
-            type: BottomNavigationBarType.fixed,
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
-              BottomNavigationBarItem(icon: Icon(Icons.storefront_rounded), label: 'Vendors'),
-              BottomNavigationBarItem(icon: Icon(Icons.people_rounded), label: 'Candidates'),
-              BottomNavigationBarItem(icon: Icon(Icons.fact_check_rounded), label: 'QC Review'),
-              BottomNavigationBarItem(icon: Icon(Icons.payments_rounded), label: 'Payments'),
-            ],
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF0F172A),
+          border: Border(top: BorderSide(color: Color(0xFF1E293B))),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const PoweredByFooter(),
+            BottomNavigationBar(
+              currentIndex: _activeNavIndex,
+              onTap: (idx) => setState(() => _activeNavIndex = idx),
+              backgroundColor: const Color(0xFF0F172A),
+              selectedItemColor: const Color(0xFF6366F1),
+              unselectedItemColor: const Color(0xFF64748B),
+              type: BottomNavigationBarType.fixed,
+              selectedFontSize: 11,
+              unselectedFontSize: 11,
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Dashboard'),
+                BottomNavigationBarItem(icon: Icon(Icons.storefront_rounded), label: 'Vendors'),
+                BottomNavigationBarItem(icon: Icon(Icons.people_rounded), label: 'Candidates'),
+                BottomNavigationBarItem(icon: Icon(Icons.fact_check_rounded), label: 'QC Review'),
+                BottomNavigationBarItem(icon: Icon(Icons.payments_rounded), label: 'Payments'),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // 1. ADMIN DASHBOARD SCREEN (Screen #2 in Image 2)
+  // 1. ADMIN DASHBOARD SCREEN (Matches UI Design)
   Widget _buildDashboardScreen() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Greeting
-          const Row(
+          // Header Greeting Row with Blue Shield Badge
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Hello, Admin 👋', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  Text("Here's what's happening today", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  Text(
+                    'Hello, Admin 👋',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    "Here's what's happening today",
+                    style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                  ),
                 ],
               ),
-              CircleAvatar(backgroundColor: AppColors.primary, child: Icon(Icons.shield, color: Colors.white)),
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF3B82F6).withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.shield_rounded, color: Colors.white, size: 26),
+              ),
             ],
           ),
           const SizedBox(height: 20),
 
-          // 2x3 Metrics Grid (Matching Image 2 Screen 2)
+          // 2x3 Metric Cards Grid (Pixel Perfect Matching Reference Image)
           GridView.count(
             crossAxisCount: 2,
             crossAxisSpacing: 12,
@@ -209,28 +284,186 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
             physics: const NeverScrollableScrollPhysics(),
             childAspectRatio: 1.4,
             children: [
-              _buildStatTile('Vendors', '${_vendors.length}', Icons.storefront_rounded, AppColors.primary),
-              _buildStatTile('Candidates', '${_candidates.length}', Icons.people_rounded, AppColors.secondary),
-              _buildStatTile('Videos', '8,542', Icons.videocam_rounded, Colors.purple),
-              _buildStatTile('Pending QC', '124', Icons.hourglass_top_rounded, Colors.amber.shade800),
-              _buildStatTile('Approved', '7,950', Icons.check_circle_rounded, AppColors.success),
-              _buildStatTile('Rejected', '592', Icons.cancel_rounded, AppColors.error),
+              _buildDarkStatCard(
+                title: 'Vendors',
+                val: '${_vendors.length}',
+                icon: Icons.storefront_rounded,
+                accentColor: const Color(0xFF38BDF8),
+                cardBg: const Color(0xFF112240),
+                borderColor: const Color(0xFF1E3A8A),
+              ),
+              _buildDarkStatCard(
+                title: 'Candidates',
+                val: '${_candidates.length}',
+                icon: Icons.people_rounded,
+                accentColor: const Color(0xFF60A5FA),
+                cardBg: const Color(0xFF0F2942),
+                borderColor: const Color(0xFF1D4ED8),
+              ),
+              _buildDarkStatCard(
+                title: 'Videos',
+                val: '8,542',
+                icon: Icons.videocam_rounded,
+                accentColor: const Color(0xFFC084FC),
+                cardBg: const Color(0xFF1E1B4B),
+                borderColor: const Color(0xFF4C1D95),
+              ),
+              _buildDarkStatCard(
+                title: 'Pending QC',
+                val: '124',
+                icon: Icons.hourglass_top_rounded,
+                accentColor: const Color(0xFFF59E0B),
+                cardBg: const Color(0xFF2E1C0C),
+                borderColor: const Color(0xFF78350F),
+              ),
+              _buildDarkStatCard(
+                title: 'Approved',
+                val: '7,950',
+                icon: Icons.check_circle_rounded,
+                accentColor: const Color(0xFF34D399),
+                cardBg: const Color(0xFF064E3B),
+                borderColor: const Color(0xFF047857),
+              ),
+              _buildDarkStatCard(
+                title: 'Rejected',
+                val: '592',
+                icon: Icons.cancel_rounded,
+                accentColor: const Color(0xFFF87171),
+                cardBg: const Color(0xFF31121C),
+                borderColor: const Color(0xFF881337),
+              ),
             ],
           ),
           const SizedBox(height: 24),
 
-          // Recent Activities Section
-          const Text('Recent Activities', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          // Recent Activities Header
+          const Text(
+            'Recent Activities',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
           const SizedBox(height: 12),
-          _buildActivityItem('New Vendor Added', 'ABC Solutions', '10:30 AM', Icons.storefront_rounded, AppColors.primary),
-          _buildActivityItem('Video Approved', 'Kitchen Video - Rahul', '09:45 AM', Icons.check_circle_rounded, AppColors.success),
-          _buildActivityItem('Payment Released', 'Vendor ABC - ₹15,200', 'Yesterday', Icons.payments_rounded, Colors.amber.shade800),
+
+          _buildDarkActivityItem(
+            title: 'New Vendor Added',
+            desc: 'ABC Solutions',
+            time: '10:30 AM',
+            icon: Icons.storefront_rounded,
+            accentColor: const Color(0xFF38BDF8),
+          ),
+          _buildDarkActivityItem(
+            title: 'Video Approved',
+            desc: 'Kitchen Video - Rahul',
+            time: '09:45 AM',
+            icon: Icons.check_circle_rounded,
+            accentColor: const Color(0xFF34D399),
+          ),
+          _buildDarkActivityItem(
+            title: 'Payment Settlement',
+            desc: 'Vendor ABC Solutions - ₹152,000 released',
+            time: 'Yesterday',
+            icon: Icons.payments_rounded,
+            accentColor: const Color(0xFFF59E0B),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  // 2. VENDOR MANAGEMENT SCREEN (Screen #4 in Image 2)
+  // Helper Widget for Metric Cards
+  Widget _buildDarkStatCard({
+    required String title,
+    required String val,
+    required IconData icon,
+    required Color accentColor,
+    required Color cardBg,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor.withValues(alpha: 0.6), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: accentColor),
+              ),
+              Icon(icon, color: accentColor, size: 22),
+            ],
+          ),
+          Text(
+            val,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: accentColor,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDarkActivityItem({
+    required String title,
+    required String desc,
+    required String time,
+    required IconData icon,
+    required Color accentColor,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: accentColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                const SizedBox(height: 2),
+                Text(desc, style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+              ],
+            ),
+          ),
+          Text(time, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  // 2. VENDOR MANAGEMENT SCREEN
   Widget _buildVendorManagementScreen() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -240,18 +473,20 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Vendor Management', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text('Vendor Management', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
               ElevatedButton.icon(
                 onPressed: _showAddVendorDialog,
                 icon: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
                 label: const Text('+ Add Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
 
-          // Vendor Cards List
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -259,48 +494,59 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
             itemBuilder: (ctx, i) {
               final v = _vendors[i];
               final isActive = v['status'] == 'Active';
-              return Card(
+              return Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(backgroundColor: AppColors.primary.withAlpha(25), child: Text(v['name'][0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary))),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(v['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  Text('ID: ${v['id']}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                ],
-                              ),
-                            ],
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                              child: Text(v['name'][0], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF818CF8))),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(v['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                                Text('ID: ${v['id']}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: (isActive ? const Color(0xFF10B981) : Colors.grey).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(color: (isActive ? AppColors.success : Colors.grey).withAlpha(25), borderRadius: BorderRadius.circular(12)),
-                            child: Text(v['status'], style: TextStyle(color: isActive ? AppColors.success : Colors.grey, fontWeight: FontWeight.bold, fontSize: 11)),
+                          child: Text(
+                            v['status'],
+                            style: TextStyle(color: isActive ? const Color(0xFF34D399) : Colors.grey, fontWeight: FontWeight.bold, fontSize: 11),
                           ),
-                        ],
-                      ),
-                      const Divider(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildMiniDetail('Candidates', '${v['candidates']}'),
-                          _buildMiniDetail('Videos', '${v['videos']}'),
-                          _buildMiniDetail('Earnings', v['earnings']),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24, color: Color(0xFF334155)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildMiniDetail('Candidates', '${v['candidates']}'),
+                        _buildMiniDetail('Videos', '${v['videos']}'),
+                        _buildMiniDetail('Earnings', v['earnings']),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
@@ -317,7 +563,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Candidate Subject Roster', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text('Candidate Subject Roster', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 16),
           ListView.builder(
             shrinkWrap: true,
@@ -325,17 +571,24 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
             itemCount: _candidates.length,
             itemBuilder: (ctx, i) {
               final c = _candidates[i];
-              return Card(
+              return Container(
                 margin: const EdgeInsets.only(bottom: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
                 child: ListTile(
-                  leading: CircleAvatar(backgroundColor: AppColors.secondary.withAlpha(30), child: Text(c['name'][0], style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold))),
-                  title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${c['id']} • Vendor: ${c['vendor']}'),
+                  leading: CircleAvatar(
+                    backgroundColor: const Color(0xFF0EA5E9).withValues(alpha: 0.2),
+                    child: Text(c['name'][0], style: const TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold)),
+                  ),
+                  title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  subtitle: Text('${c['id']} • Vendor: ${c['vendor']}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: AppColors.success.withAlpha(20), borderRadius: BorderRadius.circular(8)),
-                    child: Text('${c['videos']} Videos', style: const TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.bold)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+                    child: Text('${c['videos']} Videos', style: const TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ),
               );
@@ -346,23 +599,23 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     );
   }
 
-  // 4. VIDEO REVIEW (QC PANEL) SCREEN (Screen #3 in Image 2)
+  // 4. VIDEO REVIEW (QC PANEL) SCREEN
   Widget _buildQCReviewScreen() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Video Review (QC Panel)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text('Video Review (QC Panel)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 14),
 
-          // Video Player Container
           Container(
             height: 200,
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.black,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF334155)),
             ),
             child: Stack(
               alignment: Alignment.center,
@@ -373,7 +626,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                   right: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(color: Colors.black70, borderRadius: BorderRadius.circular(6)),
                     child: const Text('30:15', style: TextStyle(color: Colors.white, fontSize: 11)),
                   ),
                 ),
@@ -382,40 +635,52 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           ),
           const SizedBox(height: 16),
 
-          // Metadata Table
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildMetaRow('Vendor', 'ABC Solutions'),
-                  const Divider(),
-                  _buildMetaRow('Candidate', 'Rahul Kumar'),
-                  const Divider(),
-                  _buildMetaRow('Duration', '30:15'),
-                  const Divider(),
-                  _buildMetaRow('Uploaded On', '12 May 2024, 10:30 AM'),
-                  const Divider(),
-                  _buildMetaRow('Environment', 'Kitchen'),
-                ],
-              ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF334155)),
+            ),
+            child: Column(
+              children: [
+                _buildMetaRow('Vendor', 'ABC Solutions'),
+                const Divider(color: Color(0xFF334155)),
+                _buildMetaRow('Candidate', 'Rahul Kumar'),
+                const Divider(color: Color(0xFF334155)),
+                _buildMetaRow('Duration', '30:15'),
+                const Divider(color: Color(0xFF334155)),
+                _buildMetaRow('Uploaded On', '12 May 2024, 10:30 AM'),
+                const Divider(color: Color(0xFF334155)),
+                _buildMetaRow('Environment', 'Kitchen'),
+              ],
             ),
           ),
           const SizedBox(height: 16),
 
-          // Quality Score Gauge Card
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            child: const ListTile(
-              leading: CircleAvatar(backgroundColor: Color(0xFFDCFCE7), child: Text('92%', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.success))),
-              title: Text('Quality Score 92%', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('Good video quality, clear lighting'),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF059669)),
+            ),
+            child: const Row(
+              children: [
+                CircleAvatar(backgroundColor: Color(0xFF064E3B), child: Text('92%', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF34D399)))),
+                SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Quality Score 92%', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text('Good video quality, clear lighting', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
 
-          // Reject / Approve Actions
           Row(
             children: [
               Expanded(
@@ -423,7 +688,12 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Video Rejected.'), backgroundColor: AppColors.error));
                   },
-                  style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, side: const BorderSide(color: AppColors.error), padding: const EdgeInsets.symmetric(vertical: 14)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: const BorderSide(color: Color(0xFFEF4444)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   child: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -433,7 +703,11 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Video Approved!'), backgroundColor: AppColors.success));
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 14)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   child: const Text('Approve', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
@@ -444,90 +718,32 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     );
   }
 
-  // 5. PAYMENTS & FINANCIAL REPORTS SCREEN (Screen #6, #7 in Image 2)
+  // 5. PAYMENTS & FINANCIAL REPORTS SCREEN
   Widget _buildPaymentsAndReportsScreen() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Earnings & Payouts', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 14),
-
-          // Total Payout Banner Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Total Payout Settlement', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                SizedBox(height: 6),
-                Text('₹18,52,000', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
+          const Text('Payments & Financials', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 16),
 
           Row(
             children: [
-              Expanded(child: _buildPayCard('Pending', '₹2,50,000', Colors.amber.shade800)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildPayCard('Completed', '₹16,02,000', AppColors.success)),
+              Expanded(child: _buildPayCard('Total Disbursed', '₹2,13,800', const Color(0xFF34D399), const Color(0xFF064E3B))),
+              const SizedBox(width: 10),
+              Expanded(child: _buildPayCard('Pending Payout', '₹45,200', const Color(0xFFF59E0B), const Color(0xFF2E1C0C))),
             ],
           ),
           const SizedBox(height: 20),
 
-          ElevatedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Monthly financial report generated & downloaded!'), backgroundColor: AppColors.success));
-            },
-            icon: const Icon(Icons.download_rounded, color: Colors.white),
-            label: const Text('Generate Financial Report (CSV)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, minimumSize: const Size.fromHeight(48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-          ),
-        ],
-      ),
-    );
-  }
+          const Text('Vendor Payout Breakdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 12),
 
-  Widget _buildStatTile(String title, String val, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withAlpha(50)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
-              Icon(icon, color: color, size: 20),
-            ],
-          ),
-          Text(val, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+          _buildVendorPayRow('ABC Solutions', '₹152,000', 'Paid', const Color(0xFF34D399)),
+          _buildVendorPayRow('PQR Enterprises', '₹36,500', 'Pending', const Color(0xFFF59E0B)),
+          _buildVendorPayRow('LMN Groups', '₹25,300', 'Paid', const Color(0xFF34D399)),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(String title, String desc, String time, IconData icon, Color color) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(backgroundColor: color.withAlpha(20), child: Icon(icon, color: color, size: 20)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        subtitle: Text(desc, style: const TextStyle(fontSize: 12)),
-        trailing: Text(time, style: const TextStyle(fontSize: 11, color: Colors.grey)),
       ),
     );
   }
@@ -535,9 +751,9 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
   Widget _buildMiniDetail(String label, String val) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
         const SizedBox(height: 2),
-        Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
       ],
     );
   }
@@ -548,27 +764,58 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(label, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+          Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
         ],
       ),
     );
   }
 
-  Widget _buildPayCard(String label, String val, Color color) {
+  Widget _buildPayCard(String label, String val, Color textCol, Color bgCol) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withAlpha(20),
+        color: bgCol,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withAlpha(60)),
+        border: Border.all(color: textCol.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+          Text(label, style: TextStyle(fontSize: 11, color: textCol, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(val, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+          Text(val, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textCol)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVendorPayRow(String name, String amount, String status, Color statusCol) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              const Text('Contract Rate: ₹50/hr', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(amount, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15)),
+              Text(status, style: TextStyle(color: statusCol, fontWeight: FontWeight.bold, fontSize: 11)),
+            ],
+          ),
         ],
       ),
     );
