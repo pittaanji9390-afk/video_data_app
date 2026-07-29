@@ -569,7 +569,17 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                               backgroundColor: const Color(0xFF10B981),
                               labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                               onPressed: () {
-                                VoiceCommandService.instance.processSimulatedSpeech('start');
+                                if (!_isRecording) {
+                                  _startRecording();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('🎙️ Voice Command Executed: "START RECORDING"'),
+                                      backgroundColor: AppColors.success,
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               },
                             ),
                             const SizedBox(width: 12),
@@ -579,7 +589,17 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                               backgroundColor: const Color(0xFFEF4444),
                               labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                               onPressed: () {
-                                VoiceCommandService.instance.processSimulatedSpeech('stop');
+                                if (_isRecording) {
+                                  _stopRecording();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('🎙️ Voice Command Executed: "STOP RECORDING"'),
+                                      backgroundColor: Color(0xFFF59E0B),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               },
                             ),
                           ],
