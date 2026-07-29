@@ -186,16 +186,6 @@ export default function CandidatePortal() {
             flexDirection: 'column',
           }}
         >
-          {/* Top Notch Status Bar */}
-          <Box sx={{ height: 28, bgcolor: activeScreen === 'record' ? '#000' : '#fff', px: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
-            <Typography variant="caption" fontWeight="bold" color={activeScreen === 'record' ? '#fff' : '#0f172a'}>
-              9:41
-            </Typography>
-            <Box sx={{ width: 110, height: 18, bgcolor: '#1e293b', borderRadius: '0 0 10px 10px', mx: 'auto' }} />
-            <Typography variant="caption" color={activeScreen === 'record' ? '#fff' : '#0f172a'}>
-              📶 🔋
-            </Typography>
-          </Box>
 
           {/* SCREEN CONTENT VIEWPORT */}
           <Box sx={{ flexGrow: 1, overflowY: 'auto', p: activeScreen === 'record' ? 0 : 2 }}>

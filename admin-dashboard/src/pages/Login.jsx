@@ -234,16 +234,6 @@ export default function SingleUnifiedLogin() {
             flexDirection: 'column',
           }}
         >
-          {/* Top Notch Status Bar */}
-          <Box sx={{ height: 28, bgcolor: step === 0 ? '#1d4ed8' : '#fff', px: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
-            <Typography variant="caption" fontWeight="bold" color={step === 0 ? '#fff' : '#0f172a'}>
-              9:41
-            </Typography>
-            <Box sx={{ width: 110, height: 18, bgcolor: '#1e293b', borderRadius: '0 0 10px 10px', mx: 'auto' }} />
-            <Typography variant="caption" color={step === 0 ? '#fff' : '#0f172a'}>
-              📶 🔋
-            </Typography>
-          </Box>
 
           {/* SCREEN 1: SPLASH SCREEN */}
           {step === 0 && (

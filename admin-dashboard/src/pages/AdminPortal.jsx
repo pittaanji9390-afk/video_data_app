@@ -139,16 +139,6 @@ export default function AdminPortal() {
             flexDirection: 'column',
           }}
         >
-          {/* Top Notch Status Bar */}
-          <Box sx={{ height: 28, bgcolor: activeScreen === 'login' ? '#312e81' : '#fff', px: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
-            <Typography variant="caption" fontWeight="bold" color={activeScreen === 'login' ? '#fff' : '#0f172a'}>
-              9:41
-            </Typography>
-            <Box sx={{ width: 110, height: 18, bgcolor: '#1e293b', borderRadius: '0 0 10px 10px', mx: 'auto' }} />
-            <Typography variant="caption" color={activeScreen === 'login' ? '#fff' : '#0f172a'}>
-              📶 🔋
-            </Typography>
-          </Box>
 
           {/* Active Screen Content Canvas */}
           <Box sx={{ flex: 1, overflowY: 'auto', p: activeScreen === 'login' ? 0 : 2, pb: 8 }}>

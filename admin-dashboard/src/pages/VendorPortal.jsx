@@ -138,16 +138,6 @@ export default function VendorPortal() {
             flexDirection: 'column',
           }}
         >
-          {/* Top Notch Status Bar */}
-          <Box sx={{ height: 28, bgcolor: '#fff', px: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
-            <Typography variant="caption" fontWeight="bold" color="#0f172a">
-              9:41
-            </Typography>
-            <Box sx={{ width: 110, height: 18, bgcolor: '#1e293b', borderRadius: '0 0 10px 10px', mx: 'auto' }} />
-            <Typography variant="caption" color="#0f172a">
-              📶 🔋
-            </Typography>
-          </Box>
 
           {/* Active Screen Content Canvas */}
           <Box sx={{ flex: 1, overflowY: 'auto', p: activeScreen === 'login' ? 0 : 2, pb: 8 }}>
