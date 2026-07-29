@@ -31,45 +31,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   int _fileSize = 10485760; // 10 MB default
 
   // History of Uploads
-  List<Map<String, dynamic>> _uploadsHistory = [
-    {
-      'id': 'VID-2024-901',
-      'title': 'Kitchen Cooking Sample',
-      'env': 'Kitchen',
-      'status': 'Approved',
-      'date': 'Today, 10:30 AM',
-      'size': '10.5 MB',
-      'duration': '30:00 Mins',
-    },
-    {
-      'id': 'VID-2024-902',
-      'title': 'Bedroom Ambient Sample',
-      'env': 'Bedroom',
-      'status': 'Pending QC',
-      'date': 'Today, 09:15 AM',
-      'size': '15.2 MB',
-      'duration': '24:18 Mins',
-    },
-    {
-      'id': 'VID-2024-903',
-      'title': 'Garden Outdoor Sample',
-      'env': 'Garden',
-      'status': 'Approved',
-      'date': 'Yesterday, 04:45 PM',
-      'size': '18.0 MB',
-      'duration': '30:00 Mins',
-    },
-    {
-      'id': 'VID-2024-904',
-      'title': 'Bathroom Lighting Test',
-      'env': 'Bathroom',
-      'status': 'Rejected',
-      'date': '2 days ago',
-      'size': '8.4 MB',
-      'duration': '12:00 Mins',
-      'reason': 'Low lighting in frame',
-    },
-  ];
+  List<Map<String, dynamic>> _uploadsHistory = [];
 
   @override
   void initState() {

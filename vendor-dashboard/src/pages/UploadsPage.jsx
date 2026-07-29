@@ -24,12 +24,7 @@ export default function UploadsPage() {
         console.error('Error parsing qc submissions:', e);
       }
     }
-    setUploads([
-      { id: 'VID-8001', candidate: 'Vasavi Kandula', tag: 'Kitchen', duration: '30:00 Mins', status: 'approved', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80' },
-      { id: 'VID-8002', candidate: 'Rahul Kumar', tag: 'Bedroom', duration: '24:18 Mins', status: 'pending', img: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=300&auto=format&fit=crop&q=80' },
-      { id: 'VID-8003', candidate: 'Anji', tag: 'Garden', duration: '30:00 Mins', status: 'approved', img: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&auto=format&fit=crop&q=80' },
-      { id: 'VID-8004', candidate: 'Vasavi Kandula', tag: 'Bathroom', duration: '12:00 Mins', status: 'rejected', img: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=300&auto=format&fit=crop&q=80' },
-    ]);
+    setUploads([]);
   };
 
   useEffect(() => {

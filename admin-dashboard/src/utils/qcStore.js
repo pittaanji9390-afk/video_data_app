@@ -1,55 +1,6 @@
 // Shared store for Quality Control (QC) Video Submissions across candidate app, vendor portal, and admin dashboard
 
-const DEFAULT_SUBMISSIONS = [
-  {
-    id: 'VID-901',
-    title: 'Kitchen Cooking Sample',
-    candidateId: 'CAN-2024-001',
-    candidateName: 'Vasavi Kandula',
-    candidatePhone: '+91 98765 43210',
-    vendor: 'Acme Video Solutions',
-    duration: '15:30 Mins',
-    score: 92,
-    status: 'Pending',
-    env: 'Kitchen',
-    time: 'Today, 10:30 AM',
-    size: '1.24 GB',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    rejectionReason: '',
-  },
-  {
-    id: 'VID-902',
-    title: 'Bedroom Lighting Sample',
-    candidateId: 'CND-7777',
-    candidateName: 'Rahul Kumar',
-    candidatePhone: '+91 98765 43211',
-    vendor: 'Apex Data Services',
-    duration: '30:00 Mins',
-    score: 88,
-    status: 'Pending',
-    env: 'Bedroom',
-    time: 'Today, 09:15 AM',
-    size: '2.80 GB',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    rejectionReason: '',
-  },
-  {
-    id: 'VID-903',
-    title: 'Garden Daylight Sample',
-    candidateId: 'CND-7777',
-    candidateName: 'Anji',
-    candidatePhone: '+91 98765 43212',
-    vendor: 'Acme Video Solutions',
-    duration: '22:15 Mins',
-    score: 95,
-    status: 'Approved',
-    env: 'Garden',
-    time: 'Yesterday, 06:20 PM',
-    size: '1.50 GB',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    rejectionReason: '',
-  },
-];
+const DEFAULT_SUBMISSIONS = [];
 
 const DEFAULT_SUPPORT_TICKETS = [
   {
