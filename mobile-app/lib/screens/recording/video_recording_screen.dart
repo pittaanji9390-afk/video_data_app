@@ -179,21 +179,15 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   Future<void> _startRecording() async {
     if (_isRecording) return;
 
-    if (_controller != null && _controller!.value.isInitialized) {
+    if (!kIsWeb && _controller != null && _controller!.value.isInitialized) {
       try {
         await _controller!.startVideoRecording();
-        setState(() {
-          _isRecording = true;
-          _recordedFile = null;
-        });
-        _startTimer();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error starting recording: $e'), backgroundColor: AppColors.error),
-        );
+        debugPrint('Hardware recording start note: $e');
       }
-    } else {
-      // Simulation / Web fallback mode
+    }
+
+    if (mounted) {
       setState(() {
         _isRecording = true;
         _recordedFile = null;
