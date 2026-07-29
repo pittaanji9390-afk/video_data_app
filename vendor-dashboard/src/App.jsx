@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { Box, CssBaseline, ThemeProvider, createTheme, Typography } from '@mui/material';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import VendorDashboardPage from './pages/VendorDashboardPage';
@@ -73,6 +73,21 @@ function VendorDashboardLayout() {
             <Route path="/settings" element={<VendorDashboardPage />} />
             <Route path="*" element={<VendorDashboardPage />} />
           </Routes>
+        </Box>
+
+        <Box
+          component="footer"
+          sx={{
+            py: 1.5,
+            px: 3,
+            textAlign: 'center',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, letterSpacing: 0.5 }}>
+            Powered by <Box component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>ElevateIQ Softtech</Box>
+          </Typography>
         </Box>
       </Box>
     </Box>

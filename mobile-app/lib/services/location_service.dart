@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
@@ -7,24 +8,30 @@ class LocationService {
 
   /// Requests location permission and returns whether granted
   Future<bool> requestLocationPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return false;
-    }
+    try {
+      if (kIsWeb) return true;
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         return false;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return false;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        return false;
+      }
+
+      return true;
+    } catch (_) {
       return false;
     }
-
-    return true;
   }
 
   /// Gets current GPS coordinates (latitude and longitude)
@@ -34,8 +41,8 @@ class LocationService {
       if (!hasPermission) return null;
 
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        desiredAccuracy: LocationAccuracy.low,
+        timeLimit: const Duration(seconds: 4),
       );
     } catch (e) {
       return null;

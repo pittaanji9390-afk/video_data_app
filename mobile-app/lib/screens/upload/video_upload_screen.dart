@@ -1,7 +1,8 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/upload_service.dart';
+import '../../widgets/powered_by_footer.dart';
 
 class VideoUploadScreen extends StatefulWidget {
   final String videoPath;
@@ -30,14 +31,13 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   }
 
   Future<void> _checkFileStats() async {
-    final file = File(widget.videoPath);
-    if (await file.exists()) {
-      final len = await file.length();
+    if (kIsWeb) {
       if (mounted) {
         setState(() {
-          _fileSize = len;
+          _fileSize = 10485760; // 10 MB mock size for Web
         });
       }
+      return;
     }
   }
 
@@ -260,6 +260,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: const PoweredByFooter(),
     );
   }
 

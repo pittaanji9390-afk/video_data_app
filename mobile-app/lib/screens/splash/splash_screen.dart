@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../config/routes/app_routes.dart';
+import '../../widgets/powered_by_footer.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -105,6 +106,11 @@ class _SplashScreenState extends State<SplashScreen> {
                     minHeight: 4,
                   ),
                 ),
+              ),
+              const SizedBox(height: 30),
+              const PoweredByFooter(
+                textColor: Colors.white70,
+                brandColor: Colors.white,
               ),
             ],
           ),

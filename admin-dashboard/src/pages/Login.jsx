@@ -21,6 +21,7 @@ import {
 import {
   EmailOutlined,
   LockOutlined,
+  PersonOutlineOutlined,
   Visibility,
   VisibilityOff,
   Videocam,
@@ -355,82 +356,132 @@ export default function SingleUnifiedLogin() {
             </Box>
           )}
 
-          {/* SCREEN 5: WELCOME BACK LOGIN SCREEN */}
+          {/* SCREEN 5: WELCOME BACK LOGIN SCREEN (Matching Screenshot) */}
           {step === 4 && (
             <Box sx={{ flex: 1, p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflowY: 'auto' }}>
               <Box>
                 <IconButton size="small" onClick={() => setStep(1)} sx={{ mb: 1, ml: -1 }}>
                   <ArrowBack />
                 </IconButton>
-                <Typography variant="h5" fontWeight="bold">Welcome Back!</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Login to your account</Typography>
+
+                {/* Blue Camera Icon Badge */}
+                <Box
+                  sx={{
+                    width: 68,
+                    height: 68,
+                    borderRadius: '20px',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justify: 'center',
+                    mx: 'auto',
+                    mb: 2.5,
+                    boxShadow: '0 10px 25px rgba(59, 130, 246, 0.35)',
+                  }}
+                >
+                  <Videocam sx={{ fontSize: 36, color: '#ffffff' }} />
+                </Box>
+
+                <Typography variant="h4" fontWeight="800" align="center" sx={{ color: '#0f172a', letterSpacing: '-0.5px', mb: 0.8, fontSize: '1.75rem' }}>
+                  Welcome Back!
+                </Typography>
+                <Typography variant="body2" align="center" sx={{ color: '#64748b', mb: 3.5, fontWeight: 500 }}>
+                  Sign in to continue to your account
+                </Typography>
 
                 {loginAlert && (
-                  <Alert severity={loginAlert.type} sx={{ mb: 2 }}>{loginAlert.message}</Alert>
+                  <Alert severity={loginAlert.type} sx={{ mb: 2, borderRadius: 3 }}>{loginAlert.message}</Alert>
                 )}
 
                 <form onSubmit={handleSubmit}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    name="identifier"
-                    value={formData.identifier}
-                    onChange={handleInputChange}
-                    error={!!errors.identifier}
-                    helperText={errors.identifier}
-                    size="small"
-                    placeholder="anji@gmail.com"
-                    sx={{ mb: 2 }}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start"><EmailOutlined color="action" /></InputAdornment>,
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    error={!!errors.password}
-                    helperText={errors.password}
-                    size="small"
-                    placeholder="••••••••"
-                    sx={{ mb: 1 }}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start"><LockOutlined color="action" /></InputAdornment>,
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton size="small" onClick={() => setShowPassword(!showPassword)}>
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2.5 }}>
-                    <Typography variant="caption" color="primary" fontWeight="bold" sx={{ cursor: 'pointer' }}>
-                      Forgot Password?
-                    </Typography>
+                  {/* Username Field */}
+                  <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.8 }}>
+                      <PersonOutlineOutlined sx={{ color: '#3b82f6', fontSize: 18 }} />
+                      <Typography variant="body2" fontWeight="700" sx={{ color: '#1e293b', fontSize: '0.85rem' }}>Username</Typography>
+                    </Box>
+                    <TextField
+                      fullWidth
+                      name="identifier"
+                      value={formData.identifier}
+                      onChange={handleInputChange}
+                      error={!!errors.identifier}
+                      helperText={errors.identifier}
+                      placeholder="Enter your Username"
+                      size="medium"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '14px',
+                          bgcolor: '#f8fafc',
+                          '& fieldset': { borderColor: '#dbeafe' },
+                          '&:hover fieldset': { borderColor: '#93c5fd' },
+                          '&.Mui-focused fieldset': { borderColor: '#3b82f6', borderWidth: '1.5px' },
+                        },
+                      }}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start"><PersonOutlineOutlined sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                      }}
+                    />
                   </Box>
 
-                  <Button fullWidth type="submit" variant="contained" color="primary" disabled={loading} sx={{ py: 1.4, borderRadius: 3, fontWeight: 'bold', fontSize: 16, mb: 2 }}>
+                  {/* Password Field */}
+                  <Box sx={{ mb: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.8 }}>
+                      <LockOutlined sx={{ color: '#3b82f6', fontSize: 18 }} />
+                      <Typography variant="body2" fontWeight="700" sx={{ color: '#1e293b', fontSize: '0.85rem' }}>Password</Typography>
+                    </Box>
+                    <TextField
+                      fullWidth
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      error={!!errors.password}
+                      helperText={errors.password}
+                      placeholder="Enter your Password"
+                      size="medium"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '14px',
+                          bgcolor: '#f8fafc',
+                          '& fieldset': { borderColor: '#dbeafe' },
+                          '&:hover fieldset': { borderColor: '#93c5fd' },
+                          '&.Mui-focused fieldset': { borderColor: '#3b82f6', borderWidth: '1.5px' },
+                        },
+                      }}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start"><LockOutlined sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton size="small" onClick={() => setShowPassword(!showPassword)}>
+                              {showPassword ? <VisibilityOff sx={{ color: '#94a3b8' }} /> : <Visibility sx={{ color: '#94a3b8' }} />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Box>
+
+                  {/* Submit Button */}
+                  <Button
+                    fullWidth
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    sx={{
+                      py: 1.5,
+                      borderRadius: '14px',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: '#ffffff',
+                      fontWeight: 'bold',
+                      fontSize: '1rem',
+                      textTransform: 'none',
+                      boxShadow: '0 8px 20px rgba(37, 99, 235, 0.35)',
+                    }}
+                  >
                     {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
                   </Button>
                 </form>
-
-                <Typography variant="caption" align="center" display="block" color="text.secondary" sx={{ mb: 2 }}>
-                  or
-                </Typography>
-
-                <Button fullWidth variant="outlined" sx={{ py: 1.2, borderRadius: 3, color: '#0f172a', borderColor: '#cbd5e1', textTransform: 'none', fontWeight: 'bold', mb: 2 }}>
-                  <Box component="span" sx={{ color: '#4285F4', fontWeight: 'bold', mr: 1 }}>G</Box> Continue with Google
-                </Button>
-
-                <Typography variant="caption" align="center" display="block" color="text.secondary">
-                  Don't have an account? <Box component="span" color="primary.main" fontWeight="bold" sx={{ cursor: 'pointer' }}>Sign Up</Box>
-                </Typography>
               </Box>
 
               {/* 1-Click Role Login Shortcuts */}
@@ -464,6 +515,10 @@ export default function SingleUnifiedLogin() {
               </Box>
             </Box>
           )}
+
+          <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 2, pb: 2, opacity: 0.8 }}>
+            Powered by <Box component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>ElevateIQ Softtech</Box>
+          </Typography>
 
         </Box>
 

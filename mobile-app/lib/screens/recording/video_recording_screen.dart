@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -54,14 +54,16 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _initializeCamera() async {
-    final cameraStatus = await Permission.camera.request();
-    final micStatus = await Permission.microphone.request();
+    if (!kIsWeb) {
+      final cameraStatus = await Permission.camera.request();
+      final micStatus = await Permission.microphone.request();
 
-    if (!cameraStatus.isGranted || !micStatus.isGranted) {
-      if (mounted) {
-        setState(() => _isInitializing = false);
+      if (!cameraStatus.isGranted || !micStatus.isGranted) {
+        if (mounted) {
+          setState(() => _isInitializing = false);
+        }
+        return;
       }
-      return;
     }
 
     final cameras = await CameraService.instance.initCameras();
@@ -136,7 +138,10 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       setState(() => _isFetchingLocation = true);
 
       final file = await _controller!.stopVideoRecording();
-      final fileSize = await File(file.path).length();
+      int fileSize = 0;
+      try {
+        fileSize = await file.length();
+      } catch (_) {}
 
       // Capture GPS Location
       final position = await LocationService.instance.getCurrentPosition();

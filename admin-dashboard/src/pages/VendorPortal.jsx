@@ -294,7 +294,7 @@ export default function VendorPortal() {
         >
 
           {/* Active Screen Content Canvas */}
-          <Box sx={{ flex: 1, overflowY: 'auto', p: activeScreen === 'login' ? 0 : 2, pb: 8 }}>
+          <Box sx={{ flex: 1, overflowY: 'auto', p: activeScreen === 'login' ? 0 : 2, display: 'flex', flexDirection: 'column' }}>
             
             {/* 1. VENDOR LOGIN SCREEN (Mockup Screen 1) */}
             {activeScreen === 'login' && (
@@ -660,6 +660,11 @@ export default function VendorPortal() {
                 </Button>
               </Box>
             )}
+
+            {/* Powered by Footer */}
+            <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 'auto', pt: 3, pb: 1.5, fontSize: '0.75rem', fontWeight: 600, opacity: 0.85, textAlign: 'center', width: '100%' }}>
+              Powered by <Box component="span" sx={{ color: 'success.main', fontWeight: 700 }}>ElevateIQ Softtech</Box>
+            </Typography>
 
           </Box>
 

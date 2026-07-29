@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/routes/app_routes.dart';
+import '../../widgets/powered_by_footer.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -152,6 +153,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  const PoweredByFooter(),
                 ],
               ),
             ),

@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../earnings/earnings_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../widgets/powered_by_footer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,26 +30,32 @@ class _HomeScreenState extends State<HomeScreen> {
           const ProfileScreen(),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentTab,
-        onTap: (idx) {
-          if (idx == 1) {
-            Navigator.pushNamed(context, AppRoutes.cameraPermission);
-          } else if (idx == 2) {
-            Navigator.pushNamed(context, AppRoutes.uploadVideo);
-          } else {
-            setState(() => _currentTab = idx);
-          }
-        },
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.videocam_rounded), label: 'Record'),
-          BottomNavigationBarItem(icon: Icon(Icons.cloud_upload_rounded), label: 'Uploads'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications_rounded), label: 'Alerts'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const PoweredByFooter(),
+          BottomNavigationBar(
+            currentIndex: _currentTab,
+            onTap: (idx) {
+              if (idx == 1) {
+                Navigator.pushNamed(context, AppRoutes.cameraPermission);
+              } else if (idx == 2) {
+                Navigator.pushNamed(context, AppRoutes.uploadVideo);
+              } else {
+                setState(() => _currentTab = idx);
+              }
+            },
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: Colors.grey,
+            type: BottomNavigationBarType.fixed,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(Icons.videocam_rounded), label: 'Record'),
+              BottomNavigationBarItem(icon: Icon(Icons.cloud_upload_rounded), label: 'Uploads'),
+              BottomNavigationBarItem(icon: Icon(Icons.notifications_rounded), label: 'Alerts'),
+              BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+            ],
+          ),
         ],
       ),
     );
@@ -177,52 +184,65 @@ class _HomeDashboardTab extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.3,
+            Column(
               children: [
-                _buildQuickActionCard(
-                  context,
-                  title: 'Start Recording',
-                  subtitle: 'Record camera video',
-                  icon: Icons.videocam_rounded,
-                  color: AppColors.primary,
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.cameraPermission),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickActionCard(
+                        context,
+                        title: 'Start Recording',
+                        subtitle: 'Record camera video',
+                        icon: Icons.videocam_rounded,
+                        color: AppColors.primary,
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.cameraPermission),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: _buildQuickActionCard(
+                        context,
+                        title: 'Upload History',
+                        subtitle: 'View submitted logs',
+                        icon: Icons.history_rounded,
+                        color: AppColors.secondary,
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.uploadVideo),
+                      ),
+                    ),
+                  ],
                 ),
-                _buildQuickActionCard(
-                  context,
-                  title: 'Upload History',
-                  subtitle: 'View submitted logs',
-                  icon: Icons.history_rounded,
-                  color: AppColors.secondary,
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.uploadVideo),
-                ),
-                _buildQuickActionCard(
-                  context,
-                  title: 'Payment Summary',
-                  subtitle: 'Track earnings & payout',
-                  icon: Icons.account_balance_wallet_rounded,
-                  color: const Color(0xFF8B5CF6),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (ctx) => const EarningsScreen()),
-                    );
-                  },
-                ),
-                _buildQuickActionCard(
-                  context,
-                  title: 'Help Center',
-                  subtitle: 'FAQs & Support',
-                  icon: Icons.help_outline_rounded,
-                  color: AppColors.success,
-                  onTap: () {
-                    _showHelpDialog(context);
-                  },
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickActionCard(
+                        context,
+                        title: 'Payment Summary',
+                        subtitle: 'Track earnings & payout',
+                        icon: Icons.account_balance_wallet_rounded,
+                        color: const Color(0xFF8B5CF6),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (ctx) => const EarningsScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: _buildQuickActionCard(
+                        context,
+                        title: 'Help Center',
+                        subtitle: 'FAQs & Support',
+                        icon: Icons.help_outline_rounded,
+                        color: AppColors.success,
+                        onTap: () {
+                          _showHelpDialog(context);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

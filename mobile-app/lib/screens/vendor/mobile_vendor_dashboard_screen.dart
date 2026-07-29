@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../config/routes/app_routes.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/powered_by_footer.dart';
 
 class MobileVendorDashboardScreen extends StatefulWidget {
   const MobileVendorDashboardScreen({super.key});
@@ -138,18 +140,24 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
           _buildProfileTab(),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentTab,
-        onTap: (idx) => setState(() => _currentTab = idx),
-        selectedItemColor: AppColors.success,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_rounded), label: 'Candidates'),
-          BottomNavigationBarItem(icon: Icon(Icons.cloud_upload_rounded), label: 'Uploads'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications_rounded), label: 'Alerts'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const PoweredByFooter(),
+          BottomNavigationBar(
+            currentIndex: _currentTab,
+            onTap: (idx) => setState(() => _currentTab = idx),
+            selectedItemColor: AppColors.success,
+            unselectedItemColor: Colors.grey,
+            type: BottomNavigationBarType.fixed,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(Icons.people_rounded), label: 'Candidates'),
+              BottomNavigationBarItem(icon: Icon(Icons.cloud_upload_rounded), label: 'Uploads'),
+              BottomNavigationBarItem(icon: Icon(Icons.notifications_rounded), label: 'Alerts'),
+              BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+            ],
+          ),
         ],
       ),
     );

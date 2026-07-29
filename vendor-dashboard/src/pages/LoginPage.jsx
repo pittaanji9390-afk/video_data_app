@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Card,
-  CardContent,
+  Paper,
   TextField,
   Button,
   Typography,
@@ -16,29 +15,26 @@ import {
   createTheme,
 } from '@mui/material';
 import {
-  EmailOutlined,
+  PersonOutlineOutlined,
   LockOutlined,
   Visibility,
   VisibilityOff,
-  StorefrontOutlined,
+  Videocam,
 } from '@mui/icons-material';
 
 const vendorTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
-      main: '#6366f1',
-    },
-    secondary: {
-      main: '#0ea5e9',
+      main: '#3b82f6',
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: '#f8fafc',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
+      primary: '#0f172a',
+      secondary: '#64748b',
     },
   },
   typography: {
@@ -55,7 +51,7 @@ export default function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.identifier.trim() || !formData.password) {
-      setAlert({ type: 'error', message: 'Please enter email and password.' });
+      setAlert({ type: 'error', message: 'Please enter username and password.' });
       return;
     }
 
@@ -74,62 +70,135 @@ export default function LoginPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: 'background.default',
+          bgcolor: '#f8fafc',
           p: 2,
         }}
       >
         <Container maxWidth="xs">
-          <Card elevation={8} sx={{ bgcolor: 'background.paper', borderRadius: 4, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ width: 60, height: 60, borderRadius: '50%', bgcolor: 'rgba(14, 165, 233, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                  <StorefrontOutlined sx={{ fontSize: 32, color: 'secondary.main' }} />
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, sm: 4.5 },
+              borderRadius: 6,
+              bgcolor: '#ffffff',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0,0,0,0.05)',
+              border: '1px solid #f1f5f9',
+            }}
+          >
+            <Box
+              sx={{
+                width: 68,
+                height: 68,
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2.5,
+                boxShadow: '0 10px 25px rgba(59, 130, 246, 0.35)',
+              }}
+            >
+              <Videocam sx={{ fontSize: 36, color: '#ffffff' }} />
+            </Box>
+
+            <Typography variant="h4" fontWeight="800" align="center" sx={{ color: '#0f172a', letterSpacing: '-0.5px', mb: 0.8, fontSize: '1.75rem' }}>
+              Welcome Back!
+            </Typography>
+            <Typography variant="body2" align="center" sx={{ color: '#64748b', mb: 3.5, fontWeight: 500 }}>
+              Sign in to continue to your account
+            </Typography>
+
+            {alert && <Alert severity={alert.type} sx={{ mb: 2.5, borderRadius: 3 }}>{alert.message}</Alert>}
+
+            <form onSubmit={handleSubmit}>
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.8 }}>
+                  <PersonOutlineOutlined sx={{ color: '#3b82f6', fontSize: 18 }} />
+                  <Typography variant="body2" fontWeight="700" sx={{ color: '#1e293b', fontSize: '0.85rem' }}>Username</Typography>
                 </Box>
-                <Typography variant="h5" fontWeight="bold">Vendor Portal Login</Typography>
-                <Typography variant="caption" color="text.secondary">Acme Video Solutions</Typography>
-              </Box>
-
-              {alert && <Alert severity={alert.type} sx={{ mb: 2.5, borderRadius: 3 }}>{alert.message}</Alert>}
-
-              <Box component="form" onSubmit={handleSubmit} noValidate>
                 <TextField
                   fullWidth
-                  label="Email / Vendor Code"
-                  margin="normal"
                   value={formData.identifier}
                   onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
-                  slotProps={{
-                    input: {
-                      startAdornment: <InputAdornment position="start"><EmailOutlined sx={{ color: 'text.secondary' }} /></InputAdornment>,
+                  placeholder="Enter your Username"
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '14px',
+                      bgcolor: '#f8fafc',
+                      '& fieldset': { borderColor: '#dbeafe' },
+                      '&:hover fieldset': { borderColor: '#93c5fd' },
+                      '&.Mui-focused fieldset': { borderColor: '#3b82f6', borderWidth: '1.5px' },
                     },
                   }}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start"><PersonOutlineOutlined sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                  }}
                 />
+              </Box>
+
+              <Box sx={{ mb: 3.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.8 }}>
+                  <LockOutlined sx={{ color: '#3b82f6', fontSize: 18 }} />
+                  <Typography variant="body2" fontWeight="700" sx={{ color: '#1e293b', fontSize: '0.85rem' }}>Password</Typography>
+                </Box>
                 <TextField
                   fullWidth
-                  label="Password"
                   type={showPassword ? 'text' : 'password'}
-                  margin="normal"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  slotProps={{
-                    input: {
-                      startAdornment: <InputAdornment position="start"><LockOutlined sx={{ color: 'text.secondary' }} /></InputAdornment>,
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton onClick={() => setShowPassword(!showPassword)}>
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
+                  placeholder="Enter your Password"
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '14px',
+                      bgcolor: '#f8fafc',
+                      '& fieldset': { borderColor: '#dbeafe' },
+                      '&:hover fieldset': { borderColor: '#93c5fd' },
+                      '&.Mui-focused fieldset': { borderColor: '#3b82f6', borderWidth: '1.5px' },
                     },
                   }}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start"><LockOutlined sx={{ color: '#94a3b8' }} /></InputAdornment>,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setShowPassword(!showPassword)}>
+                          {showPassword ? <VisibilityOff sx={{ color: '#94a3b8' }} /> : <Visibility sx={{ color: '#94a3b8' }} />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-                <Button fullWidth type="submit" variant="contained" color="secondary" size="large" sx={{ mt: 3, py: 1.5, fontWeight: 'bold' }}>
-                  Sign In to Vendor Portal
-                </Button>
               </Box>
-            </CardContent>
-          </Card>
+
+              <Button
+                fullWidth
+                type="submit"
+                variant="contained"
+                sx={{
+                  py: 1.6,
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  fontSize: '1.05rem',
+                  textTransform: 'none',
+                  boxShadow: '0 8px 20px rgba(37, 99, 235, 0.35)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    boxShadow: '0 10px 24px rgba(37, 99, 235, 0.45)',
+                  },
+                }}
+              >
+                Login
+              </Button>
+            </form>
+          </Paper>
+
+          <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 3, opacity: 0.8, fontWeight: 600, textAlign: 'center' }}>
+            Powered by <Box component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>ElevateIQ Softtech</Box>
+          </Typography>
         </Container>
       </Box>
     </ThemeProvider>

@@ -268,7 +268,7 @@ class CandidateDashboardTab extends StatelessWidget {
                             '12',
                             style: TextStyle(
                               fontSize: 24,
-                              fontWeight: FontWeight.extrabold,
+                              fontWeight: FontWeight.w800,
                               color: Color(0xFF0F172A),
                             ),
                           ),
@@ -331,7 +331,7 @@ class CandidateDashboardTab extends StatelessWidget {
                             '05:30',
                             style: TextStyle(
                               fontSize: 22,
-                              fontWeight: FontWeight.extrabold,
+                              fontWeight: FontWeight.w800,
                               color: Color(0xFF0F172A),
                             ),
                           ),

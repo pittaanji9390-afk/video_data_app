@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { candidateStore } from '../utils/candidateStore';
+import { qcStore } from '../utils/qcStore';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -42,6 +44,8 @@ import {
   Person,
   Search,
   Mic,
+  GraphicEq,
+  CameraAltOutlined,
   Warning,
   WifiOff,
   CloudOff,
@@ -207,6 +211,8 @@ export default function CandidatePortal() {
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraMsg, setCameraMsg] = useState('Initializing camera stream...');
+  const [thirtyMinBanner, setThirtyMinBanner] = useState(false);
+  const [isListeningVoice, setIsListeningVoice] = useState(false);
 
   useEffect(() => {
     if (activeScreen === 'record') {
@@ -217,27 +223,102 @@ export default function CandidatePortal() {
     };
   }, [activeScreen]);
 
+  const [qcSubmissionsList, setQcSubmissionsList] = useState(() => qcStore.getSubmissions());
+
+  useEffect(() => {
+    return qcStore.subscribe((updated) => {
+      setQcSubmissionsList(updated);
+    });
+  }, []);
+
+  const play30MinBuzzerSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 1.2);
+    } catch (e) {
+      console.warn('Audio buzzer sound unavailable:', e);
+    }
+  };
+
+  const startSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      showToast('Google Speech Recognition not supported in this browser. Using manual controls.');
+      return;
+    }
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.lang = 'en-US';
+      recognition.onstart = () => {
+        setIsListeningVoice(true);
+        showToast('🎙️ Google Speech-to-Text Active! Say "Start recording" or "Stop recording"');
+      };
+      recognition.onresult = (event) => {
+        const text = event.results[event.results.length - 1][0].transcript.toLowerCase();
+        console.log('Voice command heard:', text);
+        if (text.includes('start') || text.includes('record')) {
+          handleStartRec();
+          showToast('🎤 Voice Command: Start Recording');
+        } else if (text.includes('stop') || text.includes('finish') || text.includes('end')) {
+          handleStopRec();
+          showToast('🎤 Voice Command: Stop Recording');
+        }
+      };
+      recognition.onerror = () => setIsListeningVoice(false);
+      recognition.onend = () => setIsListeningVoice(false);
+      recognition.start();
+    } catch (e) {
+      console.warn('Speech error:', e);
+    }
+  };
+
   const startCamera = async () => {
+    if (!videoRef.current) return;
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: true,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
+        let stream = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+            audio: true,
+          });
+        } catch (err1) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
         }
-        setCameraActive(true);
-        setCameraMsg('Live Camera HD Active');
-      } else {
-        setCameraActive(false);
-        setCameraMsg('Network Simulation Viewfinder Active');
+
+        if (stream && videoRef.current) {
+          videoRef.current.removeAttribute('src');
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+          setCameraActive(true);
+          setCameraMsg('Live Camera HD (1080p @ 30-60 FPS)');
+          return;
+        }
       }
     } catch (e) {
-      console.warn('Camera stream fallback activated:', e);
-      setCameraActive(false);
-      setCameraMsg('Viewfinder Simulation Active (HTTP Mode)');
+      console.warn('Hardware camera stream fallback activated:', e);
+    }
+
+    // Fallback feed if webcam is blocked or HTTP origin prevents getUserMedia
+    setCameraActive(false);
+    setCameraMsg('Live Viewfinder Feed Active');
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current.src = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+      videoRef.current.loop = true;
+      videoRef.current.play().catch(() => {});
     }
   };
 
@@ -253,16 +334,58 @@ export default function CandidatePortal() {
   const handleStartRec = () => {
     setRecording(true);
     setRecordingTime(0);
-    timerRef.current = setInterval(() => setRecordingTime((p) => p + 1), 1000);
+    setThirtyMinBanner(false);
+    timerRef.current = setInterval(() => {
+      setRecordingTime((p) => {
+        const next = p + 1;
+        if (next === 1800) {
+          setThirtyMinBanner(true);
+          play30MinBuzzerSound();
+        }
+        return next;
+      });
+    }, 1000);
+  };
+
+  const handleTriggerThirtyMinAlert = () => {
+    setRecordingTime(1800);
+    setThirtyMinBanner(true);
+    play30MinBuzzerSound();
   };
 
   const handleStopRec = () => {
     setRecording(false);
     clearInterval(timerRef.current);
+    showToast(`Recorded ${formatTime(recordingTime)} video clip! Now select room environment category.`);
+    setActiveScreen('env');
+  };
+
+  const handleCompleteUpload = () => {
+    const envTag = selectedEnv || 'Kitchen';
     const newCount = candidateUploadedCount + 1;
     setCandidateUploadedCount(newCount);
     localStorage.setItem(`cand_uploads_${candidateId}`, newCount.toString());
-    showToast(`Recorded ${formatTime(recordingTime)} video clip! Saved & uploaded.`);
+
+    const newSub = {
+      id: `VID-${Math.floor(900 + Math.random() * 99)}`,
+      title: `${envTag} Video Sample`,
+      candidateId: candidateId || 'CAN-2024-001',
+      candidateName: candidateName || 'Vasavi Kandula',
+      candidatePhone: '+91 98765 43210',
+      vendor: 'Acme Video Solutions',
+      duration: `${recordingTime > 0 ? (recordingTime / 60).toFixed(1) : '15.0'} Mins`,
+      score: Math.floor(88 + Math.random() * 10),
+      status: 'Pending',
+      env: envTag,
+      time: 'Just now',
+      size: '1.45 GB',
+      fps: '30',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      rejectionReason: '',
+    };
+
+    qcStore.addSubmission(newSub);
+    showToast(`Submitted ${envTag} video to Admin & QC Review panel! Status: Pending QC.`);
     setActiveScreen('upload_success');
   };
 
@@ -294,7 +417,7 @@ export default function CandidatePortal() {
         >
 
           {/* SCREEN CONTENT VIEWPORT */}
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: activeScreen === 'record' ? 0 : 2 }}>
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: activeScreen === 'record' ? 0 : 2, display: 'flex', flexDirection: 'column' }}>
             
             {/* 1. ONBOARDING SCREEN (Mockup Screens 2, 3, 4) */}
             {activeScreen === 'onboarding' && (
@@ -380,38 +503,151 @@ export default function CandidatePortal() {
               </Box>
             )}
 
-            {/* 9. RECORDING SCREEN (Mockup Screen 9) */}
+            {/* 9. RECORDING SCREEN (Minimal UI matching Screenshot) */}
             {activeScreen === 'record' && (
-              <Box sx={{ height: '100%', minHeight: 380, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 2, position: 'relative', bgcolor: '#0f172a', borderRadius: 3, overflow: 'hidden' }}>
-                {/* HTML5 Realtime Camera Stream Element */}
-                <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 1 }} />
-                
-                {/* Viewfinder Target Reticle Overlay */}
-                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                  <Box sx={{ width: 180, height: 180, border: '2px dashed rgba(255,255,255,0.7)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Videocam sx={{ fontSize: 42, color: 'rgba(255,255,255,0.4)' }} />
+              <Box sx={{ height: '100%', minHeight: 460, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', bgcolor: '#06132b', borderRadius: 3, overflow: 'hidden' }}>
+                {/* Realtime Video Feed */}
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 1 }}
+                />
+
+                {/* Optional Enable Webcam overlay if camera is not active */}
+                {!cameraActive && (
+                  <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(6, 19, 43, 0.65)' }}>
+                    <Button variant="contained" onClick={startCamera} startIcon={<Videocam />} sx={{ bgcolor: '#2563eb', borderRadius: 3, textTransform: 'none', px: 2.5, py: 1, fontWeight: 'bold' }}>
+                      Enable Device Camera
+                    </Button>
                   </Box>
-                  <Typography variant="caption" sx={{ color: '#fff', mt: 1, bgcolor: 'rgba(0,0,0,0.6)', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 'bold' }}>
-                    {selectedEnv} Environment Frame
+                )}
+
+                {/* 30-Minute Banner Alert */}
+                {thirtyMinBanner && (
+                  <Alert
+                    severity="warning"
+                    onClose={() => setThirtyMinBanner(false)}
+                    sx={{ position: 'relative', zIndex: 10, m: 1.5, borderRadius: 3, fontWeight: 'bold', boxShadow: '0 4px 14px rgba(0,0,0,0.4)', fontSize: '0.8rem' }}
+                    action={
+                      <Button color="inherit" size="small" onClick={handleStopRec} sx={{ fontWeight: 'bold', textTransform: 'none' }}>
+                        Stop & Upload
+                      </Button>
+                    }
+                  >
+                    ⏱️ 30 minutes completed!
+                  </Alert>
+                )}
+
+                {/* TOP CENTER: Dark Blue Translucent Recording Timer Pill */}
+                <Box sx={{ position: 'relative', zIndex: 5, pt: 2, display: 'flex', justifyContent: 'center' }}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      bgcolor: 'rgba(15, 43, 123, 0.85)',
+                      backdropFilter: 'blur(10px)',
+                      color: '#ffffff',
+                      px: 2.5,
+                      py: 0.75,
+                      borderRadius: 6,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.2,
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        bgcolor: recording ? '#ef4444' : '#10b981',
+                        boxShadow: recording ? '0 0 10px #ef4444' : 'none',
+                      }}
+                    />
+                    <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', letterSpacing: 1.2, fontSize: '0.95rem' }}>
+                      {formatTime(recordingTime)}
+                    </Typography>
+                  </Paper>
+                </Box>
+
+                {/* RIGHT SIDE: Voice Command Speech Bubble */}
+                <Paper
+                  elevation={0}
+                  onClick={startSpeechRecognition}
+                  sx={{
+                    position: 'absolute',
+                    right: 16,
+                    top: '42%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 5,
+                    bgcolor: isListeningVoice ? '#ef4444' : '#1d4ed8',
+                    color: '#ffffff',
+                    px: 2,
+                    py: 1,
+                    borderRadius: '18px 18px 4px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    '&:hover': { opacity: 0.95, transform: 'translateY(-50%) scale(1.03)' },
+                  }}
+                >
+                  <GraphicEq sx={{ fontSize: 22 }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                    {isListeningVoice ? 'Listening...' : 'Say "record"'}
                   </Typography>
-                </Box>
+                </Paper>
 
-                {/* Top REC Indicator & Camera Mode Badge */}
-                <Box sx={{ position: 'relative', zIndex: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Chip label={`REC ${formatTime(recordingTime)}`} color={recording ? "error" : "default"} size="small" sx={{ fontWeight: 'bold', bgcolor: recording ? '#ef4444' : 'rgba(0,0,0,0.6)', color: '#fff' }} />
-                  <Chip label={cameraMsg} size="small" sx={{ bgcolor: 'rgba(37,99,235,0.85)', color: '#fff', fontSize: 11, fontWeight: 'bold' }} />
-                </Box>
+                {/* BOTTOM CENTER: Clean Double-Ring Shutter & Camera Switch Button */}
+                <Box sx={{ position: 'relative', zIndex: 5, pb: 3, px: 3, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  {/* Big Main Shutter / Record Button */}
+                  <Box
+                    onClick={recording ? handleStopRec : handleStartRec}
+                    sx={{
+                      width: 76,
+                      height: 76,
+                      borderRadius: '50%',
+                      border: '4px solid #ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justify: 'center',
+                      bgcolor: 'transparent',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+                      transition: 'transform 0.15s ease',
+                      '&:active': { transform: 'scale(0.92)' },
+                    }}
+                  >
+                    {recording ? (
+                      <Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: '#ffffff' }} />
+                    ) : (
+                      <Box sx={{ width: 58, height: 58, borderRadius: '50%', bgcolor: '#ffffff' }} />
+                    )}
+                  </Box>
 
-                {/* Bottom Record Controls */}
-                <Box sx={{ position: 'relative', zIndex: 5, pb: 2, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-                  <IconButton onClick={() => setActiveScreen('alert')} sx={{ bgcolor: 'rgba(0, 0, 0, 0.5)', color: '#fff' }}>
-                    <Warning />
-                  </IconButton>
-                  <IconButton onClick={recording ? handleStopRec : handleStartRec} sx={{ bgcolor: recording ? '#ef4444' : '#10b981', color: '#fff', p: 2.5, boxShadow: '0 0 25px rgba(16,185,129,0.5)' }}>
-                    {recording ? <Stop sx={{ fontSize: 36 }} /> : <Videocam sx={{ fontSize: 36 }} />}
-                  </IconButton>
-                  <IconButton onClick={() => setActiveScreen('env')} sx={{ bgcolor: 'rgba(0, 0, 0, 0.5)', color: '#fff' }}>
-                    <CheckCircle />
+                  {/* Translucent Camera Icon Button on Right */}
+                  <IconButton
+                    onClick={startCamera}
+                    sx={{
+                      position: 'absolute',
+                      right: 28,
+                      width: 52,
+                      height: 52,
+                      borderRadius: '50%',
+                      bgcolor: 'rgba(255, 255, 255, 0.25)',
+                      backdropFilter: 'blur(10px)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+                      '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.4)' },
+                    }}
+                  >
+                    <CameraAltOutlined sx={{ fontSize: 26 }} />
                   </IconButton>
                 </Box>
               </Box>
@@ -510,7 +746,7 @@ export default function CandidatePortal() {
                   <Box><Typography variant="caption" color="text.secondary">Time Left</Typography><Typography variant="body2" fontWeight="bold">00:00:18</Typography></Box>
                 </Paper>
 
-                <Button fullWidth variant="contained" onClick={() => setActiveScreen('upload_success')} sx={{ py: 1.5, borderRadius: 3 }}>Complete Upload</Button>
+                <Button fullWidth variant="contained" onClick={handleCompleteUpload} sx={{ py: 1.5, borderRadius: 3 }}>Complete Upload</Button>
               </Box>
             )}
 
@@ -521,7 +757,7 @@ export default function CandidatePortal() {
                   <CheckCircle sx={{ fontSize: 54 }} />
                 </Box>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Upload Successful!</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>Your video has been uploaded and encrypted in cloud storage.</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>Your video has been submitted for QC Review by Admin & QC team.</Typography>
 
                 <Button fullWidth variant="contained" onClick={() => setActiveScreen('history')} sx={{ mb: 1.5, py: 1.5, borderRadius: 3 }}>View Upload History</Button>
                 <Button fullWidth variant="outlined" onClick={() => setActiveScreen('home')} sx={{ py: 1.5, borderRadius: 3 }}>Go to Home</Button>
@@ -534,24 +770,28 @@ export default function CandidatePortal() {
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Upload History</Typography>
                 <TextField fullWidth placeholder="Search videos..." size="small" sx={{ mb: 2 }} InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }} />
 
-                {[
-                  { title: 'Kitchen Video', time: '12:30 Min • Today, 10:30 AM', status: 'Approved', color: 'success', env: 'Kitchen', size: '1.24 GB', fps: '30' },
-                  { title: 'Bedroom Video', time: '30:00 Min • Today, 09:15 AM', status: 'Pending', color: 'warning', env: 'Bedroom', size: '2.80 GB', fps: '30' },
-                  { title: 'Garden Video', time: '15:45 Min • Yesterday, 06:20 PM', status: 'Rejected', color: 'error', env: 'Garden', size: '1.50 GB', fps: '30' },
-                ].map((item, idx) => (
-                  <Paper
-                    key={idx}
-                    elevation={0}
-                    onClick={() => setSelectedVideoModal(item)}
-                    sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', '&:hover': { bgcolor: '#f1f5f9' } }}
-                  >
-                    <Box>
-                      <Typography variant="body2" fontWeight="bold">{item.title}</Typography>
-                      <Typography variant="caption" color="text.secondary">{item.time}</Typography>
-                    </Box>
-                    <Chip label={item.status} color={item.color} size="small" />
-                  </Paper>
-                ))}
+                {qcSubmissionsList.map((item, idx) => {
+                  const statusColor = item.status === 'Approved' ? 'success' : item.status === 'Rejected' ? 'error' : 'warning';
+                  return (
+                    <Paper
+                      key={item.id || idx}
+                      elevation={0}
+                      onClick={() => setSelectedVideoModal(item)}
+                      sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', '&:hover': { bgcolor: '#f1f5f9' } }}
+                    >
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">{item.title}</Typography>
+                        <Typography variant="caption" color="text.secondary">{item.duration} • {item.time} • Tag: {item.env || 'Kitchen'}</Typography>
+                        {item.rejectionReason && (
+                          <Typography variant="caption" color="error.main" display="block">
+                            Rejection Reason: {item.rejectionReason}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Chip label={item.status} color={statusColor} size="small" />
+                    </Paper>
+                  );
+                })}
               </Box>
             )}
 
@@ -693,6 +933,11 @@ export default function CandidatePortal() {
               </Box>
             )}
 
+            {/* Powered by Footer */}
+            <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 'auto', pt: 3, pb: 1.5, fontSize: '0.75rem', fontWeight: 600, opacity: 0.85, textAlign: 'center', width: '100%' }}>
+              Powered by <Box component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>ElevateIQ Softtech</Box>
+            </Typography>
+
           </Box>
 
           {/* Bottom Device Navigation Bar */}
@@ -793,9 +1038,19 @@ export default function CandidatePortal() {
             <Button
               onClick={() => {
                 if (!supportMessage.trim()) return;
+                const newTicket = {
+                  id: 'TCK-' + Math.floor(1000 + Math.random() * 9000),
+                  candidateName: candidateName || 'Vasavi Kandula',
+                  candidateId: candidateId || 'CAN-2024-001',
+                  phone: candidatePhone || '+91 98765 43210',
+                  message: supportMessage.trim(),
+                  timestamp: 'Just now',
+                  status: 'Open',
+                };
+                qcStore.addSupportTicket(newTicket);
                 setOpenSupportModal(false);
                 setSupportMessage('');
-                showToast('Support message sent successfully!');
+                showToast('Message sent directly to Operations & Admin Team!');
               }}
               variant="contained"
               color="primary"

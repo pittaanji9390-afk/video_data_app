@@ -2,10 +2,10 @@
   "name": "video-platform-app",
   "version": "1.0.0",
   "private": true,
-  "description": "Video Data Collection & Multi-Role Vendor Management Platform",
+  "description": "Video Data Collection & Multi-Role Platform for Mobile App (Candidates, Vendors, Admin)",
   "scripts": {
-    "start": "npx concurrently \"npm --prefix backend run dev\" \"npm --prefix admin-dashboard run dev\" \"npm --prefix vendor-dashboard run dev\"",
-    "dev": "npx concurrently \"npm --prefix backend run dev\" \"npm --prefix admin-dashboard run dev\" \"npm --prefix vendor-dashboard run dev\""
+    "start": "npm --prefix backend run dev",
+    "dev": "npm --prefix backend run dev"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

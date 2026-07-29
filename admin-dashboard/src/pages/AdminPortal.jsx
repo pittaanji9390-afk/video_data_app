@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { qcStore } from '../utils/qcStore';
 import {
   Box,
   Typography,
@@ -33,6 +34,7 @@ import {
   HourglassEmpty,
   Cancel,
   ArrowBack,
+  SupportAgent,
   PlayArrow,
   Logout,
   Download,
@@ -99,11 +101,22 @@ export default function AdminPortal() {
 
   // QC Queue & Active Review State
   const [qcQueueIndex, setQcQueueIndex] = useState(0);
-  const [pendingQcList, setPendingQcList] = useState([
-    { id: 'VID-901', title: 'Kitchen Cooking Sample #12', vendor: 'Acme Video Solutions', candidate: 'Anji (CND-7777)', duration: '15:30', score: 92, status: 'Pending' },
-    { id: 'VID-902', title: 'Bedroom Lighting Sample #08', vendor: 'Apex Data Services', candidate: 'Rahul Kumar', duration: '30:00', score: 88, status: 'Pending' },
-    { id: 'VID-903', title: 'Garden Daylight Sample #04', vendor: 'Acme Video Solutions', candidate: 'Anji (CND-7777)', duration: '22:15', score: 95, status: 'Pending' },
-  ]);
+  const [qcSubmissions, setQcSubmissions] = useState(() => qcStore.getSubmissions());
+
+  const [supportTickets, setSupportTickets] = useState(() => qcStore.getSupportTickets());
+
+  useEffect(() => {
+    return qcStore.subscribeSupport((updated) => {
+      setSupportTickets(updated);
+    });
+  }, []);
+
+  const handleResolveTicket = (id) => {
+    qcStore.updateSupportTicketStatus(id, 'Resolved');
+    showToast(`Support Ticket ${id} marked as Resolved.`);
+  };
+
+  const pendingQcList = qcSubmissions.filter((item) => item.status === 'Pending' || true);
 
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -120,20 +133,21 @@ export default function AdminPortal() {
   const handleApproveQc = () => {
     const current = pendingQcList[qcQueueIndex];
     if (!current) return;
-    showToast(`Approved ${current.id} (${current.title}) with Quality Score ${current.score}%`);
+    qcStore.updateStatus(current.id, 'Approved');
+    showToast(`Approved ${current.id} (${current.title}) for ${current.candidateName || current.candidate}!`);
     if (qcQueueIndex < pendingQcList.length - 1) {
       setQcQueueIndex(qcQueueIndex + 1);
-    } else {
-      showToast('All pending QC videos in queue evaluated!');
     }
   };
 
   const handleRejectQc = () => {
     if (!rejectionReason.trim()) return;
     const current = pendingQcList[qcQueueIndex];
+    if (!current) return;
     setOpenRejectModal(false);
-    setRejectionReason('');
+    qcStore.updateStatus(current.id, 'Rejected', rejectionReason.trim());
     showToast(`Rejected ${current.id}: ${rejectionReason}`);
+    setRejectionReason('');
     if (qcQueueIndex < pendingQcList.length - 1) {
       setQcQueueIndex(qcQueueIndex + 1);
     }
@@ -233,7 +247,7 @@ export default function AdminPortal() {
         >
 
           {/* Active Screen Content Canvas */}
-          <Box sx={{ flex: 1, overflowY: 'auto', p: activeScreen === 'login' ? 0 : 2, pb: 8 }}>
+          <Box sx={{ flex: 1, overflowY: 'auto', p: activeScreen === 'login' ? 0 : 2, display: 'flex', flexDirection: 'column' }}>
             
             {/* 1. ADMIN LOGIN SCREEN (Mockup Screen 1) */}
             {activeScreen === 'login' && (
@@ -315,38 +329,59 @@ export default function AdminPortal() {
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Video Review (QC Panel)</Typography>
                 {pendingQcList[qcQueueIndex] ? (
                   <>
-                    <Box sx={{ width: '100%', height: 180, bgcolor: '#000', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', mb: 2, position: 'relative' }}>
-                      <PlayArrow sx={{ fontSize: 54 }} />
-                      <Typography variant="caption" sx={{ position: 'absolute', bottom: 10, right: 12, bgcolor: 'rgba(0,0,0,0.7)', px: 1, borderRadius: 1 }}>
-                        {pendingQcList[qcQueueIndex].duration}
-                      </Typography>
+                    <Box sx={{ width: '100%', height: 180, bgcolor: '#000', borderRadius: 3, overflow: 'hidden', mb: 2, position: 'relative' }}>
+                      <video
+                        controls
+                        src={pendingQcList[qcQueueIndex].videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
                     </Box>
+
                     <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3, mb: 2 }}>
-                      <Typography variant="body2" fontWeight="bold" gutterBottom>{pendingQcList[qcQueueIndex].title}</Typography>
-                      <Typography variant="caption" color="text.secondary">ID: {pendingQcList[qcQueueIndex].id}</Typography><br />
-                      <Typography variant="caption" color="text.secondary">Vendor: {pendingQcList[qcQueueIndex].vendor}</Typography><br />
-                      <Typography variant="caption" color="text.secondary">Candidate: {pendingQcList[qcQueueIndex].candidate}</Typography><br />
-                      <Typography variant="caption" color="text.secondary">Duration: {pendingQcList[qcQueueIndex].duration}</Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="body2" fontWeight="bold">{pendingQcList[qcQueueIndex].title}</Typography>
+                        <Chip label={pendingQcList[qcQueueIndex].status} color={pendingQcList[qcQueueIndex].status === 'Approved' ? 'success' : pendingQcList[qcQueueIndex].status === 'Rejected' ? 'error' : 'warning'} size="small" />
+                      </Box>
+                      <Typography variant="caption" color="text.secondary" display="block"><strong>ID:</strong> {pendingQcList[qcQueueIndex].id}</Typography>
+                      <Typography variant="caption" color="text.secondary" display="block"><strong>Candidate:</strong> {pendingQcList[qcQueueIndex].candidateName || pendingQcList[qcQueueIndex].candidate}</Typography>
+                      <Typography variant="caption" color="text.secondary" display="block"><strong>Phone:</strong> {pendingQcList[qcQueueIndex].candidatePhone || '+91 98765 43210'}</Typography>
+                      <Typography variant="caption" color="text.secondary" display="block"><strong>Vendor:</strong> {pendingQcList[qcQueueIndex].vendor}</Typography>
+                      <Typography variant="caption" color="text.secondary" display="block"><strong>Environment Tag:</strong> {pendingQcList[qcQueueIndex].env || 'Kitchen'}</Typography>
+                      <Typography variant="caption" color="text.secondary" display="block"><strong>Duration:</strong> {pendingQcList[qcQueueIndex].duration}</Typography>
                     </Paper>
+
                     <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#dcfce7', borderRadius: 3, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Avatar sx={{ bgcolor: '#10b981', width: 36, height: 36, fontSize: 14 }}>{pendingQcList[qcQueueIndex].score}%</Avatar>
                       <Box>
                         <Typography variant="body2" fontWeight="bold" color="#10b981">Quality Score {pendingQcList[qcQueueIndex].score}%</Typography>
-                        <Typography variant="caption" color="text.secondary">Audio, lighting & clarity verified</Typography>
+                        <Typography variant="caption" color="text.secondary">Audio, lighting & room environment verified</Typography>
                       </Box>
                     </Paper>
-                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+
+                    <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
                       <Button fullWidth variant="outlined" color="error" onClick={() => setOpenRejectModal(true)} sx={{ py: 1.2, fontWeight: 'bold' }}>
                         Reject Video
                       </Button>
-                      <Button fullWidth variant="contained" color="primary" onClick={handleApproveQc} sx={{ py: 1.2, fontWeight: 'bold' }}>
+                      <Button fullWidth variant="contained" color="success" onClick={handleApproveQc} sx={{ py: 1.2, fontWeight: 'bold' }}>
                         Approve Video
+                      </Button>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Button size="small" disabled={qcQueueIndex === 0} onClick={() => setQcQueueIndex((prev) => prev - 1)}>
+                        Previous
+                      </Button>
+                      <Typography variant="caption" color="text.secondary">
+                        Video {qcQueueIndex + 1} of {pendingQcList.length}
+                      </Typography>
+                      <Button size="small" disabled={qcQueueIndex >= pendingQcList.length - 1} onClick={() => setQcQueueIndex((prev) => prev + 1)}>
+                        Next
                       </Button>
                     </Box>
                   </>
                 ) : (
                   <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
-                    No more pending videos in QC evaluation queue.
+                    No videos found in QC evaluation queue.
                   </Typography>
                 )}
               </Box>
@@ -452,6 +487,62 @@ export default function AdminPortal() {
               </Box>
             )}
 
+            {/* 8. SUPPORT & OPERATIONS TICKETS SCREEN */}
+            {activeScreen === 'support' && (
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" fontWeight="bold">Support Tickets & Inbox</Typography>
+                  <Chip label={`${supportTickets.filter((t) => t.status === 'Open').length} Open`} color="error" size="small" />
+                </Box>
+
+                {supportTickets.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                    No support tickets received yet.
+                  </Typography>
+                ) : (
+                  supportTickets.map((item, idx) => (
+                    <Paper
+                      key={item.id || idx}
+                      elevation={0}
+                      sx={{ p: 2, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3 }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="body2" fontWeight="bold" color="primary.main">{item.id} • {item.candidateName}</Typography>
+                        <Chip label={item.status} color={item.status === 'Open' ? 'error' : 'success'} size="small" />
+                      </Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        <strong>Candidate ID:</strong> {item.candidateId} | <strong>Phone:</strong> {item.phone}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                        <strong>Received:</strong> {item.timestamp}
+                      </Typography>
+                      <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #cbd5e1', mb: 1.5 }}>
+                        <Typography variant="body2" color="text.primary">
+                          "{item.message}"
+                        </Typography>
+                      </Paper>
+                      {item.status === 'Open' && (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          onClick={() => handleResolveTicket(item.id)}
+                          sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}
+                        >
+                          Mark as Resolved
+                        </Button>
+                      )}
+                    </Paper>
+                  ))
+                )}
+              </Box>
+            )}
+
+            {/* Powered by Footer */}
+            <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 'auto', pt: 3, pb: 1.5, fontSize: '0.75rem', fontWeight: 600, opacity: 0.85, textAlign: 'center', width: '100%' }}>
+              Powered by <Box component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>ElevateIQ Softtech</Box>
+            </Typography>
+
           </Box>
 
           {/* Bottom Navigation Bar */}
@@ -460,8 +551,8 @@ export default function AdminPortal() {
               { id: 'dashboard', icon: <AdminPanelSettings />, label: 'Dashboard' },
               { id: 'vendors', icon: <Storefront />, label: 'Vendors' },
               { id: 'qc_review', icon: <FactCheck />, label: 'QC Review' },
+              { id: 'support', icon: <SupportAgent />, label: 'Support' },
               { id: 'earnings', icon: <Payments />, label: 'Payments' },
-              { id: 'reports', icon: <Assessment />, label: 'Reports' },
             ].map((tab) => (
               <IconButton key={tab.id} onClick={() => handleNavigate(tab.id)} color={activeScreen === tab.id ? 'primary' : 'default'}>
                 {tab.icon}

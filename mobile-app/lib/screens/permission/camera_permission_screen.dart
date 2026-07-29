@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../config/routes/app_routes.dart';
@@ -21,6 +22,15 @@ class _CameraPermissionScreenState extends State<CameraPermissionScreen> {
   }
 
   Future<void> _checkInitialStatus() async {
+    if (kIsWeb) {
+      if (mounted) {
+        setState(() {
+          _status = PermissionStatus.granted;
+          _isLoading = false;
+        });
+      }
+      return;
+    }
     final status = await Permission.camera.status;
     setState(() {
       _status = status;
@@ -29,6 +39,13 @@ class _CameraPermissionScreenState extends State<CameraPermissionScreen> {
   }
 
   Future<void> _requestPermission() async {
+    if (kIsWeb) {
+      setState(() {
+        _status = PermissionStatus.granted;
+        _isLoading = false;
+      });
+      return;
+    }
     setState(() => _isLoading = true);
     final newStatus = await Permission.camera.request();
     setState(() {

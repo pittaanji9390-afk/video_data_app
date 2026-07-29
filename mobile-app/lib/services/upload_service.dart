@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/api_constants.dart';
@@ -35,6 +36,28 @@ class UploadService {
     String? environmentTag,
     void Function(double progress)? onProgress,
   }) async {
+    if (kIsWeb) {
+      onProgress?.call(0.5);
+      await Future.delayed(const Duration(milliseconds: 600));
+      onProgress?.call(1.0);
+      final mockId = 'WEB-VID-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_uploaded_video_id', mockId);
+      List<String> history = prefs.getStringList('uploaded_video_ids') ?? [];
+      if (!history.contains(mockId)) {
+        history.add(mockId);
+        await prefs.setStringList('uploaded_video_ids', history);
+      }
+
+      return UploadResult(
+        isSuccess: true,
+        videoId: mockId,
+        filePath: filePath.isEmpty ? 'web_camera_blob' : filePath,
+        message: 'Video upload processed successfully (Web mode)',
+      );
+    }
+
     final file = File(filePath);
     if (!await file.exists()) {
       return UploadResult(

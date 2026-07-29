@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../config/routes/app_routes.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/powered_by_footer.dart';
 
 class MobileAdminDashboardScreen extends StatefulWidget {
   const MobileAdminDashboardScreen({super.key});
@@ -153,18 +154,24 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           _buildPaymentsAndReportsScreen(),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _activeNavIndex,
-        onTap: (idx) => setState(() => _activeNavIndex = idx),
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.storefront_rounded), label: 'Vendors'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_rounded), label: 'Candidates'),
-          BottomNavigationBarItem(icon: Icon(Icons.fact_check_rounded), label: 'QC Review'),
-          BottomNavigationBarItem(icon: Icon(Icons.payments_rounded), label: 'Payments'),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const PoweredByFooter(),
+          BottomNavigationBar(
+            currentIndex: _activeNavIndex,
+            onTap: (idx) => setState(() => _activeNavIndex = idx),
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: Colors.grey,
+            type: BottomNavigationBarType.fixed,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
+              BottomNavigationBarItem(icon: Icon(Icons.storefront_rounded), label: 'Vendors'),
+              BottomNavigationBarItem(icon: Icon(Icons.people_rounded), label: 'Candidates'),
+              BottomNavigationBarItem(icon: Icon(Icons.fact_check_rounded), label: 'QC Review'),
+              BottomNavigationBarItem(icon: Icon(Icons.payments_rounded), label: 'Payments'),
+            ],
+          ),
         ],
       ),
     );
