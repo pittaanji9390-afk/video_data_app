@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
@@ -75,9 +77,40 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       });
 
       if (result.isSuccess) {
+        // Sync newly recorded video into Admin QC Submissions Store
+        if (kIsWeb) {
+          try {
+            final raw = html.window.localStorage['platform_qc_submissions'];
+            List<dynamic> list = [];
+            if (raw != null) {
+              list = jsonDecode(raw);
+            }
+            final newSub = {
+              'id': result.videoId ?? 'VID-${DateTime.now().millisecondsSinceEpoch}',
+              'title': '${widget.environmentTag ?? "Recorded"} Dataset Sample',
+              'candidateId': 'CAN-2024-001',
+              'candidateName': 'Vasavi Kandula',
+              'candidatePhone': '+91 98765 43210',
+              'vendor': 'Acme Video Solutions',
+              'duration': '30:00 Mins',
+              'score': 94,
+              'status': 'Pending',
+              'env': widget.environmentTag ?? 'Kitchen',
+              'time': 'Just Now',
+              'size': '10.00 MB',
+              'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+              'rejectionReason': '',
+            };
+            list.insert(0, newSub);
+            html.window.localStorage['platform_qc_submissions'] = jsonEncode(list);
+          } catch (e) {
+            debugPrint('Error syncing QC submission: $e');
+          }
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Upload Complete! Video ID: ${result.videoId}'),
+            content: Text('Upload Complete! Video ID: ${result.videoId} (Sent to Admin QC)'),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
           ),
