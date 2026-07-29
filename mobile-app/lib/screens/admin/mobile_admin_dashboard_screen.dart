@@ -78,34 +78,31 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Add New Vendor', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Add New Vendor', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: _vendorNameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Company / Vendor Name', labelStyle: TextStyle(color: Colors.grey)),
+                decoration: const InputDecoration(labelText: 'Company / Vendor Name'),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _contactPersonCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Contact Person', labelStyle: TextStyle(color: Colors.grey)),
+                decoration: const InputDecoration(labelText: 'Contact Person'),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _vendorEmailCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Email Address', labelStyle: TextStyle(color: Colors.grey)),
+                decoration: const InputDecoration(labelText: 'Email Address'),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _vendorPhoneCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Phone Number', labelStyle: TextStyle(color: Colors.grey)),
+                decoration: const InputDecoration(labelText: 'Phone Number'),
               ),
             ],
           ),
@@ -132,7 +129,10 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                 SnackBar(content: Text('Vendor "${_vendorNameCtrl.text.trim()}" created successfully!'), backgroundColor: AppColors.success),
               );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
             child: const Text('Create Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -143,26 +143,31 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Dark slate theme
+      backgroundColor: const Color(0xFFF8FAFC), // Pure clean white-grey background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0.5,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Admin Platform', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text('Operations & QC Control', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+            Text('Admin Platform', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+            Text('Operations & QC Control', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
           ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1.0),
         ),
         actions: [
           Stack(
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                icon: const Icon(Icons.notifications_outlined, color: Color(0xFF475569)),
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Notifications: 3 pending QC video reviews'), backgroundColor: Color(0xFF6366F1)),
+                    const SnackBar(content: Text('Notifications: 3 pending QC video reviews'), backgroundColor: Color(0xFF2563EB)),
                   );
                 },
               ),
@@ -195,8 +200,8 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF0F172A),
-          border: Border(top: BorderSide(color: Color(0xFF1E293B))),
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -205,13 +210,14 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
             BottomNavigationBar(
               currentIndex: _activeNavIndex,
               onTap: (idx) => setState(() => _activeNavIndex = idx),
-              backgroundColor: const Color(0xFF0F172A),
-              selectedItemColor: const Color(0xFF6366F1),
-              unselectedItemColor: const Color(0xFF64748B),
+              backgroundColor: Colors.white,
+              selectedItemColor: const Color(0xFF2563EB),
+              unselectedItemColor: const Color(0xFF94A3B8),
               type: BottomNavigationBarType.fixed,
               selectedFontSize: 11,
               unselectedFontSize: 11,
               selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+              elevation: 0,
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Dashboard'),
                 BottomNavigationBarItem(icon: Icon(Icons.storefront_rounded), label: 'Vendors'),
@@ -226,10 +232,10 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     );
   }
 
-  // 1. ADMIN DASHBOARD SCREEN (Matches UI Design)
+  // 1. CLEAN WHITE ADMIN DASHBOARD SCREEN
   Widget _buildDashboardScreen() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -242,28 +248,28 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                 children: [
                   Text(
                     'Hello, Admin 👋',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), letterSpacing: -0.5),
                   ),
                   SizedBox(height: 2),
                   Text(
                     "Here's what's happening today",
-                    style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
               Container(
-                width: 46,
-                height: 46,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF3B82F6).withValues(alpha: 0.4),
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -275,7 +281,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           ),
           const SizedBox(height: 20),
 
-          // 2x3 Metric Cards Grid (Pixel Perfect Matching Reference Image)
+          // 2x3 Metric Cards Grid (Clean White Style with Colored Accents)
           GridView.count(
             crossAxisCount: 2,
             crossAxisSpacing: 12,
@@ -284,53 +290,53 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
             physics: const NeverScrollableScrollPhysics(),
             childAspectRatio: 1.4,
             children: [
-              _buildDarkStatCard(
+              _buildCleanStatCard(
                 title: 'Vendors',
                 val: '${_vendors.length}',
                 icon: Icons.storefront_rounded,
-                accentColor: const Color(0xFF38BDF8),
-                cardBg: const Color(0xFF112240),
-                borderColor: const Color(0xFF1E3A8A),
+                accentColor: const Color(0xFF1D4ED8),
+                cardBg: const Color(0xFFEFF6FF),
+                borderColor: const Color(0xFFBFDBFE),
               ),
-              _buildDarkStatCard(
+              _buildCleanStatCard(
                 title: 'Candidates',
                 val: '${_candidates.length}',
                 icon: Icons.people_rounded,
-                accentColor: const Color(0xFF60A5FA),
-                cardBg: const Color(0xFF0F2942),
-                borderColor: const Color(0xFF1D4ED8),
+                accentColor: const Color(0xFF0284C7),
+                cardBg: const Color(0xFFF0F9FF),
+                borderColor: const Color(0xFFBAE6FD),
               ),
-              _buildDarkStatCard(
+              _buildCleanStatCard(
                 title: 'Videos',
                 val: '8,542',
                 icon: Icons.videocam_rounded,
-                accentColor: const Color(0xFFC084FC),
-                cardBg: const Color(0xFF1E1B4B),
-                borderColor: const Color(0xFF4C1D95),
+                accentColor: const Color(0xFF7C3AED),
+                cardBg: const Color(0xFFF5F3FF),
+                borderColor: const Color(0xFFDDD6FE),
               ),
-              _buildDarkStatCard(
+              _buildCleanStatCard(
                 title: 'Pending QC',
                 val: '124',
                 icon: Icons.hourglass_top_rounded,
-                accentColor: const Color(0xFFF59E0B),
-                cardBg: const Color(0xFF2E1C0C),
-                borderColor: const Color(0xFF78350F),
+                accentColor: const Color(0xFFD97706),
+                cardBg: const Color(0xFFFFFBEB),
+                borderColor: const Color(0xFFFDE68A),
               ),
-              _buildDarkStatCard(
+              _buildCleanStatCard(
                 title: 'Approved',
                 val: '7,950',
                 icon: Icons.check_circle_rounded,
-                accentColor: const Color(0xFF34D399),
-                cardBg: const Color(0xFF064E3B),
-                borderColor: const Color(0xFF047857),
+                accentColor: const Color(0xFF059669),
+                cardBg: const Color(0xFFECFDF5),
+                borderColor: const Color(0xFFA7F3D0),
               ),
-              _buildDarkStatCard(
+              _buildCleanStatCard(
                 title: 'Rejected',
                 val: '592',
                 icon: Icons.cancel_rounded,
-                accentColor: const Color(0xFFF87171),
-                cardBg: const Color(0xFF31121C),
-                borderColor: const Color(0xFF881337),
+                accentColor: const Color(0xFFE11D48),
+                cardBg: const Color(0xFFFFF1F2),
+                borderColor: const Color(0xFFFECDD3),
               ),
             ],
           ),
@@ -339,30 +345,33 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           // Recent Activities Header
           const Text(
             'Recent Activities',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
           ),
           const SizedBox(height: 12),
 
-          _buildDarkActivityItem(
+          _buildCleanActivityItem(
             title: 'New Vendor Added',
             desc: 'ABC Solutions',
             time: '10:30 AM',
             icon: Icons.storefront_rounded,
-            accentColor: const Color(0xFF38BDF8),
+            accentColor: const Color(0xFF2563EB),
+            bgColor: const Color(0xFFEFF6FF),
           ),
-          _buildDarkActivityItem(
+          _buildCleanActivityItem(
             title: 'Video Approved',
             desc: 'Kitchen Video - Rahul',
             time: '09:45 AM',
             icon: Icons.check_circle_rounded,
-            accentColor: const Color(0xFF34D399),
+            accentColor: const Color(0xFF059669),
+            bgColor: const Color(0xFFECFDF5),
           ),
-          _buildDarkActivityItem(
+          _buildCleanActivityItem(
             title: 'Payment Settlement',
             desc: 'Vendor ABC Solutions - ₹152,000 released',
             time: 'Yesterday',
             icon: Icons.payments_rounded,
-            accentColor: const Color(0xFFF59E0B),
+            accentColor: const Color(0xFFD97706),
+            bgColor: const Color(0xFFFFFBEB),
           ),
           const SizedBox(height: 16),
         ],
@@ -370,8 +379,8 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     );
   }
 
-  // Helper Widget for Metric Cards
-  Widget _buildDarkStatCard({
+  // Helper Widget for Clean Light Metric Cards
+  Widget _buildCleanStatCard({
     required String title,
     required String val,
     required IconData icon,
@@ -384,11 +393,11 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor.withValues(alpha: 0.6), width: 1.2),
+        border: Border.all(color: borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
+            color: accentColor.withValues(alpha: 0.08),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -421,27 +430,35 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     );
   }
 
-  Widget _buildDarkActivityItem({
+  Widget _buildCleanActivityItem({
     required String title,
     required String desc,
     required String time,
     required IconData icon,
     required Color accentColor,
+    required Color bgColor,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
+              color: bgColor,
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: accentColor, size: 20),
@@ -451,13 +468,13 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A))),
                 const SizedBox(height: 2),
-                Text(desc, style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                Text(desc, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
               ],
             ),
           ),
-          Text(time, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+          Text(time, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -473,13 +490,13 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Vendor Management', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+              const Text('Vendor Management', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
               ElevatedButton.icon(
                 onPressed: _showAddVendorDialog,
                 icon: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
                 label: const Text('+ Add Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
+                  backgroundColor: const Color(0xFF2563EB),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
@@ -498,9 +515,16 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF334155)),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,15 +535,15 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                         Row(
                           children: [
                             CircleAvatar(
-                              backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.2),
-                              child: Text(v['name'][0], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF818CF8))),
+                              backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                              child: Text(v['name'][0], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
                             ),
                             const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(v['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
-                                Text('ID: ${v['id']}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                                Text(v['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A))),
+                                Text('ID: ${v['id']}', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
                               ],
                             ),
                           ],
@@ -527,23 +551,23 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: (isActive ? const Color(0xFF10B981) : Colors.grey).withValues(alpha: 0.2),
+                            color: (isActive ? const Color(0xFF10B981) : Colors.grey).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             v['status'],
-                            style: TextStyle(color: isActive ? const Color(0xFF34D399) : Colors.grey, fontWeight: FontWeight.bold, fontSize: 11),
+                            style: TextStyle(color: isActive ? const Color(0xFF059669) : Colors.grey, fontWeight: FontWeight.bold, fontSize: 11),
                           ),
                         ),
                       ],
                     ),
-                    const Divider(height: 24, color: Color(0xFF334155)),
+                    const Divider(height: 24, color: Color(0xFFE2E8F0)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildMiniDetail('Candidates', '${v['candidates']}'),
-                        _buildMiniDetail('Videos', '${v['videos']}'),
-                        _buildMiniDetail('Earnings', v['earnings']),
+                        _buildCleanMiniDetail('Candidates', '${v['candidates']}'),
+                        _buildCleanMiniDetail('Videos', '${v['videos']}'),
+                        _buildCleanMiniDetail('Earnings', v['earnings']),
                       ],
                     ),
                   ],
@@ -563,7 +587,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Candidate Subject Roster', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          const Text('Candidate Subject Roster', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
           const SizedBox(height: 16),
           ListView.builder(
             shrinkWrap: true,
@@ -574,21 +598,28 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF334155)),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: const Color(0xFF0EA5E9).withValues(alpha: 0.2),
-                    child: Text(c['name'][0], style: const TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold)),
+                    backgroundColor: const Color(0xFF0284C7).withValues(alpha: 0.1),
+                    child: Text(c['name'][0], style: const TextStyle(color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
                   ),
-                  title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                  subtitle: Text('${c['id']} • Vendor: ${c['vendor']}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                  title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  subtitle: Text('${c['id']} • Vendor: ${c['vendor']}', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                    child: Text('${c['videos']} Videos', style: const TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold)),
+                    decoration: BoxDecoration(color: const Color(0xFFECFDF5), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFA7F3D0))),
+                    child: Text('${c['videos']} Videos', style: const TextStyle(color: Color(0xFF059669), fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ),
               );
@@ -606,7 +637,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Video Review (QC Panel)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          const Text('Video Review (QC Panel)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
           const SizedBox(height: 14),
 
           Container(
@@ -615,7 +646,6 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
             decoration: BoxDecoration(
               color: Colors.black,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF334155)),
             ),
             child: Stack(
               alignment: Alignment.center,
@@ -638,21 +668,21 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF334155)),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Column(
               children: [
-                _buildMetaRow('Vendor', 'ABC Solutions'),
-                const Divider(color: Color(0xFF334155)),
-                _buildMetaRow('Candidate', 'Rahul Kumar'),
-                const Divider(color: Color(0xFF334155)),
-                _buildMetaRow('Duration', '30:15'),
-                const Divider(color: Color(0xFF334155)),
-                _buildMetaRow('Uploaded On', '12 May 2024, 10:30 AM'),
-                const Divider(color: Color(0xFF334155)),
-                _buildMetaRow('Environment', 'Kitchen'),
+                _buildCleanMetaRow('Vendor', 'ABC Solutions'),
+                const Divider(color: Color(0xFFE2E8F0)),
+                _buildCleanMetaRow('Candidate', 'Rahul Kumar'),
+                const Divider(color: Color(0xFFE2E8F0)),
+                _buildCleanMetaRow('Duration', '30:15'),
+                const Divider(color: Color(0xFFE2E8F0)),
+                _buildCleanMetaRow('Uploaded On', '12 May 2024, 10:30 AM'),
+                const Divider(color: Color(0xFFE2E8F0)),
+                _buildCleanMetaRow('Environment', 'Kitchen'),
               ],
             ),
           ),
@@ -661,19 +691,19 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
+              color: const Color(0xFFECFDF5),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF059669)),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
             ),
             child: const Row(
               children: [
-                CircleAvatar(backgroundColor: Color(0xFF064E3B), child: Text('92%', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF34D399)))),
+                CircleAvatar(backgroundColor: Color(0xFF059669), child: Text('92%', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
                 SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Quality Score 92%', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text('Good video quality, clear lighting', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                    Text('Quality Score 92%', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                    Text('Good video quality, clear lighting', style: TextStyle(color: Color(0xFF047857), fontSize: 12)),
                   ],
                 ),
               ],
@@ -689,8 +719,8 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Video Rejected.'), backgroundColor: AppColors.error));
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFEF4444),
-                    side: const BorderSide(color: Color(0xFFEF4444)),
+                    foregroundColor: const Color(0xFFE11D48),
+                    side: const BorderSide(color: Color(0xFFE11D48)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -704,7 +734,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Video Approved!'), backgroundColor: AppColors.success));
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
+                    backgroundColor: const Color(0xFF059669),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -725,59 +755,59 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Payments & Financials', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          const Text('Payments & Financials', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
           const SizedBox(height: 16),
 
           Row(
             children: [
-              Expanded(child: _buildPayCard('Total Disbursed', '₹2,13,800', const Color(0xFF34D399), const Color(0xFF064E3B))),
+              Expanded(child: _buildCleanPayCard('Total Disbursed', '₹2,13,800', const Color(0xFF059669), const Color(0xFFECFDF5), const Color(0xFFA7F3D0))),
               const SizedBox(width: 10),
-              Expanded(child: _buildPayCard('Pending Payout', '₹45,200', const Color(0xFFF59E0B), const Color(0xFF2E1C0C))),
+              Expanded(child: _buildCleanPayCard('Pending Payout', '₹45,200', const Color(0xFFD97706), const Color(0xFFFFFBEB), const Color(0xFFFDE68A))),
             ],
           ),
           const SizedBox(height: 20),
 
-          const Text('Vendor Payout Breakdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+          const Text('Vendor Payout Breakdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
           const SizedBox(height: 12),
 
-          _buildVendorPayRow('ABC Solutions', '₹152,000', 'Paid', const Color(0xFF34D399)),
-          _buildVendorPayRow('PQR Enterprises', '₹36,500', 'Pending', const Color(0xFFF59E0B)),
-          _buildVendorPayRow('LMN Groups', '₹25,300', 'Paid', const Color(0xFF34D399)),
+          _buildCleanVendorPayRow('ABC Solutions', '₹152,000', 'Paid', const Color(0xFF059669)),
+          _buildCleanVendorPayRow('PQR Enterprises', '₹36,500', 'Pending', const Color(0xFFD97706)),
+          _buildCleanVendorPayRow('LMN Groups', '₹25,300', 'Paid', const Color(0xFF059669)),
         ],
       ),
     );
   }
 
-  Widget _buildMiniDetail(String label, String val) {
+  Widget _buildCleanMiniDetail(String label, String val) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
         const SizedBox(height: 2),
-        Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+        Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
       ],
     );
   }
 
-  Widget _buildMetaRow(String label, String val) {
+  Widget _buildCleanMetaRow(String label, String val) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
-          Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+          Text(label, style: const TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+          Text(val, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
         ],
       ),
     );
   }
 
-  Widget _buildPayCard(String label, String val, Color textCol, Color bgCol) {
+  Widget _buildCleanPayCard(String label, String val, Color textCol, Color bgCol, Color borderCol) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bgCol,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: textCol.withValues(alpha: 0.4)),
+        border: Border.all(color: borderCol),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -790,14 +820,21 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     );
   }
 
-  Widget _buildVendorPayRow(String name, String amount, String status, Color statusCol) {
+  Widget _buildCleanVendorPayRow(String name, String amount, String status, Color statusCol) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -805,14 +842,14 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-              const Text('Contract Rate: ₹50/hr', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              const Text('Contract Rate: ₹50/hr', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(amount, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15)),
+              Text(amount, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A), fontSize: 15)),
               Text(status, style: TextStyle(color: statusCol, fontWeight: FontWeight.bold, fontSize: 11)),
             ],
           ),
