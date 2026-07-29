@@ -368,7 +368,9 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       backgroundColor: const Color(0xFFF8FAFC), // Pure clean white background
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        foregroundColor: const Color(0xFF0F172A),
+        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+        elevation: 0.5,
         scrolledUnderElevation: 0.5,
         title: const Text('Record Video Data', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
         actions: [

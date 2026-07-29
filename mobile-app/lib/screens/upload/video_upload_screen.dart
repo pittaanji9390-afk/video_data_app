@@ -217,13 +217,22 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('My Uploads & Video Dispatch', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'My Uploads & Video Dispatch',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+            fontSize: 18,
+          ),
+        ),
         backgroundColor: Colors.white,
-        foregroundColor: AppColors.textPrimaryLight,
-        elevation: 0,
+        foregroundColor: const Color(0xFF0F172A),
+        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+        elevation: 0.5,
+        scrolledUnderElevation: 0.5,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2563EB)),
             onPressed: () {
               _loadStoredHistory();
               ScaffoldMessenger.of(context).showSnackBar(
