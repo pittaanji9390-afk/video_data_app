@@ -34,6 +34,7 @@ class UploadService {
     String? candidateId,
     String? vendorId,
     String? environmentTag,
+    String? deviceId,
     void Function(double progress)? onProgress,
   }) async {
     if (kIsWeb) {
@@ -78,6 +79,7 @@ class UploadService {
       if (candidateId != null) request.fields['candidate_id'] = candidateId;
       if (vendorId != null) request.fields['vendor_id'] = vendorId;
       if (environmentTag != null) request.fields['environment_tag'] = environmentTag;
+      if (deviceId != null) request.fields['device_id'] = deviceId;
 
       onProgress?.call(0.2);
 

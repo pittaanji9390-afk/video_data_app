@@ -98,7 +98,7 @@ export default function CandidatesPage() {
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3 }, bgcolor: '#0f172a', minHeight: '100vh', color: '#f8fafc' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">
             Candidate Subject Roster
@@ -107,15 +107,36 @@ export default function CandidatesPage() {
             Manage candidates recruited by Acme Video Solutions for video recording collection.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<PersonAddOutlined />}
-          onClick={() => setOpenAdd(true)}
-          sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 'bold' }}
-        >
-          Add Candidate
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              const headers = ['Candidate ID', 'Name', 'Email', 'Phone', 'Videos Uploaded', 'Status'];
+              const rows = candidates.map((c) => [c.id, c.name, c.email, c.phone, c.videos, c.status]);
+              const csvContent = [headers.join(','), ...rows.map((r) => r.map((cell) => `"${cell}"`).join(','))].join('\n');
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', `vendor_candidates.csv`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+            sx={{ borderRadius: 3, textTransform: 'none', color: '#94a3b8', borderColor: 'rgba(255,255,255,0.15)' }}
+          >
+            Export CSV
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<PersonAddOutlined />}
+            onClick={() => setOpenAdd(true)}
+            sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 'bold' }}
+          >
+            Add Candidate
+          </Button>
+        </Box>
       </Box>
 
       <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.08)' }}>

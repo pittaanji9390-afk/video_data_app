@@ -217,15 +217,15 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                 ),
               ],
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("TODAY'S PROGRESS", style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
-                SizedBox(height: 12),
+                const Text("TODAY'S PROGRESS", style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
+                    const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Videos', style: TextStyle(color: Colors.white70, fontSize: 12)),
@@ -234,7 +234,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                       ],
                     ),
                     Container(height: 30, width: 1, color: Colors.white24),
-                    Column(
+                    const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Hours', style: TextStyle(color: Colors.white70, fontSize: 12)),
@@ -268,12 +268,12 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('APPROVED VIDEOS', style: TextStyle(fontSize: 11, color: Color(0xFF15803D), fontWeight: FontWeight.extrabold, letterSpacing: 0.8)),
+                  children: const [
+                    Text('APPROVED VIDEOS', style: TextStyle(fontSize: 11, color: Color(0xFF15803D), fontWeight: FontWeight.w800, letterSpacing: 0.8)),
                     SizedBox(height: 6),
-                    Text('285', style: TextStyle(fontSize: 26, fontWeight: FontWeight.extrabold, color: Color(0xFF166534))),
+                    Text('285', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
                     SizedBox(height: 4),
                     Text('This month • Verified QC Approvals', style: TextStyle(fontSize: 11, color: Color(0xFF166534))),
                   ],
@@ -313,7 +313,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
               children: [
                 const Text(
                   'CANDIDATE STATUS BREAKDOWN',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.extrabold, color: Colors.black87, letterSpacing: 0.5),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.black87, letterSpacing: 0.5),
                 ),
                 const SizedBox(height: 12),
 

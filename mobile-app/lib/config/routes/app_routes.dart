@@ -3,6 +3,7 @@ import '../../screens/admin/mobile_admin_dashboard_screen.dart';
 import '../../screens/environment/environment_tag_screen.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/login/login_screen.dart';
+import '../../screens/login/otp_login_screen.dart';
 import '../../screens/permission/camera_permission_screen.dart';
 import '../../screens/recording/video_recording_screen.dart';
 import '../../screens/splash/splash_screen.dart';
@@ -15,6 +16,7 @@ class AppRoutes {
   // Route Name Constants
   static const String splash = '/';
   static const String login = '/login';
+  static const String otpLogin = '/otp-login';
   static const String home = '/home';
   static const String cameraPermission = '/camera-permission';
   static const String recordVideo = '/record-video';
@@ -28,6 +30,7 @@ class AppRoutes {
     return {
       splash: (context) => const SplashScreen(),
       login: (context) => const LoginScreen(),
+      otpLogin: (context) => const OTPLoginScreen(),
       home: (context) => const HomeScreen(),
       cameraPermission: (context) => const CameraPermissionScreen(),
       recordVideo: (context) => const VideoRecordingScreen(),
@@ -44,6 +47,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SplashScreen());
       case login:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
+      case otpLogin:
+        return MaterialPageRoute(builder: (_) => const OTPLoginScreen());
       case home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
       case cameraPermission:

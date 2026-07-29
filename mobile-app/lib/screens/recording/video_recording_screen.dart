@@ -32,7 +32,10 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   bool _isFetchingLocation = false;
   String? _locationErrorMessage;
 
-  // Recording Timer
+  // Recording Timer with 30-min limit
+  static const int maxRecordingSeconds = 1800; // 30 minutes
+  static const int warningThresholdSeconds = 1500; // 25 minutes
+  static const int dangerThresholdSeconds = 1740; // 29 minutes
   Timer? _timer;
   int _elapsedSeconds = 0;
 
@@ -100,9 +103,26 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         setState(() {
           _elapsedSeconds++;
         });
+        // Auto-stop at 30 minutes
+        if (_elapsedSeconds >= maxRecordingSeconds) {
+          _stopRecording();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('⏱️ Maximum 30-minute recording limit reached. Video saved automatically.'),
+              backgroundColor: Color(0xFFF59E0B),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
       }
     });
   }
+
+  int get _remainingSeconds => maxRecordingSeconds - _elapsedSeconds;
+  double get _timerProgress => _elapsedSeconds / maxRecordingSeconds;
+  bool get _isWarning => _elapsedSeconds >= warningThresholdSeconds && _elapsedSeconds < dangerThresholdSeconds;
+  bool get _isDanger => _elapsedSeconds >= dangerThresholdSeconds;
 
   void _stopTimer() {
     _timer?.cancel();
@@ -280,44 +300,88 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                     // Recording Live Duration Overlay
                     if (_isRecording)
                       Positioned(
-                        top: 20,
-                        left: 20,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withAlpha(160),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppColors.error,
-                              width: 1.5,
+                        top: 16,
+                        left: 16,
+                        right: 16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Timer badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withAlpha(180),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: _isDanger ? AppColors.error : (_isWarning ? const Color(0xFFF59E0B) : AppColors.error),
+                                  width: _isDanger ? 2.5 : 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: _isDanger ? AppColors.error : (_isWarning ? const Color(0xFFF59E0B) : AppColors.error),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _formatDuration(_elapsedSeconds),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFeatures: [FontFeature.tabularFigures()],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    '${_formatDuration(_remainingSeconds)} left',
+                                    style: TextStyle(
+                                      color: _isDanger ? const Color(0xFFFF6B6B) : (_isWarning ? const Color(0xFFFCD34D) : Colors.white70),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      fontFeatures: const [FontFeature.tabularFigures()],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.error,
-                                  shape: BoxShape.circle,
+                            const SizedBox(height: 8),
+                            // Progress bar showing 30-min usage
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: _timerProgress,
+                                minHeight: 4,
+                                backgroundColor: Colors.white.withAlpha(40),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  _isDanger ? AppColors.error : (_isWarning ? const Color(0xFFF59E0B) : AppColors.primary),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatDuration(_elapsedSeconds),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  fontFeatures: [FontFeature.tabularFigures()],
+                            ),
+                            // Warning messages
+                            if (_isWarning && !_isDanger)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  '⚠️ ${_formatDuration(_remainingSeconds)} remaining',
+                                  style: const TextStyle(color: Color(0xFFFCD34D), fontSize: 12, fontWeight: FontWeight.bold),
                                 ),
                               ),
-                            ],
-                          ),
+                            if (_isDanger)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  '🔴 Auto-stopping in ${_formatDuration(_remainingSeconds)}...',
+                                  style: const TextStyle(color: Color(0xFFFF6B6B), fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                   ],

@@ -8,7 +8,7 @@ class ApiConstants {
   /// Handles localhost for Web/Desktop/iOS vs 10.0.2.2 for Android Emulator
   static String get baseUrl {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:5000';
+      return 'http://192.168.1.23:5000';
     }
     return 'http://localhost:5000';
   }

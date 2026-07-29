@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../config/routes/app_routes.dart';
-import '../../core/theme/app_colors.dart';
 import '../earnings/earnings_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../profile/profile_screen.dart';

@@ -14,7 +14,7 @@ class AuthService {
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:5000/api/v1';
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:5000/api/v1';
+      return 'http://192.168.1.23:5000/api/v1';
     }
     return 'http://localhost:5000/api/v1';
   }

@@ -134,4 +134,17 @@ export const vendorApiService = {
   getUploads: async () => {
     return fetchWithFallback('/videos', FALLBACK_VENDOR_DATA.recentUploads);
   },
+  getPayment: async (vendorId = 'v0000000-0000-0000-0000-000000000001', hourlyRate = 50) => {
+    return fetchWithFallback(`/payments/vendor/${vendorId}?hourly_rate=${hourlyRate}`, {
+      vendor_id: vendorId,
+      vendor_name: FALLBACK_VENDOR_DATA.vendorInfo.company_name,
+      approved_videos_count: FALLBACK_VENDOR_DATA.metrics.approvedVideos,
+      approved_seconds: FALLBACK_VENDOR_DATA.metrics.approvedHours * 3600,
+      approved_hours: FALLBACK_VENDOR_DATA.metrics.approvedHours,
+      hourly_rate: hourlyRate,
+      total_amount: FALLBACK_VENDOR_DATA.metrics.totalEarnings,
+      payment_status: 'Processing',
+      payment_date: new Date().toISOString().split('T')[0],
+    });
+  },
 };

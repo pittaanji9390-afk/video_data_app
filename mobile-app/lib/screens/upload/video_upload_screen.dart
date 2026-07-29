@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/device_service.dart';
 import '../../services/upload_service.dart';
 import '../../widgets/powered_by_footer.dart';
 
@@ -56,9 +57,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       }
     });
 
+    final deviceId = await DeviceService.instance.getDeviceId();
+
     final result = await UploadService.instance.uploadVideo(
       filePath: widget.videoPath,
       environmentTag: widget.environmentTag,
+      deviceId: deviceId,
     );
 
     progressTimer.cancel();

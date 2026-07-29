@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Grid, Card, CardMedia, CardContent, Chip } from '@mui/material';
+import { Box, Typography, Grid, Card, CardMedia, CardContent, Chip, Button } from '@mui/material';
 
 export default function UploadsPage() {
   const [filter, setFilter] = useState('All');
@@ -17,12 +17,36 @@ export default function UploadsPage() {
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3 }, bgcolor: '#0f172a', minHeight: '100vh', color: '#f8fafc' }}>
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
-        Video Collections Gallery
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        All candidate video logs recorded for Acme Video Solutions.
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 0.5 }}>
+            Video Collections Gallery
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            All candidate video logs recorded for Acme Video Solutions.
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => {
+            const headers = ['Video ID', 'Candidate', 'Environment Tag', 'Duration', 'Status'];
+            const rows = uploads.map((u) => [u.id, u.candidate, u.tag, u.duration, u.status]);
+            const csvContent = [headers.join(','), ...rows.map((r) => r.map((cell) => `"${cell}"`).join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `vendor_video_uploads.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }}
+          sx={{ borderRadius: 3, textTransform: 'none', color: '#94a3b8', borderColor: 'rgba(255,255,255,0.15)' }}
+        >
+          Export CSV
+        </Button>
+      </Box>
 
       {/* Upload Status Filter Chips */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>

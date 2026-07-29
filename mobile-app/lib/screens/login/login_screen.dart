@@ -257,6 +257,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                 ),
+                const SizedBox(height: 12),
+
+                // OTP Login Button
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.otpLogin),
+                  icon: const Icon(Icons.phonelink_ring_rounded, color: Color(0xFF0EA5E9), size: 20),
+                  label: const Text('Login with Phone OTP', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0EA5E9))),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    side: const BorderSide(color: Color(0xFF0EA5E9)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
 
                 // Quick Mobile Role Switcher (Candidate, Vendor, Admin)
