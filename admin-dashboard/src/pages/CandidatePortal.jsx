@@ -190,6 +190,9 @@ export default function CandidatePortal() {
     showToast('All notifications cleared');
   };
 
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraMsg, setCameraMsg] = useState('Initializing camera stream...');
+
   useEffect(() => {
     if (activeScreen === 'record') {
       startCamera();
@@ -201,12 +204,25 @@ export default function CandidatePortal() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: true,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+        setCameraActive(true);
+        setCameraMsg('Live Camera HD Active');
+      } else {
+        setCameraActive(false);
+        setCameraMsg('Network Simulation Viewfinder Active');
       }
     } catch (e) {
-      console.warn('Camera access denied or simulation mode:', e);
+      console.warn('Camera stream fallback activated:', e);
+      setCameraActive(false);
+      setCameraMsg('Viewfinder Simulation Active (HTTP Mode)');
     }
   };
 
@@ -214,7 +230,9 @@ export default function CandidatePortal() {
     if (videoRef.current && videoRef.current.srcObject) {
       const tracks = videoRef.current.srcObject.getTracks();
       tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
     }
+    setCameraActive(false);
   };
 
   const handleStartRec = () => {
@@ -226,7 +244,11 @@ export default function CandidatePortal() {
   const handleStopRec = () => {
     setRecording(false);
     clearInterval(timerRef.current);
-    setActiveScreen('env');
+    const newCount = candidateUploadedCount + 1;
+    setCandidateUploadedCount(newCount);
+    localStorage.setItem(`cand_uploads_${candidateId}`, newCount.toString());
+    showToast(`Recorded ${formatTime(recordingTime)} video clip! Saved & uploaded.`);
+    setActiveScreen('upload_success');
   };
 
   const formatTime = (seconds) => {
@@ -358,24 +380,35 @@ export default function CandidatePortal() {
 
             {/* 9. RECORDING SCREEN (Mockup Screen 9) */}
             {activeScreen === 'record' && (
-              <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 2, position: 'relative' }}>
-                <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} />
+              <Box sx={{ height: '100%', minHeight: 380, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 2, position: 'relative', bgcolor: '#0f172a', borderRadius: 3, overflow: 'hidden' }}>
+                {/* HTML5 Realtime Camera Stream Element */}
+                <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 1 }} />
                 
-                {/* Top REC Indicator */}
-                <Box sx={{ position: 'relative', zIndex: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Chip label={`REC ${formatTime(recordingTime)}`} color="error" size="small" sx={{ fontWeight: 'bold' }} />
-                  <Button size="small" variant="contained" color="secondary" onClick={() => setActiveScreen('voice')}>Voice</Button>
+                {/* Viewfinder Target Reticle Overlay */}
+                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                  <Box sx={{ width: 180, height: 180, border: '2px dashed rgba(255,255,255,0.7)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Videocam sx={{ fontSize: 42, color: 'rgba(255,255,255,0.4)' }} />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: '#fff', mt: 1, bgcolor: 'rgba(0,0,0,0.6)', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 'bold' }}>
+                    {selectedEnv} Environment Frame
+                  </Typography>
                 </Box>
 
-                {/* Bottom Controls */}
-                <Box sx={{ position: 'relative', zIndex: 5, pb: 4, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-                  <IconButton onClick={() => setActiveScreen('alert')} sx={{ bgcolor: 'rgba(0, 0, 0, 0.3)', color: '#fff' }}>
+                {/* Top REC Indicator & Camera Mode Badge */}
+                <Box sx={{ position: 'relative', zIndex: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Chip label={`REC ${formatTime(recordingTime)}`} color={recording ? "error" : "default"} size="small" sx={{ fontWeight: 'bold', bgcolor: recording ? '#ef4444' : 'rgba(0,0,0,0.6)', color: '#fff' }} />
+                  <Chip label={cameraMsg} size="small" sx={{ bgcolor: 'rgba(37,99,235,0.85)', color: '#fff', fontSize: 11, fontWeight: 'bold' }} />
+                </Box>
+
+                {/* Bottom Record Controls */}
+                <Box sx={{ position: 'relative', zIndex: 5, pb: 2, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                  <IconButton onClick={() => setActiveScreen('alert')} sx={{ bgcolor: 'rgba(0, 0, 0, 0.5)', color: '#fff' }}>
                     <Warning />
                   </IconButton>
-                  <IconButton onClick={recording ? handleStopRec : handleStartRec} sx={{ bgcolor: '#ef4444', color: '#fff', p: 2.5 }}>
+                  <IconButton onClick={recording ? handleStopRec : handleStartRec} sx={{ bgcolor: recording ? '#ef4444' : '#10b981', color: '#fff', p: 2.5, boxShadow: '0 0 25px rgba(16,185,129,0.5)' }}>
                     {recording ? <Stop sx={{ fontSize: 36 }} /> : <Videocam sx={{ fontSize: 36 }} />}
                   </IconButton>
-                  <IconButton onClick={() => setActiveScreen('env')} sx={{ bgcolor: 'rgba(0, 0, 0, 0.3)', color: '#fff' }}>
+                  <IconButton onClick={() => setActiveScreen('env')} sx={{ bgcolor: 'rgba(0, 0, 0, 0.5)', color: '#fff' }}>
                     <CheckCircle />
                   </IconButton>
                 </Box>
