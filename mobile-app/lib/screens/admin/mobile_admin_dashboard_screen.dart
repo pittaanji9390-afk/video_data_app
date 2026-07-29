@@ -626,7 +626,7 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
                   right: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.black70, borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(6)),
                     child: const Text('30:15', style: TextStyle(color: Colors.white, fontSize: 11)),
                   ),
                 ),
