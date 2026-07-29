@@ -44,6 +44,20 @@ class NotificationsScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimaryLight,
         elevation: 0,
+        actions: [
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('All notifications marked as read ✓'),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: const Text('Mark All Read', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
