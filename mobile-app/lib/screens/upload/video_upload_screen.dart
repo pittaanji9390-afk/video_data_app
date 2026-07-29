@@ -277,140 +277,65 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Action Card: Pick / Dispatch Video
+              // Top Summary Stats Banner
               Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 4)),
+                    BoxShadow(color: const Color(0xFF2563EB).withAlpha(60), blurRadius: 14, offset: const Offset(0, 4)),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text('DATASET UPLOADS SUMMARY', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                    const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Color(0xFFEFF6FF),
-                              child: Icon(Icons.cloud_upload_rounded, color: AppColors.primary),
-                            ),
-                            SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Dispatch Video File', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight)),
-                                Text('Upload MP4 to REST API Server', style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: _pickAndSelectFile,
-                          icon: const Icon(Icons.add_photo_alternate_rounded, size: 18),
-                          label: const Text('Select File'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                            side: const BorderSide(color: AppColors.primary),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    if (_activeVideoPath.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'File: $_activeVideoPath',
-                                    style: const TextStyle(fontSize: 12, fontFamily: 'monospace', fontWeight: FontWeight.bold),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withAlpha(25),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    _activeEnvTag ?? 'Kitchen',
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary),
-                                  ),
-                                ),
-                              ],
+                            const Text('Total Videos', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            const SizedBox(height: 2),
+                            Text('${_uploadsHistory.length}', style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('QC Approved', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${_uploadsHistory.where((i) => i['status'] == 'Approved').length}',
+                              style: const TextStyle(color: Color(0xFF34D399), fontSize: 26, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    if (_isUploading) ...[
-                      Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Uploading MP4 Video to Backend API...', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                              Text('${(_uploadProgress * 100).toInt()}%', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: LinearProgressIndicator(
-                              value: _uploadProgress,
-                              minHeight: 8,
-                              backgroundColor: AppColors.primary.withAlpha(30),
-                              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Pending QC', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${_uploadsHistory.where((i) => i['status'] == 'Pending QC' || i['status'] == 'Pending').length}',
+                              style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 26, fontWeight: FontWeight.bold),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _isUploading ? null : _startUpload,
-                        icon: const Icon(Icons.cloud_upload_rounded),
-                        label: Text(
-                          _activeVideoPath.isEmpty
-                              ? 'Upload Default Dataset Video'
-                              : (_uploadResult == null ? 'Upload Video to Backend' : 'Re-Upload Video'),
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ],
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
               // All Uploads Section Header
               Row(
