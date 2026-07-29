@@ -43,7 +43,7 @@ import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#6366f1',
       light: '#818cf8',
@@ -61,12 +61,12 @@ const adminTheme = createTheme({
       main: '#f59e0b',
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: '#f8fafc',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
+      primary: '#0f172a',
+      secondary: '#475569',
     },
   },
   typography: {
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
     <ThemeProvider theme={adminTheme}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
-        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <AdminPanelSettings sx={{ mr: 1.5, color: 'primary.main', fontSize: 32 }} />
             <Box sx={{ flexGrow: 1 }}>
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
                     p: 3,
                     borderRadius: 4,
                     bgcolor: 'background.paper',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
                     cursor: card.onClick ? 'pointer' : 'default',
                     transition: 'transform 0.2s ease-in-out',
                     '&:hover': { transform: 'translateY(-4px)', borderColor: card.color },
@@ -290,7 +290,7 @@ export default function AdminDashboard() {
           </Grid>
 
           {/* Recent Activities */}
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)' }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
               Recent Video Submissions (API)
             </Typography>
@@ -308,7 +308,7 @@ export default function AdminDashboard() {
               <TableContainer>
                 <Table sx={{ minWidth: 650 }}>
                   <TableHead>
-                    <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)' }}>
+                    <TableRow sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)' }}>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VIDEO ID</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ENVIRONMENT</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>DURATION</TableCell>

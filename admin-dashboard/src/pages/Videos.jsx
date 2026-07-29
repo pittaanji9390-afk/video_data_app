@@ -44,7 +44,7 @@ import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#6366f1',
     },
@@ -61,12 +61,12 @@ const adminTheme = createTheme({
       main: '#f59e0b',
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: '#f8fafc',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
+      primary: '#0f172a',
+      secondary: '#475569',
     },
   },
   typography: {
@@ -153,7 +153,7 @@ export default function VideoManagement() {
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
         {/* Navigation Header */}
-        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <IconButton color="inherit" onClick={() => navigate('/dashboard')} sx={{ mr: 1 }}>
               <ArrowBack />
@@ -180,7 +180,7 @@ export default function VideoManagement() {
 
         {/* Content Area */}
         <Container maxWidth="xl" sx={{ mt: 4 }}>
-          <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', flexGrow: 1 }}>
               <TextField
                 id="video-search-input"
@@ -255,7 +255,7 @@ export default function VideoManagement() {
           )}
 
           {/* Table Container */}
-          <Paper elevation={0} sx={{ borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
+          <Paper elevation={0} sx={{ borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)', overflow: 'hidden' }}>
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, gap: 2 }}>
                 <CircularProgress color="primary" />
@@ -265,7 +265,7 @@ export default function VideoManagement() {
               <TableContainer>
                 <Table sx={{ minWidth: 850 }}>
                   <TableHead>
-                    <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                    <TableRow sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)', bgcolor: 'rgba(0, 0, 0, 0.02)' }}>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>THUMBNAIL</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>CANDIDATE NAME</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ENVIRONMENT TAG</TableCell>
@@ -286,7 +286,7 @@ export default function VideoManagement() {
                       filteredVideos
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                         .map((video) => (
-                          <TableRow key={video.id} sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' } }}>
+                          <TableRow key={video.id} sx={{ '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.02)' } }}>
                             <TableCell>
                               <Box
                                 sx={{
@@ -350,7 +350,7 @@ export default function VideoManagement() {
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
-              sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+              sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}
             />
           </Paper>
         </Container>

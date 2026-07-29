@@ -37,7 +37,7 @@ import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#6366f1',
     },
@@ -54,12 +54,12 @@ const adminTheme = createTheme({
       main: '#f59e0b',
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: '#f8fafc',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
+      primary: '#0f172a',
+      secondary: '#475569',
     },
   },
   typography: {
@@ -181,7 +181,7 @@ export default function QCReview() {
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
         {/* Navigation Header */}
-        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <IconButton color="inherit" onClick={() => navigate('/videos')} sx={{ mr: 1 }}>
               <ArrowBack />
@@ -222,7 +222,7 @@ export default function QCReview() {
             </Alert>
           ) : (
             <>
-              <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+              <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Button variant="outlined" color="inherit" startIcon={<ArrowBack />} onClick={() => navigate('/videos')} sx={{ textTransform: 'none' }}>
                     Back to Videos
@@ -246,7 +246,7 @@ export default function QCReview() {
 
               <Grid container spacing={4}>
                 <Grid item xs={12} lg={7}>
-                  <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)' }}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Video Media Audit Player</Typography>
                     <Box sx={{ width: '100%', borderRadius: 3, overflow: 'hidden', bgcolor: '#000', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
                       <video controls width="100%" height="auto" style={{ display: 'block', maxHeight: '440px' }}>
@@ -258,7 +258,7 @@ export default function QCReview() {
                 </Grid>
 
                 <Grid item xs={12} lg={5}>
-                  <Paper elevation={0} sx={{ p: 3.5, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Paper elevation={0} sx={{ p: 3.5, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)', display: 'flex', flexDirection: 'column', gap: 3 }}>
                     <Box>
                       <Typography variant="h6" fontWeight="bold" gutterBottom>Quality Control Audit Panel</Typography>
                       <Typography variant="body2" color="text.secondary">Inspect video quality and submit approval decisions to API.</Typography>

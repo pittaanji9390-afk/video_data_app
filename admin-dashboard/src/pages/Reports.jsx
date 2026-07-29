@@ -32,7 +32,7 @@ import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#6366f1',
     },
@@ -46,12 +46,12 @@ const adminTheme = createTheme({
       main: '#ef4444',
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: '#f8fafc',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
+      primary: '#0f172a',
+      secondary: '#475569',
     },
   },
   typography: {
@@ -203,7 +203,7 @@ export default function ReportsPage() {
     <ThemeProvider theme={adminTheme}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
-        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <IconButton color="inherit" onClick={() => navigate('/dashboard')} sx={{ mr: 1 }}>
               <ArrowBack />
@@ -234,11 +234,11 @@ export default function ReportsPage() {
           <Grid container spacing={3.5}>
             {reportCards.map((card) => (
               <Grid item xs={12} md={6} key={card.key}>
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                <Paper elevation={0} sx={{ p: 4, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
                   <Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <Typography variant="h6" fontWeight="bold">{card.title}</Typography>
-                      <Box sx={{ p: 1.5, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.05)', color: card.color }}>{card.icon}</Box>
+                      <Box sx={{ p: 1.5, borderRadius: 3, bgcolor: 'rgba(0, 0, 0, 0.05)', color: card.color }}>{card.icon}</Box>
                     </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>{card.description}</Typography>
                     <Chip label={`Target: ${card.filename}`} size="small" variant="outlined" sx={{ fontFamily: 'monospace', mb: 3 }} />

@@ -62,7 +62,7 @@ class EarningsScreen extends StatelessWidget {
                     const Divider(color: Colors.white24, height: 28),
                     const Text('Total Earnings (This Month)', style: TextStyle(color: Colors.white70, fontSize: 13)),
                     const SizedBox(height: 4),
-                    const Text('₹1,850', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.extrabold)),
+                    const Text('₹1,850', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ),

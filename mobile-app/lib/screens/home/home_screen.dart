@@ -74,26 +74,38 @@ class _HomeDashboardTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Good Morning,',
+                      'Good Afternoon,',
                       style: TextStyle(fontSize: 14, color: AppColors.textSecondaryLight),
                     ),
-                    Text(
-                      'Vasavi 👋',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight),
+                    Row(
+                      children: [
+                        Text(
+                          'Anji ',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight),
+                        ),
+                        Text('👋', style: TextStyle(fontSize: 20)),
+                      ],
                     ),
                   ],
                 ),
                 Row(
                   children: [
                     IconButton(
-                      icon: const Stack(
+                      icon: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Icon(Icons.notifications_outlined, size: 28, color: AppColors.textPrimaryLight),
+                          const Icon(Icons.notifications_outlined, size: 28, color: AppColors.textPrimaryLight),
                           Positioned(
                             top: -2,
                             right: -2,
-                            child: CircleAvatar(radius: 5, backgroundColor: AppColors.error),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppColors.error,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Text('1', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
                           ),
                         ],
                       ),
@@ -104,32 +116,22 @@ class _HomeDashboardTab extends StatelessWidget {
                         );
                       },
                     ),
-                    const SizedBox(width: 8),
-                    const CircleAvatar(
-                      backgroundColor: AppColors.primary,
-                      radius: 20,
-                      child: Text('VK', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 24),
 
-            // Today's Progress Container
+            // Today's Progress Container (Capsule shape matching Image 1)
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(18),
+                color: const Color(0xFF2563EB),
+                borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withAlpha(60),
-                    blurRadius: 12,
+                    color: const Color(0xFF2563EB).withAlpha(80),
+                    blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
                 ],
@@ -139,54 +141,27 @@ class _HomeDashboardTab extends StatelessWidget {
                 children: [
                   const Text(
                     "TODAY'S PROGRESS",
-                    style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 0.8),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Videos Uploaded', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Text('12', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(color: Colors.white.withAlpha(40), borderRadius: BorderRadius.circular(8)),
-                                  child: const Text('+30%', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Videos Uploaded', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 4),
+                          const Text('0', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                        ],
                       ),
-                      Container(height: 40, width: 1, color: Colors.white24),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Hours Collected', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Text('05:30', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(color: Colors.white.withAlpha(40), borderRadius: BorderRadius.circular(8)),
-                                    child: const Text('+15%', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Hours Collected', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 4),
+                          const Text('0.0 hrs', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                        ],
                       ),
                     ],
                   ),
@@ -302,37 +277,33 @@ class _HomeDashboardTab extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(32),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(32),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
-            BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 6, offset: const Offset(0, 3)),
+            BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withAlpha(20),
-                borderRadius: BorderRadius.circular(10),
+                color: color.withAlpha(25),
+                shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 24),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSecondaryLight)),
-              ],
-            ),
+            const SizedBox(height: 12),
+            Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSecondaryLight)),
           ],
         ),
       ),

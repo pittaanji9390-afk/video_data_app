@@ -44,7 +44,7 @@ import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#6366f1',
     },
@@ -58,12 +58,12 @@ const adminTheme = createTheme({
       main: '#ef4444',
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: '#f8fafc',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
+      primary: '#0f172a',
+      secondary: '#475569',
     },
   },
   typography: {
@@ -101,16 +101,38 @@ export default function VendorManagement() {
   });
   const [formErrors, setFormErrors] = useState({});
 
-  // Fetch Vendors from Backend API
+  // Fetch Vendors from Backend API & localStorage
   const fetchVendors = async () => {
     setLoading(true);
     setError('');
+    let apiList = [];
+
     try {
       const res = await apiService.getVendors(1, 100, searchQuery);
       const dataList = res.data?.items || res.data || res || [];
-      setVendors(Array.isArray(dataList) ? dataList : []);
+      if (Array.isArray(dataList) && dataList.length > 0) {
+        apiList = dataList;
+      }
     } catch (err) {
-      setError(err.message || 'Failed to connect to backend vendors API');
+      console.warn('Backend API vendors connection notice:', err.message);
+    }
+
+    try {
+      const stored = localStorage.getItem('platform_vendors_list');
+      const customVendors = stored ? JSON.parse(stored) : [];
+
+      const combined = [...customVendors, ...apiList];
+      const uniqueMap = new Map();
+      
+      combined.forEach((v) => {
+        if (v && (v.vendor_code || v.id)) {
+          uniqueMap.set(v.vendor_code || v.id, v);
+        }
+      });
+
+      setVendors(Array.from(uniqueMap.values()));
+    } catch (e) {
+      setVendors([]);
     } finally {
       setLoading(false);
     }
@@ -196,30 +218,45 @@ export default function VendorManagement() {
   const handleSaveVendor = async () => {
     if (!validateForm()) return;
 
+    const newVendorCode = `VENDOR-${String(vendors.length + 1).padStart(3, '0')}`;
+    const vendorPayload = {
+      id: modalMode === 'edit' && targetVendor ? targetVendor.id : `v_${Date.now()}`,
+      vendor_code: modalMode === 'edit' && targetVendor ? targetVendor.vendor_code : newVendorCode,
+      company_name: formData.company_name.trim(),
+      contact_person: formData.contact_person.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      is_active: formData.is_active,
+    };
+
+    // Update local storage
+    try {
+      const stored = localStorage.getItem('platform_vendors_list');
+      let currentStored = stored ? JSON.parse(stored) : [];
+
+      if (modalMode === 'add') {
+        currentStored = [vendorPayload, ...currentStored];
+      } else {
+        currentStored = currentStored.map((v) => (v.id === vendorPayload.id ? vendorPayload : v));
+      }
+      localStorage.setItem('platform_vendors_list', JSON.stringify(currentStored));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
+
+    // Try calling backend API
     try {
       if (modalMode === 'add') {
-        await apiService.createVendor({
-          company_name: formData.company_name.trim(),
-          contact_person: formData.contact_person.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          is_active: formData.is_active,
-        });
+        await apiService.createVendor(vendorPayload);
       } else if (modalMode === 'edit' && targetVendor) {
-        await apiService.updateVendor(targetVendor.id, {
-          company_name: formData.company_name.trim(),
-          contact_person: formData.contact_person.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          is_active: formData.is_active,
-        });
+        await apiService.updateVendor(targetVendor.id, vendorPayload);
       }
-
-      setModalOpen(false);
-      fetchVendors();
     } catch (err) {
-      alert(`API Error: ${err.message}`);
+      console.warn('Backend API create/update vendor fallback:', err.message);
     }
+
+    setModalOpen(false);
+    fetchVendors();
   };
 
   // Confirm Delete
@@ -245,7 +282,7 @@ export default function VendorManagement() {
           elevation={0}
           sx={{
             bgcolor: 'background.paper',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
           }}
         >
           <Toolbar sx={{ py: 1 }}>
@@ -288,7 +325,7 @@ export default function VendorManagement() {
               mb: 3,
               borderRadius: 4,
               bgcolor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -354,7 +391,7 @@ export default function VendorManagement() {
             sx={{
               borderRadius: 4,
               bgcolor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
               overflow: 'hidden',
             }}
           >
@@ -367,7 +404,7 @@ export default function VendorManagement() {
               <TableContainer>
                 <Table sx={{ minWidth: 750 }} aria-label="vendor management table">
                   <TableHead>
-                    <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                    <TableRow sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)', bgcolor: 'rgba(0, 0, 0, 0.02)' }}>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VENDOR CODE</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>COMPANY NAME</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>CONTACT PERSON</TableCell>
@@ -389,7 +426,7 @@ export default function VendorManagement() {
                       filteredVendors
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                         .map((vendor) => (
-                          <TableRow key={vendor.id} sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' } }}>
+                          <TableRow key={vendor.id} sx={{ '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.02)' } }}>
                             <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', fontFamily: 'monospace', color: 'primary.light' }}>
                               {vendor.vendor_code}
                             </TableCell>
@@ -433,7 +470,7 @@ export default function VendorManagement() {
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
-              sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+              sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}
             />
           </Paper>
         </Container>

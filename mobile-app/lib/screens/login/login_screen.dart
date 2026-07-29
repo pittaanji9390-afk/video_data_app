@@ -26,16 +26,16 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _handleLogin([String? customIdentifier, String? customPassword]) async {
+    final identifier = customIdentifier ?? _identifierController.text;
+    final password = customPassword ?? _passwordController.text;
+
+    if (customIdentifier == null && !_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
 
-    final res = await AuthService.login(
-      _identifierController.text,
-      _passwordController.text,
-    );
+    final res = await AuthService.login(identifier, password);
 
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -45,9 +45,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Authenticated as ${role.toUpperCase()}! Redirecting...'),
-          backgroundColor: AppColors.success,
+          content: Text('Authenticated as ${role.toUpperCase()}! Opening portal...'),
+          backgroundColor: role == 'admin'
+              ? AppColors.primary
+              : role == 'vendor'
+                  ? AppColors.secondary
+                  : AppColors.success,
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
         ),
       );
 
@@ -90,51 +95,58 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Brand Top Logo Icon
+                    // App Logo Banner Icon
                     Container(
-                      height: 90,
-                      width: 90,
+                      height: 84,
+                      width: 84,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withAlpha(30),
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, Color(0xFF4F46E5)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withAlpha(80),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: const Icon(
-                        Icons.lock_person_rounded,
-                        size: 48,
-                        color: AppColors.primary,
+                        Icons.videocam_rounded,
+                        size: 44,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
                     // App Title
                     Text(
-                      'Welcome to ${AppConstants.appName}',
+                      AppConstants.appName,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            fontWeight: FontWeight.w800,
+                            color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                           ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Sign in with your Admin, Vendor, or Candidate credentials',
+                      'Single Login for Admin, Vendor & Candidate Accounts',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isDarkMode
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
+                            color: isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                           ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 32),
 
                     // Identifier Field
                     Text(
                       'Email, Username, or Mobile Phone',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                         color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                       ),
                     ),
@@ -142,9 +154,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _identifierController,
                       decoration: InputDecoration(
-                        hintText: 'Enter email address or mobile number',
+                        hintText: 'e.g. admin@videoplatform.com',
                         prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
@@ -159,8 +171,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       'Password',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                         color: isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                       ),
                     ),
@@ -180,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             setState(() => _obscurePassword = !_obscurePassword);
                           },
                         ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
@@ -190,51 +202,138 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
 
-                    // Single Login Button
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: _isLoading
+                    // Single Login Action Button
+                    ElevatedButton.icon(
+                      onPressed: _isLoading ? null : () => _handleLogin(),
+                      icon: _isLoading
+                          ? const SizedBox.shrink()
+                          : const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                      label: _isLoading
                           ? const SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                             )
                           : const Text(
-                              'Sign In to Platform',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              'Sign In to Platform App',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
 
-                    Text(
-                      'By continuing, you agree to our Terms of Service & Privacy Policy',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDarkMode
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight,
-                      ),
-                      textAlign: TextAlign.center,
+                    // Quick Demo Credentials Selector Section
+                    Row(
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: Text(
+                            'QUICK DEMO ACCESSS',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+                        const Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 1-Click Role Quick Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildRoleShortcutButton(
+                            label: 'Admin',
+                            icon: Icons.admin_panel_settings_rounded,
+                            color: AppColors.primary,
+                            onTap: () {
+                              _identifierController.text = 'admin@videoplatform.com';
+                              _passwordController.text = 'admin123';
+                              _handleLogin('admin@videoplatform.com', 'admin123');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildRoleShortcutButton(
+                            label: 'Vendor',
+                            icon: Icons.storefront_rounded,
+                            color: AppColors.secondary,
+                            onTap: () {
+                              _identifierController.text = 'vendor@acmevideos.com';
+                              _passwordController.text = 'vendor123';
+                              _handleLogin('vendor@acmevideos.com', 'vendor123');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildRoleShortcutButton(
+                            label: 'Candidate',
+                            icon: Icons.person_rounded,
+                            color: AppColors.success,
+                            onTap: () {
+                              _identifierController.text = 'candidate@videoplatform.com';
+                              _passwordController.text = 'candidate123';
+                              _handleLogin('candidate@videoplatform.com', 'candidate123');
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleShortcutButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(
+          color: color.withAlpha(25),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withAlpha(80)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
         ),
       ),
     );

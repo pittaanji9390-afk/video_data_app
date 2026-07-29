@@ -19,6 +19,7 @@ import {
   Switch,
   TextField,
   InputAdornment,
+  Badge,
 } from '@mui/material';
 import {
   Videocam,
@@ -51,6 +52,7 @@ import {
   Garage,
   MoreHoriz,
   ArrowBack,
+  Timer,
 } from '@mui/icons-material';
 
 const candidateTheme = createTheme({
@@ -74,6 +76,34 @@ export default function CandidatePortal() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [selectedEnv, setSelectedEnv] = useState('Kitchen');
   const [selectedTab, setSelectedTab] = useState(0);
+
+  // Dynamic Candidate Profile Data from LocalStorage / Session
+  const candidateName = localStorage.getItem('userName') || 'Vasavi Kandula';
+  const candidateEmail = localStorage.getItem('userEmail') || 'vasavi@example.com';
+  const candidateId = localStorage.getItem('candidateId') || 'CAN-2024-001';
+  const vendorId = localStorage.getItem('vendorId') || 'VENDOR-001';
+  const candidatePhone = localStorage.getItem('candidatePhone') || '+91 98765 43210';
+
+  // Greeting Time Calculation
+  const currentHour = new Date().getHours();
+  const greetingTime = currentHour < 12 ? 'Good Morning,' : currentHour < 18 ? 'Good Afternoon,' : 'Good Evening,';
+  const firstName = candidateName.split(' ')[0] || candidateName;
+  const initials = candidateName
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'VK';
+
+  // Dynamic candidate activity metrics & history
+  const [candidateUploadedCount, setCandidateUploadedCount] = useState(() => {
+    const val = localStorage.getItem(`cand_uploads_${candidateId}`);
+    return val ? parseInt(val, 10) : 0;
+  });
+
+  const candidateHours = (candidateUploadedCount * 0.5).toFixed(1);
+  const candidateEarnings = (candidateUploadedCount * 50).toFixed(0);
 
   const videoRef = useRef(null);
   const timerRef = useRef(null);
@@ -141,7 +171,38 @@ export default function CandidatePortal() {
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: '#0f172a', py: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         
-        {/* Top Screen Selector Bar for Reference Image Matching */}
+        {/* Top App Role Switcher Bar */}
+        <Paper
+          elevation={4}
+          sx={{
+            p: 1.5,
+            mb: 2,
+            bgcolor: '#0f172a',
+            color: '#fff',
+            borderRadius: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            flexWrap: 'wrap',
+            maxWidth: 1000,
+            justifyContent: 'center',
+          }}
+        >
+          <Typography variant="caption" fontWeight="bold" sx={{ color: '#38bdf8' }}>
+            📱 SWITCH MOBILE APP VIEW:
+          </Typography>
+          <Button size="small" variant="contained" color="primary" sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}>
+            👤 Candidate App
+          </Button>
+          <Button size="small" variant="outlined" sx={{ color: '#10b981', borderColor: '#10b981', textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }} onClick={() => navigate('/vendor-portal')}>
+            🏪 Vendor App
+          </Button>
+          <Button size="small" variant="outlined" sx={{ color: '#818cf8', borderColor: '#818cf8', textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }} onClick={() => navigate('/admin-portal')}>
+            🛡️ Admin App
+          </Button>
+        </Paper>
+
+        {/* Top PPT Screen Switcher Bar */}
         <Paper
           elevation={4}
           sx={{
@@ -159,7 +220,7 @@ export default function CandidatePortal() {
           }}
         >
           <Typography variant="caption" fontWeight="bold" sx={{ color: '#38bdf8', mr: 1 }}>
-            📱 23-SCREEN PPT MOCKUP SWITCHER:
+            📑 CANDIDATE MOCKUP SWITCHER:
           </Typography>
           {[
             { id: 'onboarding', label: '1-4. Onboarding' },
@@ -248,8 +309,8 @@ export default function CandidatePortal() {
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                   <Box>
-                    <Typography variant="caption" color="text.secondary">Good Morning,</Typography>
-                    <Typography variant="h6" fontWeight="bold">Vasavi 👋</Typography>
+                    <Typography variant="caption" color="text.secondary">{greetingTime}</Typography>
+                    <Typography variant="h6" fontWeight="bold">{firstName} 👋</Typography>
                   </Box>
                   <IconButton onClick={() => setActiveScreen('notifications')}>
                     <Badge badgeContent={1} color="error">
@@ -264,11 +325,11 @@ export default function CandidatePortal() {
                   <Box sx={{ display: 'flex', mt: 1.5, justifyContent: 'space-between' }}>
                     <Box>
                       <Typography variant="caption" sx={{ opacity: 0.8 }}>Videos Uploaded</Typography>
-                      <Typography variant="h5" fontWeight="bold">12 <Chip label="+30%" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', height: 18 }} /></Typography>
+                      <Typography variant="h5" fontWeight="bold">{candidateUploadedCount}</Typography>
                     </Box>
                     <Box>
                       <Typography variant="caption" sx={{ opacity: 0.8 }}>Hours Collected</Typography>
-                      <Typography variant="h5" fontWeight="bold">05:30 <Chip label="+15%" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', height: 18 }} /></Typography>
+                      <Typography variant="h5" fontWeight="bold">{candidateHours} hrs</Typography>
                     </Box>
                   </Box>
                 </Paper>
@@ -320,13 +381,13 @@ export default function CandidatePortal() {
 
                 {/* Bottom Controls */}
                 <Box sx={{ position: 'relative', zIndex: 5, pb: 4, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-                  <IconButton onClick={() => setActiveScreen('alert')} sx={{ bgcolor: 'rgba(255,255,255,0.3)', color: '#fff' }}>
+                  <IconButton onClick={() => setActiveScreen('alert')} sx={{ bgcolor: 'rgba(0, 0, 0, 0.3)', color: '#fff' }}>
                     <Warning />
                   </IconButton>
                   <IconButton onClick={recording ? handleStopRec : handleStartRec} sx={{ bgcolor: '#ef4444', color: '#fff', p: 2.5 }}>
                     {recording ? <Stop sx={{ fontSize: 36 }} /> : <Videocam sx={{ fontSize: 36 }} />}
                   </IconButton>
-                  <IconButton onClick={() => setActiveScreen('env')} sx={{ bgcolor: 'rgba(255,255,255,0.3)', color: '#fff' }}>
+                  <IconButton onClick={() => setActiveScreen('env')} sx={{ bgcolor: 'rgba(0, 0, 0, 0.3)', color: '#fff' }}>
                     <CheckCircle />
                   </IconButton>
                 </Box>
@@ -472,11 +533,11 @@ export default function CandidatePortal() {
                 <Typography variant="h6" fontWeight="bold" gutterBottom>My Earnings</Typography>
                 <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#2563eb', color: '#fff', borderRadius: 4, mb: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Approved Hours</Typography><Typography variant="h6" fontWeight="bold">18.50</Typography></Box>
+                    <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Approved Hours</Typography><Typography variant="h6" fontWeight="bold">{candidateHours}</Typography></Box>
                     <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Rate</Typography><Typography variant="h6" fontWeight="bold">₹100 / hour</Typography></Box>
                   </Box>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>Total Earnings (This Month)</Typography>
-                  <Typography variant="h4" fontWeight="bold">₹1,850</Typography>
+                  <Typography variant="h4" fontWeight="bold">₹{candidateEarnings}</Typography>
                 </Paper>
 
                 <Button fullWidth variant="contained" startIcon={<Download />} sx={{ py: 1.5, borderRadius: 3 }}>Download Report (CSV)</Button>
@@ -503,14 +564,14 @@ export default function CandidatePortal() {
             {/* 20. PROFILE SCREEN (Mockup Screen 20) */}
             {activeScreen === 'profile' && (
               <Box sx={{ textAlign: 'center' }}>
-                <Avatar sx={{ width: 80, height: 80, bgcolor: '#2563eb', mx: 'auto', mb: 1, fontSize: 32, fontWeight: 'bold' }}>VK</Avatar>
-                <Typography variant="h6" fontWeight="bold">Vasavi Kandula <Chip label="Verified" color="success" size="small" /></Typography>
-                <Typography variant="caption" color="text.secondary">+91 98765 43210</Typography>
+                <Avatar sx={{ width: 80, height: 80, bgcolor: '#2563eb', mx: 'auto', mb: 1, fontSize: 32, fontWeight: 'bold' }}>{initials}</Avatar>
+                <Typography variant="h6" fontWeight="bold">{candidateName} <Chip label="Verified" color="success" size="small" /></Typography>
+                <Typography variant="caption" color="text.secondary">{candidatePhone}</Typography>
 
                 <Paper elevation={0} sx={{ p: 2, mt: 3, border: '1px solid #e2e8f0', borderRadius: 3, textAlign: 'left' }}>
-                  <Typography variant="body2"><strong>Candidate ID:</strong> CAN-2024-001</Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}><strong>Vendor ID:</strong> VEN-001</Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}><strong>Email:</strong> vasavi@example.com</Typography>
+                  <Typography variant="body2"><strong>Candidate ID:</strong> {candidateId}</Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}><strong>Vendor ID:</strong> {vendorId}</Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}><strong>Email:</strong> {candidateEmail}</Typography>
                 </Paper>
                 <Box sx={{ mt: 2 }}><QrCode2 sx={{ fontSize: 90, color: 'primary.main' }} /></Box>
               </Box>

@@ -127,28 +127,9 @@ class VendorService {
       };
     } catch (err) {
       return {
-        items: [
-          {
-            id: 'v0000000-0000-0000-0000-000000000001',
-            vendor_code: 'VENDOR-001',
-            company_name: 'Acme Video Solutions',
-            contact_person: 'John Vendor',
-            email: 'john@acmevideos.com',
-            phone: '+1-555-0192',
-            is_active: true,
-          },
-          {
-            id: 'v0000000-0000-0000-0000-000000000002',
-            vendor_code: 'VENDOR-002',
-            company_name: 'Apex Data Services',
-            contact_person: 'Sarah Connor',
-            email: 'sarah@apexdata.io',
-            phone: '+1-555-0283',
-            is_active: true,
-          },
-        ],
+        items: [],
         pagination: {
-          total_records: 2,
+          total_records: 0,
           page: 1,
           limit: limitNum,
           total_pages: 1,

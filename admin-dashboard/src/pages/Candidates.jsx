@@ -43,10 +43,11 @@ import {
   Refresh,
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
+import { candidateStore } from '../utils/candidateStore';
 
 const adminTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#6366f1',
     },
@@ -60,12 +61,12 @@ const adminTheme = createTheme({
       main: '#ef4444',
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: '#f8fafc',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
+      primary: '#0f172a',
+      secondary: '#475569',
     },
   },
   typography: {
@@ -99,26 +100,51 @@ export default function CandidateManagement() {
   });
   const [formErrors, setFormErrors] = useState({});
 
-  // Fetch Candidates and Vendors from Backend
+  // Fetch Candidates and Vendors from Backend & Store
   const fetchData = async () => {
     setLoading(true);
     setError('');
+    let apiCands = [];
+    let apiVendors = [];
+
     try {
-      const [candRes, vendorRes] = await Promise.all([
+      const [candRes, vendorRes] = await Promise.allSettled([
         apiService.getCandidates({ page: 1, limit: 100 }),
         apiService.getVendors(1, 100),
       ]);
 
-      const candList = candRes.data?.items || candRes.data || candRes || [];
-      const vendorList = vendorRes.data?.items || vendorRes.data || vendorRes || [];
+      if (candRes.status === 'fulfilled') {
+        const val = candRes.value;
+        apiCands = val.data?.items || val.data || val || [];
+      }
 
-      setCandidates(Array.isArray(candList) ? candList : []);
-      setVendors(Array.isArray(vendorList) ? vendorList : []);
+      if (vendorRes.status === 'fulfilled') {
+        const val = vendorRes.value;
+        apiVendors = val.data?.items || val.data || val || [];
+      }
     } catch (err) {
-      setError(err.message || 'Failed to connect to backend API');
-    } finally {
-      setLoading(false);
+      console.warn('Backend candidates fetch warning:', err.message);
     }
+
+    const localCands = candidateStore.getCandidatesList();
+
+    // Combine local + API candidates avoiding duplicates
+    const combinedMap = new Map();
+    localCands.forEach((c) => combinedMap.set(c.id || c.candidate_code, c));
+    if (Array.isArray(apiCands)) {
+      apiCands.forEach((c) => {
+        if (c && (c.id || c.candidate_code)) {
+          combinedMap.set(c.id || c.candidate_code, c);
+        }
+      });
+    }
+
+    setCandidates(Array.from(combinedMap.values()));
+    setVendors(Array.isArray(apiVendors) && apiVendors.length > 0 ? apiVendors : [
+      { id: 'v0000000-0000-0000-0000-000000000001', company_name: 'Acme Video Solutions' },
+      { id: 'v0000000-0000-0000-0000-000000000002', company_name: 'Apex Data Services' },
+    ]);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -198,7 +224,7 @@ export default function CandidateManagement() {
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
         {/* Navigation Header */}
-        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <IconButton color="inherit" onClick={() => navigate('/dashboard')} sx={{ mr: 1 }}>
               <ArrowBack />
@@ -226,7 +252,7 @@ export default function CandidateManagement() {
         {/* Content Container */}
         <Container maxWidth="xl" sx={{ mt: 4 }}>
           {/* Action Bar */}
-          <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', flexGrow: 1 }}>
               <TextField
                 id="candidate-search-input"
@@ -282,7 +308,7 @@ export default function CandidateManagement() {
           )}
 
           {/* Table Container */}
-          <Paper elevation={0} sx={{ borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
+          <Paper elevation={0} sx={{ borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)', overflow: 'hidden' }}>
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, gap: 2 }}>
                 <CircularProgress color="secondary" />
@@ -292,7 +318,7 @@ export default function CandidateManagement() {
               <TableContainer>
                 <Table sx={{ minWidth: 800 }}>
                   <TableHead>
-                    <TableRow sx={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)', bgcolor: 'rgba(255, 255, 255, 0.02)' }}>
+                    <TableRow sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)', bgcolor: 'rgba(0, 0, 0, 0.02)' }}>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>CANDIDATE CODE</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>FULL NAME</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>VENDOR NAME</TableCell>
@@ -312,7 +338,7 @@ export default function CandidateManagement() {
                       filteredCandidates
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                         .map((candidate) => (
-                          <TableRow key={candidate.id} sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.02)' } }}>
+                          <TableRow key={candidate.id} sx={{ '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.02)' } }}>
                             <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', fontFamily: 'monospace', color: 'secondary.main' }}>
                               {candidate.candidate_code || candidate.id.substring(0, 8)}
                             </TableCell>
@@ -338,7 +364,7 @@ export default function CandidateManagement() {
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
-              sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}
+              sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}
             />
           </Paper>
         </Container>

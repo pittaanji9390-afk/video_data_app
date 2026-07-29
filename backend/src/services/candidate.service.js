@@ -112,54 +112,10 @@ class CandidateService {
         },
       };
     } catch (err) {
-      // Fallback candidate list for dev mode
-      const dummyCandidates = [
-        {
-          id: 'c1000000-0000-0000-0000-000000000001',
-          vendor_id: 'v0000000-0000-0000-0000-000000000001',
-          vendor_name: 'Acme Video Solutions',
-          full_name: 'Alex Johnson',
-          phone: '+1-555-0101',
-          email: 'alex@example.com',
-          is_active: true,
-        },
-        {
-          id: 'c1000000-0000-0000-0000-000000000002',
-          vendor_id: 'v0000000-0000-0000-0000-000000000001',
-          vendor_name: 'Acme Video Solutions',
-          full_name: 'Maria Garcia',
-          phone: '+1-555-0102',
-          email: 'maria@example.com',
-          is_active: true,
-        },
-        {
-          id: 'c1000000-0000-0000-0000-000000000003',
-          vendor_id: 'v0000000-0000-0000-0000-000000000002',
-          vendor_name: 'Apex Data Services',
-          full_name: 'David Kim',
-          phone: '+1-555-0103',
-          email: 'david@example.com',
-          is_active: true,
-        },
-        {
-          id: 'c1000000-0000-0000-0000-000000000004',
-          vendor_id: 'v0000000-0000-0000-0000-000000000002',
-          vendor_name: 'Apex Data Services',
-          full_name: 'Emma Watson',
-          phone: '+1-555-0104',
-          email: 'emma@example.com',
-          is_active: true,
-        },
-      ];
-
-      const filtered = vendor_id
-        ? dummyCandidates.filter((c) => c.vendor_id === vendor_id)
-        : dummyCandidates;
-
       return {
-        items: filtered,
+        items: [],
         pagination: {
-          total_records: filtered.length,
+          total_records: 0,
           page: 1,
           limit: limitNum,
           total_pages: 1,

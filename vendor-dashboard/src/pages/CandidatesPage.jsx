@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -24,29 +24,69 @@ import { Search as SearchIcon, PersonAddOutlined } from '@mui/icons-material';
 export default function CandidatesPage() {
   const [search, setSearch] = useState('');
   const [openAdd, setOpenAdd] = useState(false);
-  const [candidates, setCandidates] = useState([
-    { id: 'CAND-101', name: 'Alex Johnson', email: 'alex@example.com', phone: '+1 555-0101', videos: 18, status: 'active' },
-    { id: 'CAND-102', name: 'Maria Garcia', email: 'maria@example.com', phone: '+1 555-0102', videos: 24, status: 'active' },
-    { id: 'CAND-103', name: 'David Kim', email: 'david@example.com', phone: '+1 555-0103', videos: 12, status: 'pending' },
-    { id: 'CAND-104', name: 'Emma Watson', email: 'emma@example.com', phone: '+1 555-0104', videos: 30, status: 'active' },
-    { id: 'CAND-105', name: 'Michael Brown', email: 'michael@example.com', phone: '+1 555-0105', videos: 14, status: 'active' },
-  ]);
-
+  const [candidates, setCandidates] = useState([]);
   const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
+
+  const loadCandidates = () => {
+    try {
+      const stored = localStorage.getItem('platform_candidates_list');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          const mapped = parsed.map((c) => ({
+            id: c.id || c.candidate_code || 'CND-000',
+            name: c.name || c.full_name || 'Candidate',
+            email: c.email || 'candidate@example.com',
+            phone: c.phone || '+1 555-0000',
+            videos: c.videosCount || c.videos || 0,
+            status: (c.status || 'active').toLowerCase(),
+          }));
+          setCandidates(mapped);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed reading candidate state from storage', e);
+    }
+    setCandidates([]);
+  };
+
+  useEffect(() => {
+    loadCandidates();
+  }, []);
 
   const handleAddCandidate = () => {
     if (!newName.trim()) return;
+    const generatedId = `CND-${8900 + candidates.length + 1}`;
+    const generatedEmail = newEmail.trim() || `${newName.toLowerCase().replace(/\s+/g, '')}@example.com`;
+    
     const newCand = {
-      id: `CAND-${100 + candidates.length + 1}`,
-      name: newName,
-      email: `${newName.toLowerCase().replace(/\s+/g, '')}@example.com`,
-      phone: newPhone || '+1 555-0999',
+      id: generatedId,
+      name: newName.trim(),
+      full_name: newName.trim(),
+      email: generatedEmail,
+      phone: newPhone.trim() || '+1 555-0999',
       videos: 0,
       status: 'active',
+      vendor_id: 'v0000000-0000-0000-0000-000000000001',
+      vendor_name: 'Acme Video Solutions',
     };
-    setCandidates([newCand, ...candidates]);
+
+    const updated = [newCand, ...candidates];
+    setCandidates(updated);
+
+    try {
+      const storedRaw = localStorage.getItem('platform_candidates_list');
+      let existingList = storedRaw ? JSON.parse(storedRaw) : [];
+      localStorage.setItem('platform_candidates_list', JSON.stringify([newCand, ...existingList]));
+    } catch (e) {
+      console.warn('LocalStorage write failed:', e);
+    }
+
     setNewName('');
+    setNewEmail('');
     setNewPhone('');
     setOpenAdd(false);
   };
@@ -148,6 +188,14 @@ export default function CandidatesPage() {
             margin="dense"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
+          />
+          <TextField
+            label="Email Address"
+            type="email"
+            fullWidth
+            margin="dense"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
           />
           <TextField
             label="Mobile Number (+1 / +91)"

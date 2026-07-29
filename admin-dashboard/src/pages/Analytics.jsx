@@ -46,7 +46,7 @@ import { apiService } from '../services/api';
 
 const adminTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#6366f1',
     },
@@ -63,12 +63,12 @@ const adminTheme = createTheme({
       main: '#f59e0b',
     },
     background: {
-      default: '#0f172a',
-      paper: '#1e293b',
+      default: '#f8fafc',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#f8fafc',
-      secondary: '#94a3b8',
+      primary: '#0f172a',
+      secondary: '#475569',
     },
   },
   typography: {
@@ -188,7 +188,7 @@ export default function AnalyticsDashboard() {
     <ThemeProvider theme={adminTheme}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
-        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
           <Toolbar sx={{ py: 1 }}>
             <IconButton color="inherit" onClick={() => navigate('/dashboard')} sx={{ mr: 1 }}>
               <ArrowBack />
@@ -223,7 +223,7 @@ export default function AnalyticsDashboard() {
           <Grid container spacing={2.5} sx={{ mb: 4 }}>
             {summaryCards.map((card, index) => (
               <Grid item xs={12} sm={6} md={3} key={index}>
-                <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                     <Typography variant="caption" color="text.secondary" fontWeight="700">{card.title.toUpperCase()}</Typography>
                     <Box sx={{ p: 1, borderRadius: 2.5, bgcolor: card.bgColor, color: card.color }}>{card.icon}</Box>
@@ -246,7 +246,7 @@ export default function AnalyticsDashboard() {
           ) : (
             <Grid container spacing={3}>
               <Grid item xs={12} lg={6}>
-                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)' }}>
                   <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Videos by Environment Tag</Typography>
                   <Box sx={{ width: '100%', height: 320 }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -266,7 +266,7 @@ export default function AnalyticsDashboard() {
               </Grid>
 
               <Grid item xs={12} lg={6}>
-                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'background.paper', border: '1px solid rgba(0, 0, 0, 0.08)' }}>
                   <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Approval Status Distribution</Typography>
                   <Box sx={{ width: '100%', height: 320 }}>
                     <ResponsiveContainer width="100%" height="100%">
