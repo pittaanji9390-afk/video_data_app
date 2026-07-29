@@ -73,6 +73,18 @@ const candidateTheme = createTheme({
   shape: { borderRadius: 16 },
 });
 
+const environments = [
+  { name: 'Kitchen', icon: <Kitchen color="primary" /> },
+  { name: 'Living Room', icon: <Weekend color="primary" /> },
+  { name: 'Bedroom', icon: <Bed color="primary" /> },
+  { name: 'Bathroom', icon: <Bathtub color="primary" /> },
+  { name: 'Office / Work', icon: <Work color="primary" /> },
+  { name: 'Outdoor / Park', icon: <Park color="primary" /> },
+  { name: 'Garden', icon: <LocalFlorist color="primary" /> },
+  { name: 'Balcony / Deck', icon: <Deck color="primary" /> },
+  { name: 'Garage', icon: <Garage color="primary" /> },
+];
+
 export default function CandidatePortal() {
   const navigate = useNavigate();
   const [activeScreen, setActiveScreen] = useState('home');
