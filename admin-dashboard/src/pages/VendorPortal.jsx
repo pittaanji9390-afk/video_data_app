@@ -60,8 +60,46 @@ const vendorTheme = createTheme({
 
 export default function VendorPortal() {
   const navigate = useNavigate();
-  const [activeScreen, setActiveScreen] = useState('dashboard'); // login, dashboard, candidates, uploads, upload_details, notifications, profile
+  const [activeScreen, setActiveScreen] = useState('dashboard');
+  const [screenHistory, setScreenHistory] = useState(['dashboard']);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [activeUploadFilter, setActiveUploadFilter] = useState('All');
+
+  // 1-step back navigation handler
+  const handleNavigate = (newScreen) => {
+    if (newScreen !== activeScreen) {
+      setScreenHistory((prev) => [...prev, newScreen]);
+      setActiveScreen(newScreen);
+    }
+  };
+
+  const handleGoBack = () => {
+    if (screenHistory.length > 1) {
+      const newStack = [...screenHistory];
+      newStack.pop();
+      const prev = newStack[newStack.length - 1];
+      setScreenHistory(newStack);
+      setActiveScreen(prev);
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      e.preventDefault();
+      if (screenHistory.length > 1) {
+        handleGoBack();
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [screenHistory]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    navigate('/login');
+  };
 
   // Candidates & Store State
   const [candidatesList, setCandidatesList] = useState([]);
@@ -340,8 +378,8 @@ export default function VendorPortal() {
                   <Typography variant="caption" color="text.secondary">GST: 27ABCDE1234F1ZS</Typography>
                 </Paper>
 
-                <Button fullWidth variant="outlined" color="error" startIcon={<Logout />} onClick={() => navigate('/login')}>
-                  Logout
+                <Button fullWidth variant="contained" color="error" startIcon={<Logout />} onClick={() => setLogoutDialogOpen(true)} sx={{ py: 1.2, borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}>
+                  Sign Out
                 </Button>
               </Box>
             )}
@@ -357,13 +395,31 @@ export default function VendorPortal() {
               { id: 'notifications', icon: <Notifications />, label: 'Alerts' },
               { id: 'profile', icon: <Person />, label: 'Profile' },
             ].map((tab) => (
-              <IconButton key={tab.id} onClick={() => setActiveScreen(tab.id)} color={activeScreen === tab.id ? 'success' : 'default'}>
+              <IconButton key={tab.id} onClick={() => handleNavigate(tab.id)} color={activeScreen === tab.id ? 'success' : 'default'}>
                 {tab.icon}
               </IconButton>
             ))}
           </Box>
 
         </Box>
+
+        {/* Logout Confirmation Dialog Modal */}
+        <Dialog open={logoutDialogOpen} onClose={() => setLogoutDialogOpen(false)} paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">Confirm Sign Out</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to sign out of your vendor account? You can log back in anytime using your vendor credentials.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setLogoutDialogOpen(false)} sx={{ textTransform: 'none', color: '#64748b' }}>
+              Cancel
+            </Button>
+            <Button onClick={handleLogout} variant="contained" color="error" sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}>
+              Sign Out
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Add Candidate Modal Dialog */}
         <Dialog open={openAddCandidate} onClose={() => setOpenAddCandidate(false)} maxWidth="xs" fullWidth>

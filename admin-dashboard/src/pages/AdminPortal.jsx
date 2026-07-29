@@ -57,7 +57,45 @@ const adminTheme = createTheme({
 
 export default function AdminPortal() {
   const navigate = useNavigate();
-  const [activeScreen, setActiveScreen] = useState('dashboard'); // login, dashboard, qc_review, vendors, analytics, earnings, reports, settings
+  const [activeScreen, setActiveScreen] = useState('dashboard');
+  const [screenHistory, setScreenHistory] = useState(['dashboard']);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+
+  // 1-step back navigation handler
+  const handleNavigate = (newScreen) => {
+    if (newScreen !== activeScreen) {
+      setScreenHistory((prev) => [...prev, newScreen]);
+      setActiveScreen(newScreen);
+    }
+  };
+
+  const handleGoBack = () => {
+    if (screenHistory.length > 1) {
+      const newStack = [...screenHistory];
+      newStack.pop();
+      const prev = newStack[newStack.length - 1];
+      setScreenHistory(newStack);
+      setActiveScreen(prev);
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      e.preventDefault();
+      if (screenHistory.length > 1) {
+        handleGoBack();
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [screenHistory]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    navigate('/login');
+  };
 
   // Admin Vendor List State
   const [vendorsList, setVendorsList] = useState(() => {
@@ -326,8 +364,11 @@ export default function AdminPortal() {
                 <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3, mb: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold" gutterBottom>Generate Settlement Report</Typography>
                   <Typography variant="caption" color="text.secondary" paragraph>Select Date Range & Export Format</Typography>
-                  <Button fullWidth variant="contained" color="primary" startIcon={<Download />}>
+                  <Button fullWidth variant="contained" color="primary" startIcon={<Download />} sx={{ mb: 2 }}>
                     Generate Report (CSV)
+                  </Button>
+                  <Button fullWidth variant="outlined" color="error" startIcon={<Logout />} onClick={() => setLogoutDialogOpen(true)} sx={{ py: 1.2, borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}>
+                    Sign Out Admin
                   </Button>
                 </Paper>
               </Box>
@@ -344,13 +385,31 @@ export default function AdminPortal() {
               { id: 'earnings', icon: <Payments />, label: 'Payments' },
               { id: 'reports', icon: <Assessment />, label: 'Reports' },
             ].map((tab) => (
-              <IconButton key={tab.id} onClick={() => setActiveScreen(tab.id)} color={activeScreen === tab.id ? 'primary' : 'default'}>
+              <IconButton key={tab.id} onClick={() => handleNavigate(tab.id)} color={activeScreen === tab.id ? 'primary' : 'default'}>
                 {tab.icon}
               </IconButton>
             ))}
           </Box>
 
         </Box>
+
+        {/* Logout Confirmation Dialog Modal */}
+        <Dialog open={logoutDialogOpen} onClose={() => setLogoutDialogOpen(false)} paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">Confirm Sign Out</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to sign out of the Admin portal? You can log back in anytime using your admin credentials.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setLogoutDialogOpen(false)} sx={{ textTransform: 'none', color: '#64748b' }}>
+              Cancel
+            </Button>
+            <Button onClick={handleLogout} variant="contained" color="error" sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}>
+              Sign Out
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Add Vendor Modal Dialog */}
         <Dialog open={openAddVendor} onClose={() => setOpenAddVendor(false)} maxWidth="xs" fullWidth>

@@ -20,6 +20,10 @@ import {
   TextField,
   InputAdornment,
   Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Videocam,
@@ -27,6 +31,7 @@ import {
   CloudUpload,
   CheckCircle,
   Logout,
+  ArrowBack,
   Kitchen,
   Weekend,
   Bed,
@@ -51,7 +56,6 @@ import {
   Deck,
   Garage,
   MoreHoriz,
-  ArrowBack,
   Timer,
 } from '@mui/icons-material';
 
@@ -71,11 +75,53 @@ const candidateTheme = createTheme({
 
 export default function CandidatePortal() {
   const navigate = useNavigate();
-  const [activeScreen, setActiveScreen] = useState('home'); // home, record, voice, alert, env, upload_progress, upload_success, history, earnings, notifications, profile, settings, help, errors, onboarding
+  const [activeScreen, setActiveScreen] = useState('home');
+  const [screenHistory, setScreenHistory] = useState(['home']);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [selectedEnv, setSelectedEnv] = useState('Kitchen');
   const [selectedTab, setSelectedTab] = useState(0);
+
+  // 1-step back navigation handler
+  const handleNavigate = (newScreen) => {
+    if (newScreen !== activeScreen) {
+      setScreenHistory((prev) => [...prev, newScreen]);
+      setActiveScreen(newScreen);
+    }
+  };
+
+  const handleGoBack = () => {
+    if (screenHistory.length > 1) {
+      const newStack = [...screenHistory];
+      newStack.pop();
+      const prev = newStack[newStack.length - 1];
+      setScreenHistory(newStack);
+      setActiveScreen(prev);
+    }
+  };
+
+  // Hardware back button / browser back gesture popstate listener
+  useEffect(() => {
+    const handlePopState = (e) => {
+      e.preventDefault();
+      if (screenHistory.length > 1) {
+        handleGoBack();
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [screenHistory]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('candidateId');
+    localStorage.removeItem('vendorId');
+    localStorage.removeItem('candidatePhone');
+    navigate('/login');
+  };
 
   // Dynamic Candidate Profile Data from LocalStorage / Session
   const candidateName = localStorage.getItem('userName') || 'Vasavi Kandula';
@@ -469,7 +515,7 @@ export default function CandidatePortal() {
 
             {/* 20. PROFILE SCREEN (Mockup Screen 20) */}
             {activeScreen === 'profile' && (
-              <Box sx={{ textAlign: 'center' }}>
+              <Box sx={{ textAlign: 'center', pb: 2 }}>
                 <Avatar sx={{ width: 80, height: 80, bgcolor: '#2563eb', mx: 'auto', mb: 1, fontSize: 32, fontWeight: 'bold' }}>{initials}</Avatar>
                 <Typography variant="h6" fontWeight="bold">{candidateName} <Chip label="Verified" color="success" size="small" /></Typography>
                 <Typography variant="caption" color="text.secondary">{candidatePhone}</Typography>
@@ -479,7 +525,20 @@ export default function CandidatePortal() {
                   <Typography variant="body2" sx={{ mt: 1 }}><strong>Vendor ID:</strong> {vendorId}</Typography>
                   <Typography variant="body2" sx={{ mt: 1 }}><strong>Email:</strong> {candidateEmail}</Typography>
                 </Paper>
+                
                 <Box sx={{ mt: 2 }}><QrCode2 sx={{ fontSize: 90, color: 'primary.main' }} /></Box>
+
+                {/* Prominent Red Logout / Sign Out Button */}
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="error"
+                  startIcon={<Logout />}
+                  onClick={() => setLogoutDialogOpen(true)}
+                  sx={{ mt: 3, py: 1.2, borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}
+                >
+                  Sign Out
+                </Button>
               </Box>
             )}
 
@@ -525,15 +584,33 @@ export default function CandidatePortal() {
 
           </Box>
 
-          {/* Bottom Device Navigation Bar (Matching Screen 8) */}
+          {/* Bottom Device Navigation Bar */}
           <Box sx={{ height: 56, bgcolor: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
-            <IconButton onClick={() => setActiveScreen('home')} color={activeScreen === 'home' ? 'primary' : 'default'}><Home /></IconButton>
-            <IconButton onClick={() => setActiveScreen('record')} color={activeScreen === 'record' ? 'primary' : 'default'}><Videocam /></IconButton>
-            <IconButton onClick={() => setActiveScreen('history')} color={activeScreen === 'history' ? 'primary' : 'default'}><CloudUpload /></IconButton>
-            <IconButton onClick={() => setActiveScreen('notifications')} color={activeScreen === 'notifications' ? 'primary' : 'default'}><Notifications /></IconButton>
-            <IconButton onClick={() => setActiveScreen('profile')} color={activeScreen === 'profile' ? 'primary' : 'default'}><Person /></IconButton>
+            <IconButton onClick={() => handleNavigate('home')} color={activeScreen === 'home' ? 'primary' : 'default'}><Home /></IconButton>
+            <IconButton onClick={() => handleNavigate('record')} color={activeScreen === 'record' ? 'primary' : 'default'}><Videocam /></IconButton>
+            <IconButton onClick={() => handleNavigate('history')} color={activeScreen === 'history' ? 'primary' : 'default'}><CloudUpload /></IconButton>
+            <IconButton onClick={() => handleNavigate('notifications')} color={activeScreen === 'notifications' ? 'primary' : 'default'}><Notifications /></IconButton>
+            <IconButton onClick={() => handleNavigate('profile')} color={activeScreen === 'profile' ? 'primary' : 'default'}><Person /></IconButton>
           </Box>
         </Box>
+
+        {/* Logout Confirmation Dialog Modal */}
+        <Dialog open={logoutDialogOpen} onClose={() => setLogoutDialogOpen(false)} paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">Confirm Sign Out</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to sign out of your candidate account? You can log back in anytime using your credentials.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setLogoutDialogOpen(false)} sx={{ textTransform: 'none', color: '#64748b' }}>
+              Cancel
+            </Button>
+            <Button onClick={handleLogout} variant="contained" color="error" sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}>
+              Sign Out
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </ThemeProvider>
   );

@@ -76,6 +76,18 @@ export default function SingleUnifiedLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginAlert, setLoginAlert] = useState(null);
 
+  // Check existing session on mount
+  useEffect(() => {
+    const activeRole = localStorage.getItem('userRole');
+    if (activeRole === 'candidate') {
+      navigate('/candidate-portal');
+    } else if (activeRole === 'vendor') {
+      navigate('/vendor-portal');
+    } else if (activeRole === 'admin') {
+      navigate('/admin-portal');
+    }
+  }, [navigate]);
+
   // Auto transition Splash screen after 2.5 seconds
   useEffect(() => {
     if (step === 0) {
