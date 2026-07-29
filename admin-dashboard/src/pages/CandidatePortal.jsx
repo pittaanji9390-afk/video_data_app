@@ -163,6 +163,9 @@ export default function CandidatePortal() {
   const candidateHours = (candidateUploadedCount * 0.5).toFixed(1);
   const candidateEarnings = (candidateUploadedCount * 50).toFixed(0);
 
+  const videoRef = useRef(null);
+  const timerRef = useRef(null);
+
   const [selectedVideoModal, setSelectedVideoModal] = useState(null);
   const [openPayoutModal, setOpenPayoutModal] = useState(false);
   const [payoutStatus, setPayoutStatus] = useState('Available');
@@ -268,19 +271,6 @@ export default function CandidatePortal() {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const environments = [
-    { name: 'Kitchen', icon: <Kitchen color="primary" /> },
-    { name: 'Bedroom', icon: <Bed color="secondary" /> },
-    { name: 'Bathroom', icon: <Bathtub color="info" /> },
-    { name: 'Garden', icon: <LocalFlorist color="success" /> },
-    { name: 'Office', icon: <Work color="action" /> },
-    { name: 'Living Room', icon: <Weekend color="warning" /> },
-    { name: 'Balcony', icon: <Deck color="secondary" /> },
-    { name: 'Garage', icon: <Garage color="error" /> },
-    { name: 'Outdoor', icon: <Park color="success" /> },
-    { name: 'Other', icon: <MoreHoriz color="action" /> },
-  ];
 
   return (
     <ThemeProvider theme={candidateTheme}>
