@@ -29,7 +29,7 @@ INSERT INTO admins (
     'System Administrator',
     TRUE
 )
-ON CONFLICT (username) DO NOTHING;
+ON CONFLICT (email) DO NOTHING;
 
 -- ============================================================================
 -- SEED COMPLETE

@@ -16,6 +16,11 @@ import {
   Button,
   Grid,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   GroupOutlined,
@@ -29,12 +34,44 @@ import {
   Work,
   FactCheckOutlined,
   HowToRegOutlined,
+  PersonAddOutlined,
 } from '@mui/icons-material';
 import { vendorApiService } from '../services/api';
 
 export default function VendorDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [openAddCand, setOpenAddCand] = useState(false);
+  const [candName, setCandName] = useState('');
+  const [candEmail, setCandEmail] = useState('');
+  const [candPhone, setCandPhone] = useState('');
+
+  const handleAddCandidate = async () => {
+    if (!candName.trim()) return;
+    const email = candEmail.trim() || `${candName.toLowerCase().replace(/\s+/g, '')}@example.com`;
+    const phone = candPhone.trim() || `+91 98${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+    try {
+      await fetch('http://localhost:5000/api/v1/candidates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vendor_id: '10000000-0000-4000-8000-000000000001',
+          full_name: candName.trim(),
+          email: email,
+          phone: phone,
+        }),
+      });
+    } catch (err) {
+      console.warn('Backend candidate creation error:', err);
+    }
+
+    setCandName('');
+    setCandEmail('');
+    setCandPhone('');
+    setOpenAddCand(false);
+    fetchCandidateStats();
+  };
 
   // Candidate Status Counts State
   const [statsLoading, setStatsLoading] = useState(true);
@@ -133,7 +170,7 @@ export default function VendorDashboardPage() {
   return (
     <Box sx={{ p: { xs: 2, sm: 3 }, bgcolor: '#0f172a', minHeight: '100vh', color: '#f8fafc' }}>
       {/* Title Banner */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold" sx={{ color: '#fff' }}>
             Vendor Control Overview
@@ -142,9 +179,20 @@ export default function VendorDashboardPage() {
             Real-time candidate metrics, status counts, video collection progress, and payout statements.
           </Typography>
         </Box>
-        <IconButton color="secondary" onClick={loadDashboardData} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }}>
-          <Refresh />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<PersonAddOutlined />}
+            onClick={() => setOpenAddCand(true)}
+            sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 'bold' }}
+          >
+            Add Candidate
+          </Button>
+          <IconButton color="secondary" onClick={loadDashboardData} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }}>
+            <Refresh />
+          </IconButton>
+        </Box>
       </Box>
 
       {/* DYNAMIC CANDIDATE COUNT BY STATUS SECTION */}
@@ -324,6 +372,39 @@ export default function VendorDashboardPage() {
           ))}
         </Paper>
       </Box>
+
+      {/* Onboard New Candidate Modal */}
+      <Dialog open={openAddCand} onClose={() => setOpenAddCand(false)}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Onboard New Candidate</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Candidate Full Name"
+            fullWidth
+            margin="dense"
+            value={candName}
+            onChange={(e) => setCandName(e.target.value)}
+          />
+          <TextField
+            label="Email Address"
+            type="email"
+            fullWidth
+            margin="dense"
+            value={candEmail}
+            onChange={(e) => setCandEmail(e.target.value)}
+          />
+          <TextField
+            label="Mobile Number (+91 / +1)"
+            fullWidth
+            margin="dense"
+            value={candPhone}
+            onChange={(e) => setCandPhone(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenAddCand(false)}>Cancel</Button>
+          <Button variant="contained" color="success" onClick={handleAddCandidate}>Save Candidate</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

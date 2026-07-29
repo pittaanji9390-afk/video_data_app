@@ -29,7 +29,29 @@ export default function CandidatesPage() {
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
 
-  const loadCandidates = () => {
+  const loadCandidates = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/candidates');
+      if (res.ok) {
+        const json = await res.json();
+        const items = json?.data?.items || [];
+        if (items.length > 0) {
+          const mapped = items.map((c) => ({
+            id: c.id ? c.id.substring(0, 8) : 'CND-000',
+            name: c.full_name || 'Candidate',
+            email: c.email || 'candidate@example.com',
+            phone: c.phone || '+91 98765 00000',
+            videos: 1,
+            status: c.is_active ? 'active' : 'inactive',
+          }));
+          setCandidates(mapped);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('API candidates fetch failed:', err);
+    }
+
     try {
       const stored = localStorage.getItem('platform_candidates_list');
       if (stored) {
@@ -57,21 +79,35 @@ export default function CandidatesPage() {
     loadCandidates();
   }, []);
 
-  const handleAddCandidate = () => {
+  const handleAddCandidate = async () => {
     if (!newName.trim()) return;
     const generatedId = `CND-${8900 + candidates.length + 1}`;
     const generatedEmail = newEmail.trim() || `${newName.toLowerCase().replace(/\s+/g, '')}@example.com`;
-    
+    const phone = newPhone.trim() || `+91 98${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+    try {
+      await fetch('http://localhost:5000/api/v1/candidates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vendor_id: '10000000-0000-4000-8000-000000000001',
+          full_name: newName.trim(),
+          email: generatedEmail,
+          phone: phone,
+        }),
+      });
+    } catch (err) {
+      console.warn('Backend candidate post info:', err);
+    }
+
     const newCand = {
       id: generatedId,
       name: newName.trim(),
       full_name: newName.trim(),
       email: generatedEmail,
-      phone: newPhone.trim() || '+1 555-0999',
+      phone: phone,
       videos: 0,
       status: 'active',
-      vendor_id: 'v0000000-0000-0000-0000-000000000001',
-      vendor_name: 'Acme Video Solutions',
     };
 
     const updated = [newCand, ...candidates];
