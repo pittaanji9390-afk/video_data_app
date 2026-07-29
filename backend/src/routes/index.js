@@ -8,6 +8,7 @@ const candidateRoutes = require('./candidate.routes');
 const videoRoutes = require('./video.routes');
 const qcReviewRoutes = require('./qcReview.routes');
 const paymentRoutes = require('./payment.routes');
+const notificationRoutes = require('./notification.routes');
 
 // GET /
 router.get('/', (req, res) => {
@@ -36,6 +37,7 @@ router.get('/api/v1', (req, res) => {
       videos: 'GET /api/v1/videos',
       qc_reviews: 'POST /api/v1/qc-reviews',
       payments: 'GET /api/v1/payments/vendor/:vendorId',
+      notifications: 'GET /api/v1/notifications',
     },
   });
 });
@@ -48,5 +50,6 @@ router.use('/api/v1/candidates', candidateRoutes);
 router.use('/api/v1/videos', videoRoutes);
 router.use('/api/v1/qc-reviews', qcReviewRoutes);
 router.use('/api/v1/payments', paymentRoutes);
+router.use('/api/v1/notifications', notificationRoutes);
 
 module.exports = router;

@@ -64,6 +64,42 @@ export default function VendorPortal() {
   const [screenHistory, setScreenHistory] = useState(['dashboard']);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [activeUploadFilter, setActiveUploadFilter] = useState('All');
+  const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
+
+  // Persistent Notifications State & Backend / LocalStorage Sync
+  const [notificationsList, setNotificationsList] = useState(() => {
+    try {
+      const stored = localStorage.getItem('vendor_notifications_list');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [
+      { id: 'notif-1', title: 'Video Approved', desc: 'Kitchen Video has been approved.', color: '#10b981', read: false },
+      { id: 'notif-2', title: 'Upload Complete', desc: 'Bedroom Video uploaded successfully.', color: '#0ea5e9', read: false },
+      { id: 'notif-3', title: 'Payment Received', desc: '₹2,500 credited to account.', color: '#8b5cf6', read: true },
+    ];
+  });
+
+  const unreadCount = notificationsList.filter((n) => !n.read).length;
+
+  const markNotificationsAsRead = () => {
+    setNotificationsList((prev) => {
+      const updated = prev.map((n) => ({ ...n, read: true }));
+      try {
+        localStorage.setItem('vendor_notifications_list', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    fetch('http://localhost:5000/api/v1/notifications/mark-all-read', { method: 'PUT' }).catch(() => {});
+  };
+
+  const handleOpenNotifications = () => {
+    handleNavigate('notifications');
+    markNotificationsAsRead();
+  };
 
   // 1-step back navigation handler
   const handleNavigate = (newScreen) => {
@@ -93,6 +129,12 @@ export default function VendorPortal() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [screenHistory]);
+
+  useEffect(() => {
+    if (activeScreen === 'notifications') {
+      markNotificationsAsRead();
+    }
+  }, [activeScreen]);
 
   const handleLogout = () => {
     localStorage.removeItem('userRole');
@@ -220,8 +262,10 @@ export default function VendorPortal() {
                     <Typography variant="caption" color="text.secondary">Good Morning,</Typography>
                     <Typography variant="h6" fontWeight="bold">Vendor 001 👋</Typography>
                   </Box>
-                  <IconButton onClick={() => setActiveScreen('notifications')}>
-                    <Badge badgeContent={2} color="error"><Notifications /></Badge>
+                  <IconButton onClick={handleOpenNotifications}>
+                    <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0}>
+                      <Notifications />
+                    </Badge>
                   </IconButton>
                 </Box>
 
@@ -279,20 +323,56 @@ export default function VendorPortal() {
                     + Add Candidate
                   </Button>
                 </Box>
-                <TextField fullWidth placeholder="Search candidates..." size="small" sx={{ mb: 2 }} InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }} />
+                <TextField
+                  fullWidth
+                  placeholder="Search candidates by name or code..."
+                  size="small"
+                  value={candidateSearchQuery}
+                  onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
 
-                {candidatesList.map((c, i) => (
-                  <Paper key={i} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Avatar sx={{ bgcolor: '#dcfce7', color: '#10b981', fontWeight: 'bold' }}>{(c.name || 'C')[0]}</Avatar>
-                      <Box>
-                        <Typography variant="body2" fontWeight="bold">{c.name || c.full_name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{c.candidate_code || c.id} • {c.videosCount || 0} Videos</Typography>
+                {candidatesList
+                  .filter((c) => {
+                    const q = candidateSearchQuery.toLowerCase().trim();
+                    if (!q) return true;
+                    const name = (c.name || c.full_name || '').toLowerCase();
+                    const code = (c.candidate_code || c.id || '').toLowerCase();
+                    const email = (c.email || '').toLowerCase();
+                    return name.includes(q) || code.includes(q) || email.includes(q);
+                  })
+                  .map((c, i) => (
+                    <Paper key={i} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar sx={{ bgcolor: '#dcfce7', color: '#10b981', fontWeight: 'bold' }}>{(c.name || c.full_name || 'C')[0]}</Avatar>
+                        <Box>
+                          <Typography variant="body2" fontWeight="bold">{c.name || c.full_name}</Typography>
+                          <Typography variant="caption" color="text.secondary">{c.candidate_code || c.id} • {c.videosCount || 0} Videos</Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                    <Chip label={c.status || 'Active'} color="success" size="small" />
-                  </Paper>
-                ))}
+                      <Chip label={c.status || 'Active'} color="success" size="small" />
+                    </Paper>
+                  ))}
+
+                {candidatesList.filter((c) => {
+                  const q = candidateSearchQuery.toLowerCase().trim();
+                  if (!q) return true;
+                  const name = (c.name || c.full_name || '').toLowerCase();
+                  const code = (c.candidate_code || c.id || '').toLowerCase();
+                  const email = (c.email || '').toLowerCase();
+                  return name.includes(q) || code.includes(q) || email.includes(q);
+                }).length === 0 && (
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                    No candidates found matching "{candidateSearchQuery}"
+                  </Typography>
+                )}
               </Box>
             )}
 
@@ -305,9 +385,10 @@ export default function VendorPortal() {
                     <Chip
                       key={status}
                       label={status}
-                      color={activeUploadFilter === status ? 'success' : 'default'}
+                      color={activeUploadFilter === status ? (status === 'Rejected' ? 'error' : status === 'Approved' ? 'success' : status === 'Pending' ? 'warning' : 'primary') : 'default'}
                       onClick={() => setActiveUploadFilter(status)}
                       size="small"
+                      sx={{ fontWeight: 'bold', cursor: 'pointer' }}
                     />
                   ))}
                 </Box>
@@ -315,20 +396,31 @@ export default function VendorPortal() {
                   { title: 'Kitchen Video', time: '10 May 2024, 10:30 AM', status: 'Approved', color: 'success' },
                   { title: 'Bedroom Video', time: '12 May 2024, 09:15 AM', status: 'Pending', color: 'warning' },
                   { title: 'Garden Video', time: '11 May 2024, 06:20 PM', status: 'Rejected', color: 'error' },
-                ].map((item, idx) => (
-                  <Paper key={idx} onClick={() => setActiveScreen('upload_details')} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Box sx={{ width: 44, height: 44, bgcolor: '#000', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                        <PlayArrow />
+                ]
+                  .filter((item) => activeUploadFilter === 'All' || item.status === activeUploadFilter)
+                  .map((item, idx) => (
+                    <Paper key={idx} onClick={() => setActiveScreen('upload_details')} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{ width: 44, height: 44, bgcolor: '#000', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                          <PlayArrow />
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" fontWeight="bold">{item.title}</Typography>
+                          <Typography variant="caption" color="text.secondary">{item.time}</Typography>
+                        </Box>
                       </Box>
-                      <Box>
-                        <Typography variant="body2" fontWeight="bold">{item.title}</Typography>
-                        <Typography variant="caption" color="text.secondary">{item.time}</Typography>
-                      </Box>
-                    </Box>
-                    <Chip label={item.status} color={item.color} size="small" />
-                  </Paper>
-                ))}
+                      <Chip label={item.status} color={item.color} size="small" />
+                    </Paper>
+                  ))}
+                {[
+                  { title: 'Kitchen Video', time: '10 May 2024, 10:30 AM', status: 'Approved', color: 'success' },
+                  { title: 'Bedroom Video', time: '12 May 2024, 09:15 AM', status: 'Pending', color: 'warning' },
+                  { title: 'Garden Video', time: '11 May 2024, 06:20 PM', status: 'Rejected', color: 'error' },
+                ].filter((item) => activeUploadFilter === 'All' || item.status === activeUploadFilter).length === 0 && (
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                    No videos with status "{activeUploadFilter}"
+                  </Typography>
+                )}
               </Box>
             )}
 
@@ -362,17 +454,39 @@ export default function VendorPortal() {
             {/* 6. NOTIFICATIONS SCREEN (Mockup Screen 6) */}
             {activeScreen === 'notifications' && (
               <Box>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>Notifications</Typography>
-                {[
-                  { title: 'Video Approved', desc: 'Kitchen Video has been approved.', color: '#10b981' },
-                  { title: 'Upload Complete', desc: 'Bedroom Video uploaded successfully.', color: '#0ea5e9' },
-                  { title: 'Payment Received', desc: '₹2,500 credited to account.', color: '#8b5cf6' },
-                ].map((n, i) => (
-                  <Paper key={i} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3 }}>
-                    <Typography variant="body2" fontWeight="bold" style={{ color: n.color }}>{n.title}</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" fontWeight="bold">Notifications</Typography>
+                  <Button size="small" variant="text" onClick={markNotificationsAsRead} sx={{ fontSize: '0.75rem', textTransform: 'none' }}>
+                    Mark all read
+                  </Button>
+                </Box>
+
+                {notificationsList.map((n, i) => (
+                  <Paper
+                    key={i}
+                    elevation={0}
+                    sx={{
+                      p: 1.5,
+                      mb: 1.5,
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 3,
+                      bgcolor: n.read ? '#ffffff' : '#f0f9ff',
+                      borderLeft: n.read ? '1px solid #e2e8f0' : `4px solid ${n.color || '#10b981'}`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                      <Typography variant="body2" fontWeight="bold" style={{ color: n.color || '#10b981' }}>{n.title}</Typography>
+                      {!n.read && <Chip label="New" size="small" color="primary" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 'bold' }} />}
+                    </Box>
                     <Typography variant="caption" color="text.secondary">{n.desc}</Typography>
                   </Paper>
                 ))}
+
+                {notificationsList.length === 0 && (
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                    No notifications
+                  </Typography>
+                )}
               </Box>
             )}
 

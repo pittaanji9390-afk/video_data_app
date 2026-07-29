@@ -35,6 +35,27 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
   // Add Candidate Dialog Controllers
   final _candNameCtrl = TextEditingController();
   final _candPhoneCtrl = TextEditingController();
+  String _searchCandidateQuery = '';
+
+  List<Map<String, dynamic>> _vendorNotifications = [
+    {'id': 'n1', 'title': 'Video Approved', 'desc': 'Kitchen Video has been approved.', 'time': '10:30 AM', 'color': AppColors.success, 'read': false},
+    {'id': 'n2', 'title': 'Upload Complete', 'desc': 'Bedroom Video upload successfully completed.', 'time': '09:45 AM', 'color': AppColors.primary, 'read': false},
+    {'id': 'n3', 'title': 'Payment Received', 'desc': '₹2,500 has been credited to your account.', 'time': 'Yesterday', 'color': Colors.purple, 'read': true},
+  ];
+
+  int get _unreadNotificationCount => _vendorNotifications.where((n) => n['read'] == false).length;
+
+  Future<void> _markNotificationsAsRead() async {
+    setState(() {
+      for (var n in _vendorNotifications) {
+        n['read'] = true;
+      }
+    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('notifications_all_read', true);
+    } catch (_) {}
+  }
 
   Future<void> _handleLogout() async {
     await AuthService.logout();
@@ -142,17 +163,33 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Greeting Header
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Good Morning,', style: TextStyle(fontSize: 13, color: Colors.grey)),
                   Text('Vendor 001 👋', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 ],
               ),
-              CircleAvatar(backgroundColor: AppColors.success, child: Icon(Icons.storefront_rounded, color: Colors.white)),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      setState(() => _currentTab = 3);
+                      _markNotificationsAsRead();
+                    },
+                    icon: Badge(
+                      isLabelVisible: _unreadNotificationCount > 0,
+                      label: Text('$_unreadNotificationCount'),
+                      child: const Icon(Icons.notifications_rounded, color: Colors.black87, size: 26),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const CircleAvatar(backgroundColor: AppColors.success, child: Icon(Icons.storefront_rounded, color: Colors.white)),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -297,6 +334,11 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
 
           // Search Field
           TextField(
+            onChanged: (val) {
+              setState(() {
+                _searchCandidateQuery = val;
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Search candidates...',
               prefixIcon: const Icon(Icons.search_rounded),
@@ -307,25 +349,47 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
           const SizedBox(height: 16),
 
           // Candidate Items Roster
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _vendorCandidates.length,
-            itemBuilder: (ctx, i) {
-              final c = _vendorCandidates[i];
-              final isActive = c['status'] == 'Active';
-              return Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                child: ListTile(
-                  leading: CircleAvatar(backgroundColor: AppColors.success.withAlpha(30), child: Text(c['name'][0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.success))),
-                  title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${c['id']} • ${c['videos']} Videos'),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: (isActive ? AppColors.success : Colors.grey).withAlpha(20), borderRadius: BorderRadius.circular(8)),
-                    child: Text(c['status'], style: TextStyle(color: isActive ? AppColors.success : Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
+          Builder(
+            builder: (context) {
+              final filtered = _vendorCandidates.where((c) {
+                final q = _searchCandidateQuery.toLowerCase().trim();
+                if (q.isEmpty) return true;
+                final name = (c['name'] ?? '').toString().toLowerCase();
+                final id = (c['id'] ?? '').toString().toLowerCase();
+                final phone = (c['phone'] ?? '').toString().toLowerCase();
+                return name.contains(q) || id.contains(q) || phone.contains(q);
+              }).toList();
+
+              if (filtered.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32.0),
+                  child: Center(
+                    child: Text('No candidates match your search', style: TextStyle(color: Colors.grey)),
                   ),
-                ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filtered.length,
+                itemBuilder: (ctx, i) {
+                  final c = filtered[i];
+                  final isActive = c['status'] == 'Active';
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ListTile(
+                      leading: CircleAvatar(backgroundColor: AppColors.success.withAlpha(30), child: Text(c['name'][0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.success))),
+                      title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('${c['id']} • ${c['videos']} Videos'),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(color: (isActive ? AppColors.success : Colors.grey).withAlpha(20), borderRadius: BorderRadius.circular(8)),
+                        child: Text(c['status'], style: TextStyle(color: isActive ? AppColors.success : Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -405,30 +469,40 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
 
   // 4. NOTIFICATIONS TAB (Screen #6 in Image 2)
   Widget _buildNotificationsTab() {
-    final notifs = [
-      {'title': 'Video Approved', 'desc': 'Kitchen Video has been approved.', 'time': '10:30 AM', 'color': AppColors.success},
-      {'title': 'Upload Complete', 'desc': 'Bedroom Video upload successfully completed.', 'time': '09:45 AM', 'color': AppColors.primary},
-      {'title': 'Payment Received', 'desc': '₹2,500 has been credited to your account.', 'time': 'Yesterday', 'color': Colors.purple},
-      {'title': 'Video Rejected', 'desc': 'Garden Video was rejected due to lighting.', 'time': 'Yesterday', 'color': AppColors.error},
-    ];
+    _markNotificationsAsRead();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Notifications', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Notifications', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              TextButton(
+                onPressed: _markNotificationsAsRead,
+                child: const Text('Mark all read', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
 
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: notifs.length,
+            itemCount: _vendorNotifications.length,
             itemBuilder: (ctx, i) {
-              final n = notifs[i];
-              final c = n['color'] as Color;
+              final n = _vendorNotifications[i];
+              final c = (n['color'] is Color) ? n['color'] as Color : AppColors.success;
+              final isRead = n['read'] == true;
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),
+                color: isRead ? Colors.white : const Color(0xFFF0F9FF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: isRead ? const Color(0xFFE2E8F0) : AppColors.primary.withOpacity(0.3)),
+                ),
                 child: ListTile(
                   leading: CircleAvatar(backgroundColor: c.withAlpha(25), child: Icon(Icons.notifications_rounded, color: c)),
                   title: Text(n['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
