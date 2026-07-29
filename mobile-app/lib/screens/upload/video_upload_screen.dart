@@ -77,6 +77,18 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     _activeVideoPath = widget.videoPath;
     _activeEnvTag = widget.environmentTag ?? 'Kitchen';
     _loadStoredHistory();
+    _subscribeRealtime();
+  }
+
+  void _subscribeRealtime() {
+    if (kIsWeb) {
+      try {
+        final bc = html.BroadcastChannel('platform_realtime_channel');
+        bc.onMessage.listen((event) {
+          _loadStoredHistory();
+        });
+      } catch (_) {}
+    }
   }
 
   void _loadStoredHistory() {
@@ -207,6 +219,13 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
             };
             list.insert(0, newSub);
             html.window.localStorage['platform_qc_submissions'] = jsonEncode(list);
+
+            // Broadcast to all open tabs in real-time
+            try {
+              final bc = html.BroadcastChannel('platform_realtime_channel');
+              bc.postMessage({'type': 'QC_STORE_UPDATED', 'payload': list});
+              bc.close();
+            } catch (_) {}
           } catch (e) {
             debugPrint('Error syncing QC submission: $e');
           }

@@ -1,15 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Grid, Card, CardMedia, CardContent, Chip, Button } from '@mui/material';
 
 export default function UploadsPage() {
   const [filter, setFilter] = useState('All');
+  const [uploads, setUploads] = useState([]);
 
-  const uploads = [
-    { id: 'VID-8001', candidate: 'Alex Johnson', tag: 'Kitchen', duration: '45s', status: 'approved', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80' },
-    { id: 'VID-8002', candidate: 'Maria Garcia', tag: 'Bedroom', duration: '60s', status: 'approved', img: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=300&auto=format&fit=crop&q=80' },
-    { id: 'VID-8003', candidate: 'David Kim', tag: 'Living Room', duration: '30s', status: 'pending', img: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&auto=format&fit=crop&q=80' },
-    { id: 'VID-8004', candidate: 'Emma Watson', tag: 'Office Desk', duration: '90s', status: 'rejected', img: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=300&auto=format&fit=crop&q=80' },
-  ];
+  const loadUploads = () => {
+    const raw = localStorage.getItem('platform_qc_submissions');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        const mapped = parsed.map((item) => ({
+          id: item.id || `VID-${Math.floor(Math.random() * 9000 + 1000)}`,
+          candidate: item.candidateName || 'Vasavi Kandula',
+          tag: item.env || 'Kitchen',
+          duration: item.duration || '30:00 Mins',
+          status: (item.status || 'pending').toLowerCase(),
+          img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80',
+        }));
+        setUploads(mapped);
+        return;
+      } catch (e) {
+        console.error('Error parsing qc submissions:', e);
+      }
+    }
+    setUploads([
+      { id: 'VID-8001', candidate: 'Vasavi Kandula', tag: 'Kitchen', duration: '30:00 Mins', status: 'approved', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80' },
+      { id: 'VID-8002', candidate: 'Rahul Kumar', tag: 'Bedroom', duration: '24:18 Mins', status: 'pending', img: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=300&auto=format&fit=crop&q=80' },
+      { id: 'VID-8003', candidate: 'Anji', tag: 'Garden', duration: '30:00 Mins', status: 'approved', img: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&auto=format&fit=crop&q=80' },
+      { id: 'VID-8004', candidate: 'Vasavi Kandula', tag: 'Bathroom', duration: '12:00 Mins', status: 'rejected', img: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=300&auto=format&fit=crop&q=80' },
+    ]);
+  };
+
+  useEffect(() => {
+    loadUploads();
+    let bc;
+    try {
+      bc = new BroadcastChannel('platform_realtime_channel');
+      bc.onmessage = () => {
+        loadUploads();
+      };
+    } catch (_) {}
+    window.addEventListener('storage', loadUploads);
+    window.addEventListener('qc_store_updated', loadUploads);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', loadUploads);
+      window.removeEventListener('qc_store_updated', loadUploads);
+    };
+  }, []);
 
   const filteredUploads = uploads.filter(
     (item) => filter === 'All' || item.status.toLowerCase() === filter.toLowerCase()

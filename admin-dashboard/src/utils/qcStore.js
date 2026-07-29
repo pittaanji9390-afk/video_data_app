@@ -91,6 +91,11 @@ export const qcStore = {
     const updated = [submission, ...current];
     localStorage.setItem('platform_qc_submissions', JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('qc_store_updated', { detail: updated }));
+    try {
+      const bc = new BroadcastChannel('platform_realtime_channel');
+      bc.postMessage({ type: 'QC_STORE_UPDATED', payload: updated });
+      bc.close();
+    } catch (_) {}
     return updated;
   },
 
@@ -104,6 +109,11 @@ export const qcStore = {
     });
     localStorage.setItem('platform_qc_submissions', JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('qc_store_updated', { detail: updated }));
+    try {
+      const bc = new BroadcastChannel('platform_realtime_channel');
+      bc.postMessage({ type: 'QC_STORE_UPDATED', payload: updated });
+      bc.close();
+    } catch (_) {}
     return updated;
   },
 
@@ -117,9 +127,20 @@ export const qcStore = {
     };
     window.addEventListener('storage', storageHandler);
 
+    let bc;
+    try {
+      bc = new BroadcastChannel('platform_realtime_channel');
+      bc.onmessage = (e) => {
+        if (e.data && e.data.type === 'QC_STORE_UPDATED') {
+          callback(e.data.payload || this.getSubmissions());
+        }
+      };
+    } catch (_) {}
+
     return () => {
       window.removeEventListener('qc_store_updated', handler);
       window.removeEventListener('storage', storageHandler);
+      if (bc) bc.close();
     };
   },
 
