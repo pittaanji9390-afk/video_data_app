@@ -50,6 +50,43 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     super.initState();
     _initializeCamera();
     _loadSavedEnvironmentTag();
+    _initVoiceCommandListener();
+  }
+
+  void _initVoiceCommandListener() {
+    VoiceCommandService.instance.startListening(
+      onCommand: (command) {
+        if (command == VoiceCommand.start && !_isRecording) {
+          _startRecording();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🎙️ Voice Command Detected: "START RECORDING"'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else if (command == VoiceCommand.stop && _isRecording) {
+          _stopRecording();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🎙️ Voice Command Detected: "STOP RECORDING"'),
+              backgroundColor: Color(0xFFF59E0B),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      onSpeechRecognized: (text) {
+        if (mounted) {
+          setState(() {
+            _lastVoiceText = text;
+            _isVoiceListening = true;
+          });
+        }
+      },
+    );
   }
 
   Future<void> _loadSavedEnvironmentTag() async {
@@ -496,6 +533,61 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Voice Control Status Banner & Interactive Voice Trigger Chips
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.mic_rounded, size: 18, color: Color(0xFF2563EB)),
+                            const SizedBox(width: 8),
+                            Text(
+                              _lastVoiceText ?? '🎙️ Voice Control: Say "Start" to record, "Stop" to save',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E40AF),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ActionChip(
+                              avatar: const Icon(Icons.mic_rounded, size: 14, color: Colors.white),
+                              label: const Text('Say "Start"'),
+                              backgroundColor: const Color(0xFF10B981),
+                              labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                              onPressed: () {
+                                VoiceCommandService.instance.processSimulatedSpeech('start');
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            ActionChip(
+                              avatar: const Icon(Icons.stop_circle_rounded, size: 14, color: Colors.white),
+                              label: const Text('Say "Stop"'),
+                              backgroundColor: const Color(0xFFEF4444),
+                              labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                              onPressed: () {
+                                VoiceCommandService.instance.processSimulatedSpeech('stop');
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
                   if (_recordedFile == null && !_isFetchingLocation) ...[
                     // Record Controls
                     Row(
@@ -610,7 +702,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       );
     }
 
-    if (_controller != null && _controller!.value.isInitialized) {
+    // On Web (Chrome/Edge), ALWAYS use WebLiveCameraView for reliable video stream
+    if (!kIsWeb && _controller != null && _controller!.value.isInitialized) {
       return CameraPreview(_controller!);
     }
 
