@@ -722,8 +722,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       );
     }
 
-    // On Web (Chrome/Edge), ALWAYS use WebLiveCameraView for reliable video stream
-    if (!kIsWeb && _controller != null && _controller!.value.isInitialized) {
+    // Direct Hardware Camera Preview (Web & Mobile Native)
+    if (_controller != null && _controller!.value.isInitialized) {
       return CameraPreview(_controller!);
     }
 
