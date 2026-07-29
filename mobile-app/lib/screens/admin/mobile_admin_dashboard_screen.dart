@@ -198,6 +198,15 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
           _buildPaymentsAndReportsScreen(),
         ],
       ),
+      floatingActionButton: _activeNavIndex == 1
+          ? FloatingActionButton.extended(
+              onPressed: _showAddVendorDialog,
+              backgroundColor: const Color(0xFF2563EB),
+              elevation: 4,
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: const Text('Add Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          : null,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -489,15 +498,27 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text('Vendor Management', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              const Expanded(
+                child: Text(
+                  'Vendor Management',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), letterSpacing: -0.5),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: _showAddVendorDialog,
-                icon: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
-                label: const Text('+ Add Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                label: const Text('Add Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ],
