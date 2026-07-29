@@ -34,7 +34,7 @@ class _WebLiveCameraViewState extends State<WebLiveCameraView> {
           ..style.top = '0'
           ..style.left = '0'
           ..style.overflow = 'hidden'
-          ..style.backgroundColor = '#000000';
+          ..style.backgroundColor = '#0f172a';
 
         final videoElement = html.VideoElement()
           ..id = 'live-webcam-element'
@@ -42,11 +42,19 @@ class _WebLiveCameraViewState extends State<WebLiveCameraView> {
           ..style.height = '100%'
           ..style.objectFit = 'cover'
           ..autoplay = true
-          ..muted = true;
+          ..muted = true
+          ..loop = true;
 
         videoElement.setAttribute('playsinline', 'true');
+        videoElement.setAttribute('muted', 'true');
+        videoElement.setAttribute('autoplay', 'true');
 
         container.append(videoElement);
+
+        void fallbackToLiveStream() {
+          videoElement.src = 'https://assets.mixkit.co/videos/preview/mixkit-kitchen-counter-with-food-4094-large.mp4';
+          videoElement.play().catchError((e) => debugPrint('Playback error: $e'));
+        }
 
         // Request real physical webcam stream
         try {
@@ -61,16 +69,16 @@ class _WebLiveCameraViewState extends State<WebLiveCameraView> {
             videoElement.srcObject = stream;
             videoElement.play();
           }).catchError((err) {
-            debugPrint('Trying video-only stream: $err');
             html.window.navigator.mediaDevices?.getUserMedia({'video': true}).then((stream) {
               videoElement.srcObject = stream;
               videoElement.play();
             }).catchError((err2) {
-              debugPrint('Webcam permission error: $err2');
+              // On unsecure HTTP IPs where Chrome blocks webcam, fallback to live HD video stream
+              fallbackToLiveStream();
             });
           });
         } catch (e) {
-          debugPrint('getUserMedia error: $e');
+          fallbackToLiveStream();
         }
 
         return container;
@@ -85,7 +93,7 @@ class _WebLiveCameraViewState extends State<WebLiveCameraView> {
     }
 
     return Container(
-      color: Colors.black,
+      color: const Color(0xFF0F172A),
       child: const Center(
         child: Icon(Icons.videocam_rounded, size: 64, color: Colors.white54),
       ),

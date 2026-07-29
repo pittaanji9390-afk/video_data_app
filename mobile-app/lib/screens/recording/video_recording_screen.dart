@@ -722,8 +722,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       );
     }
 
-    // Direct Hardware Camera Preview (Web & Mobile Native)
-    if (_controller != null && _controller!.value.isInitialized) {
+    // On Mobile Native, use CameraPreview. On Web, use WebLiveCameraView
+    if (!kIsWeb && _controller != null && _controller!.value.isInitialized) {
       return CameraPreview(_controller!);
     }
 
