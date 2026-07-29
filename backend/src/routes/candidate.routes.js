@@ -15,6 +15,9 @@ const {
 // Apply JWT authentication middleware to protect candidate routes
 router.use(authenticateJWT);
 
+// GET /api/v1/candidates/stats - Get Candidate Counts by Status for Vendor
+router.get('/stats', (req, res, next) => candidateController.getCandidateStats(req, res, next));
+
 // POST /api/v1/candidates - Create Candidate
 router.post('/', validateCreateCandidate, (req, res, next) => candidateController.createCandidate(req, res, next));
 

@@ -50,6 +50,24 @@ class CandidateController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/v1/candidates/stats
+   */
+  async getCandidateStats(req, res, next) {
+    try {
+      const { vendor_id } = req.query;
+      const stats = await candidateService.getCandidateStats({ vendor_id });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Candidate status counts fetched successfully',
+        data: stats,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new CandidateController();

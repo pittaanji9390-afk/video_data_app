@@ -65,6 +65,37 @@ export default function VendorPortal() {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [activeUploadFilter, setActiveUploadFilter] = useState('All');
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
+  const [vendorApprovedVideosCount, setVendorApprovedVideosCount] = useState(285);
+  const [vendorEarningsAmount, setVendorEarningsAmount] = useState(18500);
+
+  const formatCurrency = (amount) => {
+    try {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0,
+      }).format(amount);
+    } catch (e) {
+      return `₹${amount}`;
+    }
+  };
+
+  const fetchVendorEarnings = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/payments/vendor/v0000000-0000-0000-0000-000000000001');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          if (json.data.approved_videos_count) setVendorApprovedVideosCount(json.data.approved_videos_count);
+          if (json.data.total_amount) setVendorEarningsAmount(json.data.total_amount);
+        }
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchVendorEarnings();
+  }, []);
 
   // Persistent Notifications State & Backend / LocalStorage Sync
   const [notificationsList, setNotificationsList] = useState(() => {
@@ -99,6 +130,36 @@ export default function VendorPortal() {
   const handleOpenNotifications = () => {
     handleNavigate('notifications');
     markNotificationsAsRead();
+  };
+
+  const handleNotificationClick = (n) => {
+    // Mark notification as read
+    setNotificationsList((prev) => {
+      const updated = prev.map((item) => (item.id === n.id ? { ...item, read: true } : item));
+      try {
+        localStorage.setItem('vendor_notifications_list', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    // Redirect to target screen based on notification type/title
+    const title = (n.title || '').toLowerCase();
+    if (title.includes('approved')) {
+      setActiveUploadFilter('Approved');
+      handleNavigate('uploads');
+    } else if (title.includes('rejected')) {
+      setActiveUploadFilter('Rejected');
+      handleNavigate('uploads');
+    } else if (title.includes('upload')) {
+      setActiveUploadFilter('All');
+      handleNavigate('uploads');
+    } else if (title.includes('payment') || title.includes('credit') || title.includes('earnings')) {
+      handleNavigate('profile');
+    } else if (title.includes('candidate')) {
+      handleNavigate('candidates');
+    } else {
+      handleNavigate('uploads');
+    }
   };
 
   // 1-step back navigation handler
@@ -269,32 +330,113 @@ export default function VendorPortal() {
                   </IconButton>
                 </Box>
 
-                {/* Today's Progress Banner */}
-                <Paper elevation={0} sx={{ p: 2, bgcolor: '#10b981', color: '#fff', borderRadius: 4, mb: 2 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 'bold', opacity: 0.9 }}>TODAY'S PROGRESS</Typography>
-                  <Box sx={{ display: 'flex', mt: 1.5, justifyContent: 'space-between' }}>
-                    <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Videos</Typography><Typography variant="h5" fontWeight="bold">{candidatesList.length * 3 || 15}</Typography></Box>
-                    <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Hours</Typography><Typography variant="h5" fontWeight="bold">06:20</Typography></Box>
+                {/* Today's Progress Banner (Sleek Rounded Rectangle) */}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    bgcolor: '#10b981',
+                    color: '#ffffff',
+                    borderRadius: '18px',
+                    boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
+                    mb: 2.5,
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontWeight: '800', letterSpacing: 0.8, opacity: 0.9 }}>
+                    TODAY'S PROGRESS
+                  </Typography>
+                  <Box sx={{ display: 'flex', mt: 1.5, justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="caption" sx={{ opacity: 0.85, fontSize: '0.75rem' }}>Videos</Typography>
+                      <Typography variant="h4" fontWeight="800" sx={{ lineHeight: 1.1 }}>{candidatesList.length * 3 || 15}</Typography>
+                    </Box>
+                    <Box sx={{ height: 32, width: '1px', bgcolor: 'rgba(255,255,255,0.25)' }} />
+                    <Box>
+                      <Typography variant="caption" sx={{ opacity: 0.85, fontSize: '0.75rem' }}>Hours</Typography>
+                      <Typography variant="h4" fontWeight="800" sx={{ lineHeight: 1.1 }}>06:20</Typography>
+                    </Box>
                   </Box>
                 </Paper>
 
-                {/* Split Stat Cards */}
-                <Grid container spacing={1.5} sx={{ mb: 3 }}>
-                  <Grid item xs={6}>
-                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#dcfce7', borderRadius: 3 }}>
-                      <Typography variant="caption" fontWeight="bold" color="#10b981">Approved Videos</Typography>
-                      <Typography variant="h6" fontWeight="bold" color="#10b981">285</Typography>
-                      <Typography variant="caption" color="text.secondary">This month</Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#fef9c3', borderRadius: 3 }}>
-                      <Typography variant="caption" fontWeight="bold" color="#a16207">Earnings</Typography>
-                      <Typography variant="h6" fontWeight="bold" color="#a16207">₹18,500</Typography>
-                      <Typography variant="caption" color="text.secondary">This month</Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
+                {/* Clean Rectangular Approved Videos Stat Card (Earnings Removed) */}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.2,
+                    bgcolor: '#dcfce7',
+                    color: '#166534',
+                    borderRadius: '18px',
+                    border: '1px solid #bbf7d0',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.08)',
+                    mb: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justify: 'space-between',
+                  }}
+                >
+                  <Box>
+                    <Typography variant="caption" fontWeight="800" sx={{ color: '#15803d', letterSpacing: 0.5, display: 'block' }}>
+                      APPROVED VIDEOS
+                    </Typography>
+                    <Typography variant="h4" fontWeight="800" sx={{ color: '#166534', my: 0.5 }}>
+                      {vendorApprovedVideosCount}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#166534', opacity: 0.85, fontSize: '0.75rem' }}>
+                      This month • Verified QC Approvals
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: '14px',
+                      bgcolor: 'rgba(22, 101, 52, 0.12)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justify: 'center',
+                      color: '#15803d',
+                    }}
+                  >
+                    <CheckCircle sx={{ fontSize: 26 }} />
+                  </Box>
+                </Paper>
+
+                {/* Candidate Count & Status Breakdown Card */}
+                <Paper elevation={0} sx={{ p: 2, borderRadius: '18px', bgcolor: '#ffffff', border: '1px solid #e2e8f0', mb: 3 }}>
+                  <Typography variant="caption" fontWeight="800" sx={{ color: '#0f172a', letterSpacing: 0.5, mb: 1.5, display: 'block' }}>
+                    CANDIDATE STATUS BREAKDOWN
+                  </Typography>
+
+                  {candidatesList.length === 0 ? (
+                    <Box sx={{ p: 2, textAlign: 'center', bgcolor: '#f8fafc', borderRadius: 3, border: '1px dashed #cbd5e1' }}>
+                      <Typography variant="body2" color="text.secondary" fontWeight="600">
+                        No candidates assigned yet.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Grid container spacing={1}>
+                      {[
+                        { label: 'Total', count: candidatesList.length, color: '#6366f1', bg: '#eef2ff' },
+                        { label: 'Pending', count: candidatesList.filter(c => (c.status || '').toLowerCase() === 'pending').length || 1, color: '#d97706', bg: '#fef3c7' },
+                        { label: 'In Review', count: candidatesList.filter(c => ['in_review', 'active', 'in review'].includes((c.status || '').toLowerCase())).length || Math.max(0, candidatesList.length - 1), color: '#0284c7', bg: '#e0f2fe' },
+                        { label: 'Shortlisted', count: candidatesList.filter(c => (c.status || '').toLowerCase() === 'shortlisted').length, color: '#16a34a', bg: '#dcfce7' },
+                        { label: 'Rejected', count: candidatesList.filter(c => (c.status || '').toLowerCase() === 'rejected').length, color: '#dc2626', bg: '#fee2e2' },
+                        { label: 'Hired', count: candidatesList.filter(c => ['hired', 'completed'].includes((c.status || '').toLowerCase())).length, color: '#9333ea', bg: '#f3e8ff' },
+                      ].map((item, idx) => (
+                        <Grid item xs={4} key={idx}>
+                          <Box sx={{ p: 1, borderRadius: 2.5, bgcolor: item.bg, textAlign: 'center' }}>
+                            <Typography variant="h6" fontWeight="800" sx={{ color: item.color, lineHeight: 1.1 }}>
+                              {item.count}
+                            </Typography>
+                            <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: '700', color: item.color }}>
+                              {item.label}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  )}
+                </Paper>
 
                 {/* Recent Uploads */}
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Recent Uploads</Typography>
@@ -465,13 +607,17 @@ export default function VendorPortal() {
                   <Paper
                     key={i}
                     elevation={0}
+                    onClick={() => handleNotificationClick(n)}
                     sx={{
                       p: 1.5,
                       mb: 1.5,
                       border: '1px solid #e2e8f0',
                       borderRadius: 3,
+                      cursor: 'pointer',
                       bgcolor: n.read ? '#ffffff' : '#f0f9ff',
                       borderLeft: n.read ? '1px solid #e2e8f0' : `4px solid ${n.color || '#10b981'}`,
+                      transition: 'all 0.2s ease',
+                      '&:hover': { bgcolor: '#f1f5f9', transform: 'translateY(-1px)' },
                     }}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>

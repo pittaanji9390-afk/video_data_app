@@ -194,19 +194,26 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
           ),
           const SizedBox(height: 18),
 
-          // Today's Progress Card (Green theme)
+          // Today's Progress Card (Green theme with rounded corners 18)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: AppColors.success,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withOpacity(0.25),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("TODAY'S PROGRESS", style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
-                SizedBox(height: 10),
+                Text("TODAY'S PROGRESS", style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -218,6 +225,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                         Text('15', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                       ],
                     ),
+                    Container(height: 30, width: 1, color: Colors.white24),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -233,41 +241,102 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
           ),
           const SizedBox(height: 18),
 
-          // Split Metric Cards
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(14)),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Approved Videos', style: TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text('285', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.success)),
-                      Text('This month', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    ],
-                  ),
+          // Clean Full-Width Approved Videos Stat Card (Earnings Removed)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDCFCE7),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: const Color(0xFFFEF9C3), borderRadius: BorderRadius.circular(14)),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Earnings', style: TextStyle(fontSize: 12, color: Color(0xFFA16207), fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text('₹18,500', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFA16207))),
-                      Text('This month', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    ],
-                  ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('APPROVED VIDEOS', style: TextStyle(fontSize: 11, color: Color(0xFF15803D), fontWeight: FontWeight.extrabold, letterSpacing: 0.8)),
+                    SizedBox(height: 6),
+                    Text('285', style: TextStyle(fontSize: 26, fontWeight: FontWeight.extrabold, color: Color(0xFF166534))),
+                    SizedBox(height: 4),
+                    Text('This month • Verified QC Approvals', style: TextStyle(fontSize: 11, color: Color(0xFF166534))),
+                  ],
                 ),
-              ),
-            ],
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF15803D).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.check_circle_rounded, color: Color(0xFF15803D), size: 28),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Candidate Status Breakdown Card Grid
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'CANDIDATE STATUS BREAKDOWN',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.extrabold, color: Colors.black87, letterSpacing: 0.5),
+                ),
+                const SizedBox(height: 12),
+
+                _vendorCandidates.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.0),
+                        child: Center(
+                          child: Text(
+                            'No candidates assigned yet.',
+                            style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      )
+                    : GridView.count(
+                        crossAxisCount: 3,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 1.6,
+                        children: [
+                          _buildStatusMiniTile('Total', '${_vendorCandidates.length}', const Color(0xFF6366F1), const Color(0xFFEEF2FF)),
+                          _buildStatusMiniTile('Pending', '3', const Color(0xFFD97706), const Color(0xFFFEF3C7)),
+                          _buildStatusMiniTile('In Review', '5', const Color(0xFF0284C7), const Color(0xFFE0F2FE)),
+                          _buildStatusMiniTile('Shortlisted', '4', const Color(0xFF16A34A), const Color(0xFFDCFCE7)),
+                          _buildStatusMiniTile('Rejected', '1', const Color(0xFFDC2626), const Color(0xFFFEE2E2)),
+                          _buildStatusMiniTile('Hired', '1', const Color(0xFF9333EA), const Color(0xFFF3E8FF)),
+                        ],
+                      ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -467,6 +536,42 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
     );
   }
 
+  void _handleNotificationTap(Map<String, dynamic> n) {
+    setState(() {
+      n['read'] = true;
+    });
+
+    final title = (n['title'] ?? '').toString().toLowerCase();
+    if (title.contains('approved')) {
+      setState(() {
+        _activeUploadFilter = 'Approved';
+        _currentTab = 2;
+      });
+    } else if (title.contains('rejected')) {
+      setState(() {
+        _activeUploadFilter = 'Rejected';
+        _currentTab = 2;
+      });
+    } else if (title.contains('upload')) {
+      setState(() {
+        _activeUploadFilter = 'All';
+        _currentTab = 2;
+      });
+    } else if (title.contains('payment') || title.contains('credit') || title.contains('earnings')) {
+      setState(() {
+        _currentTab = 4;
+      });
+    } else if (title.contains('candidate')) {
+      setState(() {
+        _currentTab = 1;
+      });
+    } else {
+      setState(() {
+        _currentTab = 2;
+      });
+    }
+  }
+
   // 4. NOTIFICATIONS TAB (Screen #6 in Image 2)
   Widget _buildNotificationsTab() {
     _markNotificationsAsRead();
@@ -504,10 +609,11 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                   side: BorderSide(color: isRead ? const Color(0xFFE2E8F0) : AppColors.primary.withOpacity(0.3)),
                 ),
                 child: ListTile(
+                  onTap: () => _handleNotificationTap(n),
                   leading: CircleAvatar(backgroundColor: c.withAlpha(25), child: Icon(Icons.notifications_rounded, color: c)),
                   title: Text(n['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(n['desc'] as String),
-                  trailing: Text(n['time'] as String, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
                 ),
               );
             },
@@ -584,6 +690,32 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
           Text(label, style: const TextStyle(color: Colors.grey)),
           const Spacer(),
           Text(val, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusMiniTile(String label, String count, Color color, Color bg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            count,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color, height: 1.1),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: color),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
