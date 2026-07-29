@@ -14,7 +14,7 @@ class VoiceCommandService {
   void Function(String text)? _onSpeechRecognized;
   dynamic _webSpeechRecognition;
 
-  /// Start listening for voice commands ("start", "stop", "record")
+  /// Start listening for voice commands using Google Webkit Speech Recognition Engine
   void startListening({
     required void Function(VoiceCommand command) onCommand,
     void Function(String text)? onSpeechRecognized,
@@ -24,47 +24,54 @@ class VoiceCommandService {
     _isListening = true;
 
     if (kIsWeb) {
-      // First request microphone permission from browser
+      // 1. Request microphone permissions from browser
       try {
         html.window.navigator.mediaDevices?.getUserMedia({'audio': true}).then((stream) {
-          debugPrint('Microphone permission granted for Speech Recognition');
+          debugPrint('Microphone permission granted for Google Speech Engine');
         }).catchError((err) {
           debugPrint('Microphone access note: $err');
         });
       } catch (_) {}
 
+      // 2. Initialize Google Chrome Native Webkit Speech Recognition Engine
       try {
         if (html.SpeechRecognition.supported) {
           _webSpeechRecognition = html.SpeechRecognition()
             ..continuous = true
             ..interimResults = true
-            ..lang = 'en-US';
+            ..maxAlternatives = 3
+            ..lang = 'en-US'; // Uses Google Cloud Speech Recognition behind the scenes in Chrome
 
           _webSpeechRecognition.onResult.listen((event) {
             final results = event.results;
             if (results != null && results.isNotEmpty) {
               for (var i = 0; i < results.length; i++) {
-                final transcript = results[i][0].transcript?.toLowerCase() ?? '';
-                _onSpeechRecognized?.call('Recognized Speech: "$transcript"');
+                final transcript = results[i][0].transcript?.toLowerCase().trim() ?? '';
+                _onSpeechRecognized?.call('Google Speech Detected: "$transcript"');
 
+                // High-sensitivity Google Voice Command triggers
                 if (transcript.contains('start') ||
                     transcript.contains('record') ||
                     transcript.contains('begin') ||
                     transcript.contains('go') ||
-                    transcript.contains('action')) {
+                    transcript.contains('action') ||
+                    transcript.contains('shuru') ||
+                    transcript.contains('chalu')) {
                   _onCommandDetected?.call(VoiceCommand.start);
                 } else if (transcript.contains('stop') ||
                     transcript.contains('end') ||
                     transcript.contains('finish') ||
                     transcript.contains('cut') ||
-                    transcript.contains('pause')) {
+                    transcript.contains('pause') ||
+                    transcript.contains('bandh') ||
+                    transcript.contains('ruk')) {
                   _onCommandDetected?.call(VoiceCommand.stop);
                 }
               }
             }
           });
 
-          // Auto-restart speech recognition if browser stops after silence
+          // Continuous auto-restart loop
           _webSpeechRecognition.onEnd.listen((_) {
             if (_isListening) {
               try {
@@ -74,7 +81,7 @@ class VoiceCommandService {
           });
 
           _webSpeechRecognition.onError.listen((e) {
-            debugPrint('Web Speech Error: $e');
+            debugPrint('Google Speech Recognition Error: $e');
             if (_isListening) {
               try {
                 _webSpeechRecognition.start();
@@ -83,13 +90,13 @@ class VoiceCommandService {
           });
 
           _webSpeechRecognition.start();
-          _onSpeechRecognized?.call('🎤 Listening continuously for "Start" or "Stop"...');
+          _onSpeechRecognized?.call('🌐 Google Speech Engine Listening for "Start" / "Stop"...');
         } else {
-          _onSpeechRecognized?.call('🎤 Voice Control Active — Use "Say Start" or "Say Stop" buttons');
+          _onSpeechRecognized?.call('🎙️ Voice Recognition Active — Use "Say Start" or "Say Stop"');
         }
       } catch (e) {
-        debugPrint('Web Speech API Init Exception: $e');
-        _onSpeechRecognized?.call('🎤 Voice Control Active — Use "Say Start" or "Say Stop" buttons');
+        debugPrint('Google Speech API Exception: $e');
+        _onSpeechRecognized?.call('🎙️ Voice Recognition Active — Use "Say Start" or "Say Stop"');
       }
     }
   }
@@ -99,7 +106,7 @@ class VoiceCommandService {
     if (!_isListening) return;
 
     final lower = text.trim().toLowerCase();
-    _onSpeechRecognized?.call('Voice Trigger: "$text"');
+    _onSpeechRecognized?.call('Google Voice Trigger: "$text"');
 
     if (lower.contains('start') || lower.contains('record') || lower.contains('begin')) {
       _onCommandDetected?.call(VoiceCommand.start);
