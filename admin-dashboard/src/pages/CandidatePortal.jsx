@@ -151,8 +151,44 @@ export default function CandidatePortal() {
   const candidateHours = (candidateUploadedCount * 0.5).toFixed(1);
   const candidateEarnings = (candidateUploadedCount * 50).toFixed(0);
 
-  const videoRef = useRef(null);
-  const timerRef = useRef(null);
+  const [selectedVideoModal, setSelectedVideoModal] = useState(null);
+  const [openPayoutModal, setOpenPayoutModal] = useState(false);
+  const [payoutStatus, setPayoutStatus] = useState('Available');
+  const [openSupportModal, setOpenSupportModal] = useState(false);
+  const [supportMessage, setSupportMessage] = useState('');
+  const [expandedFaq, setExpandedFaq] = useState(null);
+  const [autoUpload, setAutoUpload] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [videoQuality, setVideoQuality] = useState('1080p');
+  const [toastAlert, setToastAlert] = useState(null);
+
+  const [notificationsList, setNotificationsList] = useState([
+    { id: 1, title: 'Video Approved', desc: 'Kitchen Video has been approved by Quality Control.', time: '10:30 AM', color: '#10b981', read: false },
+    { id: 2, title: 'Upload Complete', desc: 'Bedroom Video upload completed successfully.', time: '09:45 AM', color: '#2563eb', read: false },
+    { id: 3, title: 'Payment Updated', desc: 'Monthly earnings updated in your wallet.', time: 'Yesterday', color: '#8b5cf6', read: true },
+  ]);
+
+  const handleDownloadStatement = () => {
+    const csvContent = "data:text/csv;charset=utf-8,Date,Hours,Earnings,Status\n2026-07-29,0.5h,$50.00,Completed\n2026-07-28,1.0h,$100.00,Approved";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Candidate_Statement_${candidateId}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Statement downloaded successfully!');
+  };
+
+  const showToast = (msg) => {
+    setToastAlert(msg);
+    setTimeout(() => setToastAlert(null), 3000);
+  };
+
+  const handleClearNotifications = () => {
+    setNotificationsList([]);
+    showToast('All notifications cleared');
+  };
 
   useEffect(() => {
     if (activeScreen === 'record') {
@@ -464,11 +500,16 @@ export default function CandidatePortal() {
                 <TextField fullWidth placeholder="Search videos..." size="small" sx={{ mb: 2 }} InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }} />
 
                 {[
-                  { title: 'Kitchen Video', time: '12:30 Min • Today, 10:30 AM', status: 'Approved', color: 'success' },
-                  { title: 'Bedroom Video', time: '30:00 Min • Today, 09:15 AM', status: 'Pending', color: 'warning' },
-                  { title: 'Garden Video', time: '15:45 Min • Yesterday, 06:20 PM', status: 'Rejected', color: 'error' },
+                  { title: 'Kitchen Video', time: '12:30 Min • Today, 10:30 AM', status: 'Approved', color: 'success', env: 'Kitchen', size: '1.24 GB', fps: '30' },
+                  { title: 'Bedroom Video', time: '30:00 Min • Today, 09:15 AM', status: 'Pending', color: 'warning', env: 'Bedroom', size: '2.80 GB', fps: '30' },
+                  { title: 'Garden Video', time: '15:45 Min • Yesterday, 06:20 PM', status: 'Rejected', color: 'error', env: 'Garden', size: '1.50 GB', fps: '30' },
                 ].map((item, idx) => (
-                  <Paper key={idx} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Paper
+                    key={idx}
+                    elevation={0}
+                    onClick={() => setSelectedVideoModal(item)}
+                    sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', '&:hover': { bgcolor: '#f1f5f9' } }}
+                  >
                     <Box>
                       <Typography variant="body2" fontWeight="bold">{item.title}</Typography>
                       <Typography variant="caption" color="text.secondary">{item.time}</Typography>
@@ -485,31 +526,48 @@ export default function CandidatePortal() {
                 <Typography variant="h6" fontWeight="bold" gutterBottom>My Earnings</Typography>
                 <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#2563eb', color: '#fff', borderRadius: 4, mb: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Approved Hours</Typography><Typography variant="h6" fontWeight="bold">{candidateHours}</Typography></Box>
+                    <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Approved Hours</Typography><Typography variant="h6" fontWeight="bold">{candidateHours} hrs</Typography></Box>
                     <Box><Typography variant="caption" sx={{ opacity: 0.8 }}>Rate</Typography><Typography variant="h6" fontWeight="bold">₹100 / hour</Typography></Box>
                   </Box>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>Total Earnings (This Month)</Typography>
                   <Typography variant="h4" fontWeight="bold">₹{candidateEarnings}</Typography>
+                  <Chip label={payoutStatus} size="small" sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 'bold' }} />
                 </Paper>
 
-                <Button fullWidth variant="contained" startIcon={<Download />} sx={{ py: 1.5, borderRadius: 3 }}>Download Report (CSV)</Button>
+                <Button fullWidth variant="contained" color="success" onClick={() => setOpenPayoutModal(true)} sx={{ mb: 1.5, py: 1.4, borderRadius: 3, fontWeight: 'bold' }}>
+                  Request Payout Settlement
+                </Button>
+                <Button fullWidth variant="outlined" startIcon={<Download />} onClick={handleDownloadStatement} sx={{ py: 1.4, borderRadius: 3, fontWeight: 'bold' }}>
+                  Download Statement (CSV)
+                </Button>
               </Box>
             )}
 
             {/* 19. NOTIFICATIONS SCREEN (Mockup Screen 19) */}
             {activeScreen === 'notifications' && (
               <Box>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>Notifications</Typography>
-                {[
-                  { title: 'Video Approved', desc: 'Kitchen Video has been approved.', time: '10:30 AM', color: '#10b981' },
-                  { title: 'Upload Complete', desc: 'Bedroom Video upload completed.', time: '09:45 AM', color: '#2563eb' },
-                  { title: 'Payment Updated', desc: 'Monthly earnings updated.', time: 'Yesterday', color: '#8b5cf6' },
-                ].map((item, i) => (
-                  <Paper key={i} elevation={0} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" fontWeight="bold">Notifications</Typography>
+                  <Button size="small" onClick={handleClearNotifications} sx={{ textTransform: 'none', color: '#ef4444' }}>Clear All</Button>
+                </Box>
+                {notificationsList.map((item, i) => (
+                  <Paper
+                    key={i}
+                    elevation={0}
+                    onClick={() => {
+                      const updated = [...notificationsList];
+                      updated[i].read = true;
+                      setNotificationsList(updated);
+                    }}
+                    sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer', opacity: item.read ? 0.7 : 1, bgcolor: item.read ? '#fff' : '#f0f9ff' }}
+                  >
                     <Typography variant="body2" fontWeight="bold" style={{ color: item.color }}>{item.title}</Typography>
                     <Typography variant="caption" color="text.secondary">{item.desc}</Typography>
                   </Paper>
                 ))}
+                {notificationsList.length === 0 && (
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>No new notifications</Typography>
+                )}
               </Box>
             )}
 
@@ -546,14 +604,20 @@ export default function CandidatePortal() {
             {activeScreen === 'settings' && (
               <Box>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Settings</Typography>
-                <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3, mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="body2">Auto Upload</Typography>
-                    <Switch defaultChecked />
+                    <Typography variant="body2" fontWeight="bold">Auto Upload</Typography>
+                    <Switch checked={autoUpload} onChange={(e) => { setAutoUpload(e.target.checked); showToast(`Auto Upload ${e.target.checked ? 'Enabled' : 'Disabled'}`); }} />
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                    <Typography variant="body2">Video Quality</Typography>
-                    <Typography variant="body2" color="primary" fontWeight="bold">1080p</Typography>
+                    <Typography variant="body2" fontWeight="bold">Push Notifications</Typography>
+                    <Switch checked={pushNotifications} onChange={(e) => { setPushNotifications(e.target.checked); showToast(`Notifications ${e.target.checked ? 'Enabled' : 'Disabled'}`); }} />
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                    <Typography variant="body2" fontWeight="bold">Video Quality</Typography>
+                    <Button size="small" onClick={() => { const q = videoQuality === '1080p' ? '720p' : '1080p'; setVideoQuality(q); showToast(`Video Quality set to ${q}`); }} variant="outlined">
+                      {videoQuality}
+                    </Button>
                   </Box>
                 </Paper>
               </Box>
@@ -563,12 +627,24 @@ export default function CandidatePortal() {
             {activeScreen === 'help' && (
               <Box>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Help Center</Typography>
-                {['How to record a video?', 'How to upload video?', 'How are earnings calculated?'].map((q, i) => (
-                  <Paper key={i} elevation={0} sx={{ p: 1.5, mb: 1, border: '1px solid #e2e8f0', borderRadius: 3, display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">{q}</Typography>
-                    <ArrowForwardIos sx={{ fontSize: 14, color: 'text.secondary' }} />
+                {[
+                  { q: 'How to record a video?', a: 'Tap the camera icon on the bottom navigation bar, select environment tag, and tap Record.' },
+                  { q: 'How to upload video?', a: 'Videos upload automatically when connected to Wi-Fi, or tap Upload on the video card.' },
+                  { q: 'How are earnings calculated?', a: 'Earnings are calculated at ₹100 per approved hour of quality-checked video collection.' },
+                ].map((item, i) => (
+                  <Paper key={i} elevation={0} onClick={() => setExpandedFaq(expandedFaq === i ? null : i)} sx={{ p: 1.5, mb: 1, border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" fontWeight="bold">{item.q}</Typography>
+                      <Typography variant="caption">{expandedFaq === i ? '▲' : '▼'}</Typography>
+                    </Box>
+                    {expandedFaq === i && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>{item.a}</Typography>
+                    )}
                   </Paper>
                 ))}
+                <Button fullWidth variant="contained" color="primary" onClick={() => setOpenSupportModal(true)} sx={{ mt: 2, py: 1.2, borderRadius: 3, textTransform: 'none', fontWeight: 'bold' }}>
+                  Contact Support Team
+                </Button>
               </Box>
             )}
 
@@ -611,6 +687,96 @@ export default function CandidatePortal() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Video Detail Modal Dialog */}
+        <Dialog open={!!selectedVideoModal} onClose={() => setSelectedVideoModal(null)} maxWidth="xs" fullWidth paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">{selectedVideoModal?.title}</DialogTitle>
+          <DialogContent>
+            <Box sx={{ width: '100%', height: 160, bgcolor: '#000', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', mb: 2 }}>
+              <Videocam sx={{ fontSize: 48 }} />
+            </Box>
+            <Typography variant="body2"><strong>Status:</strong> {selectedVideoModal?.status}</Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}><strong>Time:</strong> {selectedVideoModal?.time}</Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}><strong>Environment:</strong> {selectedVideoModal?.env || 'Kitchen'}</Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}><strong>Size:</strong> {selectedVideoModal?.size || '1.24 GB'}</Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setSelectedVideoModal(null)} variant="contained" fullWidth sx={{ textTransform: 'none', borderRadius: 2 }}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Payout Settlement Request Modal Dialog */}
+        <Dialog open={openPayoutModal} onClose={() => setOpenPayoutModal(false)} maxWidth="xs" fullWidth paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">Request Payout Settlement</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Request settlement for your approved earnings of <strong>₹{candidateEarnings}</strong> ({candidateHours} hrs @ ₹100/hr).
+            </Typography>
+            <Paper elevation={0} sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 2 }}>
+              <Typography variant="caption" color="text.secondary">Payout Method</Typography>
+              <Typography variant="body2" fontWeight="bold">Direct Bank Transfer (**** 4567)</Typography>
+            </Paper>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenPayoutModal(false)} sx={{ textTransform: 'none', color: '#64748b' }}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setOpenPayoutModal(false);
+                setPayoutStatus('Processing');
+                showToast('Payout request submitted for processing!');
+              }}
+              variant="contained"
+              color="success"
+              sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}
+            >
+              Confirm Request
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Support Message Dialog Modal */}
+        <Dialog open={openSupportModal} onClose={() => setOpenSupportModal(false)} maxWidth="xs" fullWidth paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">Contact Support</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Have a question or issue? Send a message directly to the operations team.
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              placeholder="Describe your issue..."
+              value={supportMessage}
+              onChange={(e) => setSupportMessage(e.target.value)}
+              size="small"
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenSupportModal(false)} sx={{ textTransform: 'none', color: '#64748b' }}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (!supportMessage.trim()) return;
+                setOpenSupportModal(false);
+                setSupportMessage('');
+                showToast('Support message sent successfully!');
+              }}
+              variant="contained"
+              color="primary"
+              sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}
+            >
+              Send Message
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Feedback Toast Alert */}
+        {toastAlert && (
+          <Alert severity="success" sx={{ position: 'absolute', bottom: 70, left: 16, right: 16, zIndex: 100, borderRadius: 3, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+            {toastAlert}
+          </Alert>
+        )}
       </Box>
     </ThemeProvider>
   );

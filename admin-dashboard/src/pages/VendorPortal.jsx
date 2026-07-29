@@ -101,6 +101,19 @@ export default function VendorPortal() {
     navigate('/login');
   };
 
+  const [selectedCandidateModal, setSelectedCandidateModal] = useState(null);
+  const [selectedUploadModal, setSelectedUploadModal] = useState(null);
+  const [openEditProfileModal, setOpenEditProfileModal] = useState(false);
+  const [vendorPhone, setVendorPhone] = useState('+91 98765 43210');
+  const [vendorGst, setVendorGst] = useState('27ABCDE1234F1ZS');
+  const [vendorBank, setVendorBank] = useState('**** 4567');
+  const [toastAlert, setToastAlert] = useState(null);
+
+  const showToast = (msg) => {
+    setToastAlert(msg);
+    setTimeout(() => setToastAlert(null), 3000);
+  };
+
   // Candidates & Store State
   const [candidatesList, setCandidatesList] = useState([]);
   const [openAddCandidate, setOpenAddCandidate] = useState(false);
@@ -365,18 +378,22 @@ export default function VendorPortal() {
 
             {/* 7. PROFILE SCREEN (Mockup Screen 7) */}
             {activeScreen === 'profile' && (
-              <Box sx={{ textAlign: 'center' }}>
+              <Box sx={{ textAlign: 'center', pb: 2 }}>
                 <Avatar sx={{ width: 64, height: 64, bgcolor: '#10b981', mx: 'auto', mb: 1, fontSize: 24, fontWeight: 'bold' }}>RK</Avatar>
                 <Typography variant="h6" fontWeight="bold">Rahul Kumar</Typography>
                 <Chip icon={<Verified />} label="Verified Vendor" color="success" size="small" sx={{ mb: 2 }} />
 
                 <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3, mb: 2, textAlign: 'left' }}>
                   <Typography variant="caption" color="text.secondary">Email: rahul@vendor.com</Typography><br />
-                  <Typography variant="caption" color="text.secondary">Phone: +91 98765 43210</Typography><br />
+                  <Typography variant="caption" color="text.secondary">Phone: {vendorPhone}</Typography><br />
                   <Typography variant="caption" color="text.secondary">Joined: 15 Jan 2024</Typography><br />
-                  <Typography variant="caption" color="text.secondary">Bank: **** 4567</Typography><br />
-                  <Typography variant="caption" color="text.secondary">GST: 27ABCDE1234F1ZS</Typography>
+                  <Typography variant="caption" color="text.secondary">Bank: {vendorBank}</Typography><br />
+                  <Typography variant="caption" color="text.secondary">GST: {vendorGst}</Typography>
                 </Paper>
+
+                <Button fullWidth variant="outlined" onClick={() => setOpenEditProfileModal(true)} sx={{ mb: 1.5, py: 1.2, borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}>
+                  Edit Profile & Bank Info
+                </Button>
 
                 <Button fullWidth variant="contained" color="error" startIcon={<Logout />} onClick={() => setLogoutDialogOpen(true)} sx={{ py: 1.2, borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}>
                   Sign Out
@@ -420,6 +437,37 @@ export default function VendorPortal() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Edit Vendor Profile Modal Dialog */}
+        <Dialog open={openEditProfileModal} onClose={() => setOpenEditProfileModal(false)} maxWidth="xs" fullWidth paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">Edit Vendor Profile</DialogTitle>
+          <DialogContent sx={{ pt: 1 }}>
+            <TextField fullWidth label="Phone Number" value={vendorPhone} onChange={(e) => setVendorPhone(e.target.value)} size="small" sx={{ mb: 2, mt: 1 }} />
+            <TextField fullWidth label="Bank Account" value={vendorBank} onChange={(e) => setVendorBank(e.target.value)} size="small" sx={{ mb: 2 }} />
+            <TextField fullWidth label="GST Number" value={vendorGst} onChange={(e) => setVendorGst(e.target.value)} size="small" />
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenEditProfileModal(false)} sx={{ textTransform: 'none', color: '#64748b' }}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setOpenEditProfileModal(false);
+                showToast('Vendor profile & bank info updated!');
+              }}
+              variant="contained"
+              color="success"
+              sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}
+            >
+              Save Changes
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Feedback Toast Alert */}
+        {toastAlert && (
+          <Alert severity="success" sx={{ position: 'absolute', bottom: 70, left: 16, right: 16, zIndex: 100, borderRadius: 3, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+            {toastAlert}
+          </Alert>
+        )}
 
         {/* Add Candidate Modal Dialog */}
         <Dialog open={openAddCandidate} onClose={() => setOpenAddCandidate(false)} maxWidth="xs" fullWidth>

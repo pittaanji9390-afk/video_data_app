@@ -97,6 +97,60 @@ export default function AdminPortal() {
     navigate('/login');
   };
 
+  // QC Queue & Active Review State
+  const [qcQueueIndex, setQcQueueIndex] = useState(0);
+  const [pendingQcList, setPendingQcList] = useState([
+    { id: 'VID-901', title: 'Kitchen Cooking Sample #12', vendor: 'Acme Video Solutions', candidate: 'Anji (CND-7777)', duration: '15:30', score: 92, status: 'Pending' },
+    { id: 'VID-902', title: 'Bedroom Lighting Sample #08', vendor: 'Apex Data Services', candidate: 'Rahul Kumar', duration: '30:00', score: 88, status: 'Pending' },
+    { id: 'VID-903', title: 'Garden Daylight Sample #04', vendor: 'Acme Video Solutions', candidate: 'Anji (CND-7777)', duration: '22:15', score: 95, status: 'Pending' },
+  ]);
+
+  const [openRejectModal, setOpenRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [openPayoutModal, setOpenPayoutModal] = useState(false);
+  const [pendingPayout, setPendingPayout] = useState(250000);
+  const [completedPayout, setCompletedPayout] = useState(1602000);
+  const [toastAlert, setToastAlert] = useState(null);
+
+  const showToast = (msg) => {
+    setToastAlert(msg);
+    setTimeout(() => setToastAlert(null), 3000);
+  };
+
+  const handleApproveQc = () => {
+    const current = pendingQcList[qcQueueIndex];
+    if (!current) return;
+    showToast(`Approved ${current.id} (${current.title}) with Quality Score ${current.score}%`);
+    if (qcQueueIndex < pendingQcList.length - 1) {
+      setQcQueueIndex(qcQueueIndex + 1);
+    } else {
+      showToast('All pending QC videos in queue evaluated!');
+    }
+  };
+
+  const handleRejectQc = () => {
+    if (!rejectionReason.trim()) return;
+    const current = pendingQcList[qcQueueIndex];
+    setOpenRejectModal(false);
+    setRejectionReason('');
+    showToast(`Rejected ${current.id}: ${rejectionReason}`);
+    if (qcQueueIndex < pendingQcList.length - 1) {
+      setQcQueueIndex(qcQueueIndex + 1);
+    }
+  };
+
+  const handleExportReport = () => {
+    const csvContent = "data:text/csv;charset=utf-8,Vendor,Candidates,Videos,Approved_Payout_INR,Status\nAcme Video Solutions,20,868,1520000,Active\nApex Data Services,158,628,365000,Active\nZenith Media Labs,25,410,253000,Inactive";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Admin_Settlement_Report_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Platform settlement report exported (CSV)');
+  };
+
   // Admin Vendor List State
   const [vendorsList, setVendorsList] = useState(() => {
     const stored = localStorage.getItem('platform_vendors_list');
@@ -214,15 +268,19 @@ export default function AdminPortal() {
                 {/* 2x3 Grid Stats Cards (Matching Image 2 Screen 2) */}
                 <Grid container spacing={1.5} sx={{ mb: 3 }}>
                   {[
-                    { label: 'Vendors', val: vendorsList.length, color: '#6366f1', icon: <Storefront /> },
-                    { label: 'Candidates', val: '1,248', color: '#0ea5e9', icon: <People /> },
-                    { label: 'Videos', val: '8,542', color: '#8b5cf6', icon: <Videocam /> },
-                    { label: 'Pending QC', val: '124', color: '#f59e0b', icon: <HourglassEmpty /> },
-                    { label: 'Approved', val: '7,950', color: '#10b981', icon: <CheckCircle /> },
-                    { label: 'Rejected', val: '592', color: '#ef4444', icon: <Cancel /> },
+                    { label: 'Vendors', val: vendorsList.length, color: '#6366f1', icon: <Storefront />, target: 'vendors' },
+                    { label: 'Candidates', val: '1,248', color: '#0ea5e9', icon: <People />, target: 'vendors' },
+                    { label: 'Videos', val: '8,542', color: '#8b5cf6', icon: <Videocam />, target: 'qc_review' },
+                    { label: 'Pending QC', val: pendingQcList.length, color: '#f59e0b', icon: <HourglassEmpty />, target: 'qc_review' },
+                    { label: 'Approved', val: '7,950', color: '#10b981', icon: <CheckCircle />, target: 'qc_review' },
+                    { label: 'Rejected', val: '592', color: '#ef4444', icon: <Cancel />, target: 'qc_review' },
                   ].map((tile, i) => (
                     <Grid item xs={6} key={i}>
-                      <Paper elevation={0} sx={{ p: 1.5, border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                      <Paper
+                        elevation={0}
+                        onClick={() => handleNavigate(tile.target)}
+                        sx={{ p: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer', '&:hover': { bgcolor: '#f8fafc' } }}
+                      >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                           <Typography variant="caption" fontWeight="bold" style={{ color: tile.color }}>{tile.label}</Typography>
                           {tile.icon}
@@ -255,25 +313,42 @@ export default function AdminPortal() {
             {activeScreen === 'qc_review' && (
               <Box>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Video Review (QC Panel)</Typography>
-                <Box sx={{ width: '100%', height: 180, bgcolor: '#000', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', mb: 2, position: 'relative' }}>
-                  <PlayArrow sx={{ fontSize: 54 }} />
-                  <Typography variant="caption" sx={{ position: 'absolute', bottom: 10, right: 12, bgcolor: 'rgba(0,0,0,0.7)', px: 1, borderRadius: 1 }}>30:15</Typography>
-                </Box>
-                <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3, mb: 2 }}>
-                  <Typography variant="caption" color="text.secondary">Vendor: ABC Solutions</Typography><br />
-                  <Typography variant="caption" color="text.secondary">Candidate: Rahul Kumar</Typography><br />
-                  <Typography variant="caption" color="text.secondary">Duration: 30:15</Typography><br />
-                  <Typography variant="caption" color="text.secondary">Uploaded: 12 May 2024, 10:30 AM</Typography><br />
-                  <Typography variant="caption" color="text.secondary">Environment: Kitchen</Typography>
-                </Paper>
-                <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#dcfce7', borderRadius: 3, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Avatar sx={{ bgcolor: '#10b981', width: 36, height: 36, fontSize: 14 }}>92%</Avatar>
-                  <Box><Typography variant="body2" fontWeight="bold" color="#10b981">Quality Score 92%</Typography><Typography variant="caption" color="text.secondary">Good video quality</Typography></Box>
-                </Paper>
-                <Box sx={{ display: 'flex', gap: 1.5 }}>
-                  <Button fullWidth variant="outlined" color="error">Reject</Button>
-                  <Button fullWidth variant="contained" color="primary">Approve</Button>
-                </Box>
+                {pendingQcList[qcQueueIndex] ? (
+                  <>
+                    <Box sx={{ width: '100%', height: 180, bgcolor: '#000', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', mb: 2, position: 'relative' }}>
+                      <PlayArrow sx={{ fontSize: 54 }} />
+                      <Typography variant="caption" sx={{ position: 'absolute', bottom: 10, right: 12, bgcolor: 'rgba(0,0,0,0.7)', px: 1, borderRadius: 1 }}>
+                        {pendingQcList[qcQueueIndex].duration}
+                      </Typography>
+                    </Box>
+                    <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3, mb: 2 }}>
+                      <Typography variant="body2" fontWeight="bold" gutterBottom>{pendingQcList[qcQueueIndex].title}</Typography>
+                      <Typography variant="caption" color="text.secondary">ID: {pendingQcList[qcQueueIndex].id}</Typography><br />
+                      <Typography variant="caption" color="text.secondary">Vendor: {pendingQcList[qcQueueIndex].vendor}</Typography><br />
+                      <Typography variant="caption" color="text.secondary">Candidate: {pendingQcList[qcQueueIndex].candidate}</Typography><br />
+                      <Typography variant="caption" color="text.secondary">Duration: {pendingQcList[qcQueueIndex].duration}</Typography>
+                    </Paper>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#dcfce7', borderRadius: 3, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Avatar sx={{ bgcolor: '#10b981', width: 36, height: 36, fontSize: 14 }}>{pendingQcList[qcQueueIndex].score}%</Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold" color="#10b981">Quality Score {pendingQcList[qcQueueIndex].score}%</Typography>
+                        <Typography variant="caption" color="text.secondary">Audio, lighting & clarity verified</Typography>
+                      </Box>
+                    </Paper>
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <Button fullWidth variant="outlined" color="error" onClick={() => setOpenRejectModal(true)} sx={{ py: 1.2, fontWeight: 'bold' }}>
+                        Reject Video
+                      </Button>
+                      <Button fullWidth variant="contained" color="primary" onClick={handleApproveQc} sx={{ py: 1.2, fontWeight: 'bold' }}>
+                        Approve Video
+                      </Button>
+                    </Box>
+                  </>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                    No more pending videos in QC evaluation queue.
+                  </Typography>
+                )}
               </Box>
             )}
 
@@ -293,7 +368,7 @@ export default function AdminPortal() {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                       <Box>
                         <Typography variant="body2" fontWeight="bold">{v.company_name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{v.vendor_code}</Typography>
+                        <Typography variant="caption" color="text.secondary">{v.vendor_code} • {v.contact_person}</Typography>
                       </Box>
                       <Chip label={v.status || 'Active'} color={v.status === 'Inactive' ? 'default' : 'success'} size="small" />
                     </Box>
@@ -336,24 +411,27 @@ export default function AdminPortal() {
             {activeScreen === 'earnings' && (
               <Box>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>Earnings & Payouts</Typography>
-                <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#6366f1', color: '#fff', borderRadius: 4, mb: 2 }}>
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Total Payout</Typography>
-                  <Typography variant="h4" fontWeight="bold">₹18,52,000</Typography>
+                <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#312e81', color: '#fff', borderRadius: 4, mb: 2 }}>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Total Platform Payout</Typography>
+                  <Typography variant="h4" fontWeight="bold">₹{(pendingPayout + completedPayout).toLocaleString()}</Typography>
                 </Paper>
                 <Grid container spacing={1.5} sx={{ mb: 2 }}>
                   <Grid item xs={6}>
                     <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#fef3c7', borderRadius: 3 }}>
-                      <Typography variant="caption" color="#b45309">Pending</Typography>
-                      <Typography variant="h6" fontWeight="bold" color="#b45309">₹2,50,000</Typography>
+                      <Typography variant="caption" color="#b45309">Pending Settlement</Typography>
+                      <Typography variant="h6" fontWeight="bold" color="#b45309">₹{pendingPayout.toLocaleString()}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={6}>
                     <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#dcfce7', borderRadius: 3 }}>
-                      <Typography variant="caption" color="#10b981">Completed</Typography>
-                      <Typography variant="h6" fontWeight="bold" color="#10b981">₹16,02,000</Typography>
+                      <Typography variant="caption" color="#10b981">Completed Payouts</Typography>
+                      <Typography variant="h6" fontWeight="bold" color="#10b981">₹{completedPayout.toLocaleString()}</Typography>
                     </Paper>
                   </Grid>
                 </Grid>
+                <Button fullWidth variant="contained" color="success" onClick={() => setOpenPayoutModal(true)} disabled={pendingPayout === 0} sx={{ py: 1.4, borderRadius: 3, fontWeight: 'bold' }}>
+                  Process Settlement Payout
+                </Button>
               </Box>
             )}
 
@@ -364,7 +442,7 @@ export default function AdminPortal() {
                 <Paper elevation={0} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 3, mb: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold" gutterBottom>Generate Settlement Report</Typography>
                   <Typography variant="caption" color="text.secondary" paragraph>Select Date Range & Export Format</Typography>
-                  <Button fullWidth variant="contained" color="primary" startIcon={<Download />} sx={{ mb: 2 }}>
+                  <Button fullWidth variant="contained" color="primary" startIcon={<Download />} onClick={handleExportReport} sx={{ mb: 2, py: 1.2, borderRadius: 3, fontWeight: 'bold' }}>
                     Generate Report (CSV)
                   </Button>
                   <Button fullWidth variant="outlined" color="error" startIcon={<Logout />} onClick={() => setLogoutDialogOpen(true)} sx={{ py: 1.2, borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}>
@@ -428,7 +506,68 @@ export default function AdminPortal() {
             </DialogActions>
           </form>
         </Dialog>
+        {/* Rejection Reason Dialog Modal */}
+        <Dialog open={openRejectModal} onClose={() => setOpenRejectModal(false)} maxWidth="xs" fullWidth paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">Reject Video Sample</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Specify the quality control rejection reason for video sample <strong>{pendingQcList[qcQueueIndex]?.id}</strong>.
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="Rejection Reason"
+              placeholder="e.g. Low lighting, background noise, insufficient duration..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              size="small"
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenRejectModal(false)} sx={{ textTransform: 'none', color: '#64748b' }}>Cancel</Button>
+            <Button onClick={handleRejectQc} variant="contained" color="error" sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}>
+              Submit Rejection
+            </Button>
+          </DialogActions>
+        </Dialog>
 
+        {/* Process Settlement Payout Dialog Modal */}
+        <Dialog open={openPayoutModal} onClose={() => setOpenPayoutModal(false)} maxWidth="xs" fullWidth paperProps={{ sx: { borderRadius: 3 } }}>
+          <DialogTitle fontWeight="bold">Process Settlement Payout</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Confirm batch settlement payout of <strong>₹{pendingPayout.toLocaleString()}</strong> to active vendors and collection candidates.
+            </Typography>
+            <Paper elevation={0} sx={{ p: 2, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 2 }}>
+              <Typography variant="caption" color="text.secondary">Payout Channel</Typography>
+              <Typography variant="body2" fontWeight="bold" color="#166534">NEFT / RTGS Automated Clearing House</Typography>
+            </Paper>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenPayoutModal(false)} sx={{ textTransform: 'none', color: '#64748b' }}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setOpenPayoutModal(false);
+                setCompletedPayout((prev) => prev + pendingPayout);
+                setPendingPayout(0);
+                showToast('Settlement payout processed successfully!');
+              }}
+              variant="contained"
+              color="success"
+              sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}
+            >
+              Authorize Payout
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Feedback Toast Alert */}
+        {toastAlert && (
+          <Alert severity="success" sx={{ position: 'absolute', bottom: 70, left: 16, right: 16, zIndex: 100, borderRadius: 3, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+            {toastAlert}
+          </Alert>
+        )}
       </Box>
     </ThemeProvider>
   );
