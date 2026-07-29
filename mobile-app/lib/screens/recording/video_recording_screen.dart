@@ -613,44 +613,124 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       return CameraPreview(_controller!);
     }
 
-    // Web & Demo Interactive Live Recorder View Simulation
+    // Active Live Camera Recording Stream & Viewfinder (Web / Demo Mode)
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
+        color: const Color(0xFF090D16),
         gradient: LinearGradient(
           colors: _isRecording
-              ? [const Color(0xFF1E1B4B), const Color(0xFF0F172A)]
+              ? [const Color(0xFF1E1B4B), const Color(0xFF0F172A), const Color(0xFF31121C)]
               : [const Color(0xFF0F172A), const Color(0xFF1E293B)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _isRecording ? Icons.videocam_rounded : Icons.videocam_outlined,
-                size: 64,
-                color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF38BDF8),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _isRecording ? '🔴 Live Recording Video Stream...' : '📹 Camera Stream Ready',
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _selectedEnvironmentTag != null
-                    ? 'Target Environment: $_selectedEnvironmentTag'
-                    : 'Tap "Start Recording" below to collect video data',
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ],
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Live Camera Gridlines Overlay
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _CameraGridPainter(isRecording: _isRecording),
+            ),
           ),
-        ),
+
+          // Central Live Viewfinder / Video Stream Focus Ring
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF2563EB)).withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF38BDF8),
+                      width: _isRecording ? 3 : 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF2563EB)).withValues(alpha: 0.35),
+                        blurRadius: 20,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _isRecording ? Icons.videocam_rounded : Icons.camera_alt_rounded,
+                    size: 48,
+                    color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF38BDF8),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isRecording ? 'REC 🔴 LIVE STREAMING MP4' : '📷 LIVE CAMERA FEED ACTIVE',
+                        style: TextStyle(
+                          color: _isRecording ? const Color(0xFFFF6B6B) : const Color(0xFF34D399),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _selectedEnvironmentTag != null
+                      ? 'Environment: $_selectedEnvironmentTag'
+                      : 'Target Dataset: General Collection',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+
+          // Viewfinder Corners (Target Box)
+          Positioned(
+            top: 24,
+            left: 24,
+            child: Container(width: 24, height: 24, decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white54, width: 2), left: BorderSide(color: Colors.white54, width: 2)))),
+          ),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: Container(width: 24, height: 24, decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white54, width: 2), right: BorderSide(color: Colors.white54, width: 2)))),
+          ),
+          Positioned(
+            bottom: 24,
+            left: 24,
+            child: Container(width: 24, height: 24, decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white54, width: 2), left: BorderSide(color: Colors.white54, width: 2)))),
+          ),
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: Container(width: 24, height: 24, decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white54, width: 2), right: BorderSide(color: Colors.white54, width: 2)))),
+          ),
+        ],
       ),
     );
   }
@@ -729,4 +809,29 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       ),
     );
   }
+}
+
+class _CameraGridPainter extends CustomPainter {
+  final bool isRecording;
+  _CameraGridPainter({required this.isRecording});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = (isRecording ? const Color(0xFFEF4444) : Colors.white).withValues(alpha: 0.12)
+      ..strokeWidth = 1.0;
+
+    // Rule-of-thirds camera grid lines
+    final thirdWidth = size.width / 3;
+    final thirdHeight = size.height / 3;
+
+    canvas.drawLine(Offset(thirdWidth, 0), Offset(thirdWidth, size.height), paint);
+    canvas.drawLine(Offset(thirdWidth * 2, 0), Offset(thirdWidth * 2, size.height), paint);
+
+    canvas.drawLine(Offset(0, thirdHeight), Offset(size.width, thirdHeight), paint);
+    canvas.drawLine(Offset(0, thirdHeight * 2), Offset(size.width, thirdHeight * 2), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CameraGridPainter oldDelegate) => oldDelegate.isRecording != isRecording;
 }
