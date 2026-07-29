@@ -169,7 +169,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     });
 
     XFile? file;
-    if (_controller != null && _controller!.value.isRecording) {
+    if (_controller != null && _controller!.value.isRecordingVideo) {
       try {
         file = await _controller!.stopVideoRecording();
       } catch (e) {
@@ -194,7 +194,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     String? locationError;
 
     try {
-      pos = await LocationService.instance.getCurrentLocation();
+      pos = await LocationService.instance.getCurrentPosition();
     } catch (e) {
       locationError = 'GPS unavailable: ${e.toString().replaceAll('Exception: ', '')}';
     }
