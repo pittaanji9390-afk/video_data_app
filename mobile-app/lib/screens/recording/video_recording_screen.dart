@@ -10,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../services/camera_service.dart';
 import '../../services/location_service.dart';
 import '../../services/voice_command_service.dart';
+import '../../widgets/web_camera_view.dart';
 
 class VideoRecordingScreen extends StatefulWidget {
   const VideoRecordingScreen({super.key});
@@ -617,19 +618,20 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF090D16),
-        gradient: LinearGradient(
-          colors: _isRecording
-              ? [const Color(0xFF1E1B4B), const Color(0xFF0F172A), const Color(0xFF31121C)]
-              : [const Color(0xFF0F172A), const Color(0xFF1E293B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+      decoration: const BoxDecoration(
+        color: Color(0xFF090D16),
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Live Video Stream Layer (HTML5 Browser Webcam or HD Sample Video Feed)
+          Positioned.fill(
+            child: WebLiveCameraView(
+              isRecording: _isRecording,
+              environmentTag: _selectedEnvironmentTag,
+            ),
+          ),
+
           // Live Camera Gridlines Overlay
           Positioned.fill(
             child: CustomPaint(
