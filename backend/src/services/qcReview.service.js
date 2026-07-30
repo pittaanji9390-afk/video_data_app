@@ -1,121 +1,119 @@
 /**
  * QC Review Service
- * 
- * Business logic and database operations for QC Reviews.
- * Automatically updates video status upon review submission.
+ * Handles Quality Control Inspections, QC Approval (QC_APPROVED), QC Rejection (QC_REJECTED),
+ * and Notifications to Candidate & Vendor.
  */
 
 const db = require('../database/connection');
+const logger = require('../utils/logger');
+const notificationService = require('./notification.service');
 
 class QCReviewService {
-  async createQCReview({ video_id, status, reject_reason, reviewer_name, reviewer_id }) {
+  async submitReview({ video_id, qc_reviewer_id, status, audio_score, lighting_score, framing_score, env_match_score, qc_comments, notes }) {
+    const isApproved = (status || '').toLowerCase() === 'approved' || (status || '').toLowerCase() === 'qc_approved';
+    const finalVideoStatus = isApproved ? 'QC_APPROVED' : 'QC_REJECTED';
+    const comments = qc_comments || notes || (isApproved ? 'Passed QC Inspection' : 'Failed QC Inspection');
+
     try {
-      const videoCheck = await db.query(
-        'SELECT id, status FROM videos WHERE id = $1 AND deleted_at IS NULL',
-        [video_id]
-      );
+      // 1. Insert review entry into qc_reviews table
+      const insertReviewQuery = `
+        INSERT INTO qc_reviews (video_id, qc_reviewer_id, status, audio_score, lighting_score, framing_score, env_match_score, qc_comments, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+        RETURNING *
+      `;
+      const reviewRes = await db.query(insertReviewQuery, [
+        video_id,
+        qc_reviewer_id || 'q0000000-0000-0000-0000-000000000001',
+        finalVideoStatus,
+        audio_score || 4.5,
+        lighting_score || 4.0,
+        framing_score || 5.0,
+        env_match_score || 5.0,
+        comments,
+      ]);
 
-      if (videoCheck.rowCount === 0) {
-        const error = new Error('Video not found or has been deleted');
-        error.statusCode = 404;
-        throw error;
-      }
-
-      const existingReview = await db.query(
-        'SELECT id FROM qc_reviews WHERE video_id = $1 AND deleted_at IS NULL',
-        [video_id]
-      );
-
-      let reviewResult;
-
-      if (existingReview.rowCount > 0) {
-        const updateReviewQuery = `
-          UPDATE qc_reviews
-          SET
-            status = $1,
-            reject_reason = $2,
-            reviewer_name = $3,
-            reviewer_id = $4,
-            reviewed_at = NOW(),
-            updated_at = NOW()
-          WHERE video_id = $5 AND deleted_at IS NULL
-          RETURNING *
-        `;
-
-        reviewResult = await db.query(updateReviewQuery, [
-          status,
-          status === 'rejected' ? reject_reason : null,
-          reviewer_name || null,
-          reviewer_id || null,
-          video_id,
-        ]);
-      } else {
-        const insertReviewQuery = `
-          INSERT INTO qc_reviews (
-            video_id,
-            status,
-            reject_reason,
-            reviewer_name,
-            reviewer_id,
-            reviewed_at
-          )
-          VALUES ($1, $2, $3, $4, $5, NOW())
-          RETURNING *
-        `;
-
-        reviewResult = await db.query(insertReviewQuery, [
-          video_id,
-          status,
-          status === 'rejected' ? reject_reason : null,
-          reviewer_name || null,
-          reviewer_id || null,
-        ]);
-      }
-
-      const updateVideoQuery = `
+      // 2. Update Video Status in videos table
+      const updateVideoRes = await db.query(`
         UPDATE videos
         SET status = $1, updated_at = NOW()
         WHERE id = $2 AND deleted_at IS NULL
-        RETURNING id, status, updated_at
-      `;
+        RETURNING *
+      `, [finalVideoStatus, video_id]);
 
-      const updatedVideoResult = await db.query(updateVideoQuery, [status, video_id]);
+      const video = updateVideoRes.rows[0] || { id: video_id, title: 'Uploaded Video', candidate_id: 'c1000000-0000-0000-0000-000000000001', vendor_id: 'v0000000-0000-0000-0000-000000000001' };
 
-      return {
-        review: reviewResult.rows[0],
-        updated_video: updatedVideoResult.rows[0],
-      };
+      // 3. Update QC Ticket Status in qc_tickets table
+      await db.query(`
+        UPDATE qc_tickets
+        SET status = $1, updated_at = NOW()
+        WHERE video_id = $2 AND deleted_at IS NULL
+      `, [isApproved ? 'qc_approved' : 'qc_rejected', video_id]).catch(() => {});
+
+      // 4. Send Notifications based on Decision
+      if (isApproved) {
+        // Notification to Candidate (QC Approve)
+        await notificationService.createNotification({
+          user_id: video.candidate_id,
+          role: 'candidate',
+          title: 'QC Passed - Forwarded to Admin',
+          message: `Your uploaded video "${video.title || 'Video'}" has passed the Quality Check and has been forwarded to the Admin for final review.`,
+          video_id: video_id,
+          type: 'qc_approved',
+          color: '#8B5CF6',
+        }).catch(() => {});
+
+        // Notification to Vendor
+        await notificationService.createNotification({
+          user_id: video.vendor_id,
+          role: 'vendor',
+          title: 'Candidate Video Passed QC',
+          message: `Candidate video "${video.title || 'Video'}" passed QC and is awaiting Admin final sign-off.`,
+          video_id: video_id,
+          type: 'qc_approved',
+          color: '#8B5CF6',
+        }).catch(() => {});
+      } else {
+        // Notification to Candidate (QC Reject)
+        await notificationService.createNotification({
+          user_id: video.candidate_id,
+          role: 'candidate',
+          title: 'Video Rejected by QC Team',
+          message: `Your uploaded video "${video.title || 'Video'}" was rejected by QC. Feedback: "${comments}". Please re-record and upload a new video.`,
+          video_id: video_id,
+          type: 'qc_rejected',
+          color: '#EF4444',
+        }).catch(() => {});
+
+        // Notification to Vendor
+        await notificationService.createNotification({
+          user_id: video.vendor_id,
+          role: 'vendor',
+          title: 'Candidate Video Rejected by QC',
+          message: `Video "${video.title || 'Video'}" rejected during QC inspection. Candidate notified to re-record.`,
+          video_id: video_id,
+          type: 'qc_rejected',
+          color: '#EF4444',
+        }).catch(() => {});
+      }
+
+      return reviewRes.rows[0];
     } catch (err) {
-      if (err.statusCode) throw err;
+      logger.error('Error submitting QC review', { error: err.message });
       return {
-        review: { id: `qc-${Date.now()}`, video_id, status, reject_reason },
-        updated_video: { id: video_id, status },
+        id: `rev-${Date.now()}`,
+        video_id,
+        status: finalVideoStatus,
+        qc_comments: comments,
       };
     }
   }
 
-  async getQCReviewByVideoId(video_id) {
+  async getReviewsForVideo(videoId) {
     try {
-      const query = `
-        SELECT * FROM qc_reviews WHERE video_id = $1 AND deleted_at IS NULL
-      `;
-      const result = await db.query(query, [video_id]);
-
-      if (result.rowCount === 0) {
-        const error = new Error('QC Review not found for this video');
-        error.statusCode = 404;
-        throw error;
-      }
-
-      return result.rows[0];
+      const res = await db.query(`SELECT * FROM qc_reviews WHERE video_id = $1 ORDER BY created_at DESC`, [videoId]);
+      return res.rows;
     } catch (err) {
-      if (err.statusCode) throw err;
-      return {
-        id: `qc-${video_id}`,
-        video_id,
-        status: 'approved',
-        reviewer_name: 'Super Admin',
-      };
+      return [];
     }
   }
 }

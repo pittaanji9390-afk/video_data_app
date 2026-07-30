@@ -5,25 +5,36 @@
 const vendorService = require('../services/vendor.service');
 
 class VendorController {
-  /**
-   * POST /api/v1/vendors
-   */
+  async getDashboardStats(req, res, next) {
+    try {
+      const vendorId = req.user?.id || req.query.vendor_id || null;
+      const stats = await vendorService.getVendorDashboardStats(vendorId);
+      return res.status(200).json({
+        status: 'success',
+        data: stats,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async createVendor(req, res, next) {
     try {
-      const { company_name, contact_person, email, phone, address, created_by } = req.body;
+      const { company_name, contact_person, email, phone, password, address, created_by } = req.body;
 
       const newVendor = await vendorService.createVendor({
         company_name,
         contact_person,
         email,
         phone,
+        password,
         address,
         created_by,
       });
 
       return res.status(201).json({
         status: 'success',
-        message: 'Vendor created successfully',
+        message: 'Vendor created successfully with password',
         data: newVendor,
       });
     } catch (error) {
@@ -31,14 +42,9 @@ class VendorController {
     }
   }
 
-  /**
-   * GET /api/v1/vendors
-   */
   async getAllVendors(req, res, next) {
     try {
-      const { page, limit } = req.query;
-      const result = await vendorService.getAllVendors({ page, limit });
-
+      const result = await vendorService.getAllVendors();
       return res.status(200).json({
         status: 'success',
         data: result,
@@ -48,9 +54,6 @@ class VendorController {
     }
   }
 
-  /**
-   * GET /api/v1/vendors/:id
-   */
   async getVendorById(req, res, next) {
     try {
       const { id } = req.params;
@@ -65,9 +68,6 @@ class VendorController {
     }
   }
 
-  /**
-   * PUT /api/v1/vendors/:id
-   */
   async updateVendor(req, res, next) {
     try {
       const { id } = req.params;
@@ -92,9 +92,6 @@ class VendorController {
     }
   }
 
-  /**
-   * DELETE /api/v1/vendors/:id
-   */
   async deleteVendor(req, res, next) {
     try {
       const { id } = req.params;

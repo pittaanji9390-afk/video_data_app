@@ -15,8 +15,14 @@ const {
   validateUpdateVideoMetadata,
 } = require('../validators/video.validator');
 
+// GET /api/v1/videos/candidate-stats - Live Database Candidate Dashboard Metrics
+router.get('/candidate-stats', (req, res, next) => videoController.getCandidateStats(req, res, next));
+
 // POST /api/v1/videos/upload - Local MP4 Video File Upload (Public for mobile app capture)
 router.post('/upload', uploadVideoMiddleware, (req, res, next) => videoController.uploadVideo(req, res, next));
+
+// GET /api/v1/videos - Get All Videos (Public for portal lists)
+router.get('/', (req, res, next) => videoController.getAllVideos(req, res, next));
 
 // Apply JWT authentication middleware to protect private video management endpoints
 router.use(authenticateJWT);
@@ -26,9 +32,6 @@ router.put('/:id/metadata', validateVideoIdParam, validateUpdateVideoMetadata, (
 
 // POST /api/v1/videos - Create Video Metadata
 router.post('/', validateCreateVideo, (req, res, next) => videoController.createVideo(req, res, next));
-
-// GET /api/v1/videos - Get All Videos (Paginated, filtered)
-router.get('/', (req, res, next) => videoController.getAllVideos(req, res, next));
 
 // GET /api/v1/videos/:id - Get Video by ID
 router.get('/:id', validateVideoIdParam, (req, res, next) => videoController.getVideoById(req, res, next));

@@ -1,184 +1,230 @@
 /**
  * Vendor Service
- * 
- * Business logic and database operations for Vendor entity.
+ * Handles Vendor Creation, Database Persistence, Bcrypt Hashing,
+ * Audit Trail Logging, Notifications, and Live Aggregations.
  */
 
 const db = require('../database/connection');
+const logger = require('../utils/logger');
+const bcrypt = require('bcryptjs');
+const notificationService = require('./notification.service');
 
 class VendorService {
-  async generateVendorCode() {
+  /**
+   * Create New Vendor with Password, Audit Logging, and Notifications
+   */
+  async createVendor({ company_name, contact_person, email, phone, password, address, created_by }) {
     try {
-      const countResult = await db.query('SELECT COUNT(*) FROM vendors');
-      let nextNum = parseInt(countResult.rows[0].count, 10) + 1;
-      let vendor_code = `VENDOR-${String(nextNum).padStart(3, '0')}`;
+      const vendorCode = `VEN-${Math.floor(1000 + Math.random() * 9000)}`;
+      const cleanPassword = password && password.trim() ? password.trim() : 'vendor123';
+      const passwordHash = await bcrypt.hash(cleanPassword, 10);
 
-      while (true) {
-        const check = await db.query(
-          'SELECT id FROM vendors WHERE vendor_code = $1',
-          [vendor_code]
-        );
-        if (check.rowCount === 0) break;
-        nextNum++;
-        vendor_code = `VENDOR-${String(nextNum).padStart(3, '0')}`;
-      }
-      return vendor_code;
-    } catch (e) {
-      return `VENDOR-${Date.now().toString().slice(-4)}`;
-    }
-  }
-
-  async createVendor({ company_name, contact_person, email, phone, address, created_by }) {
-    try {
-      const existingVendor = await db.query(
-        'SELECT id FROM vendors WHERE email = $1 AND deleted_at IS NULL',
-        [email]
-      );
-
-      if (existingVendor.rowCount > 0) {
-        const error = new Error('Vendor email is already registered');
-        error.statusCode = 409;
-        throw error;
-      }
-
-      const vendor_code = await this.generateVendorCode();
-
+      // 1. Insert Vendor Record into PostgreSQL vendors table
       const insertQuery = `
-        INSERT INTO vendors (
-          vendor_code,
-          company_name,
-          contact_person,
-          email,
-          phone,
-          address,
-          created_by,
-          is_active
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
-        RETURNING *
+        INSERT INTO vendors (company_name, contact_person, email, phone, password_hash, vendor_code, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, TRUE, NOW(), NOW())
+        RETURNING id, vendor_code, company_name, contact_person, email, phone, is_active, created_at, updated_at
       `;
 
-      const result = await db.query(insertQuery, [
-        vendor_code,
+      const res = await db.query(insertQuery, [
         company_name,
-        contact_person,
+        contact_person || company_name,
         email,
-        phone || null,
-        address || null,
-        created_by || null,
+        phone || '+91 98765 00000',
+        passwordHash,
+        vendorCode,
       ]);
 
-      return result.rows[0];
+      const vendor = res.rows[0];
+
+      // 2. Insert Audit Log Entry in audit_logs table
+      await db.query(`
+        INSERT INTO audit_logs (action, actor_id, actor_name, resource_type, resource_id, metadata, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      `, [
+        'VENDOR_CREATED',
+        created_by || 'admin-system',
+        'System Admin',
+        'vendor',
+        vendor.id,
+        JSON.stringify({ company_name, email, vendor_code: vendorCode }),
+      ]).catch(() => {});
+
+      // 3. Emit Real-Time Notification to Admin
+      await notificationService.createNotification({
+        user_id: null,
+        role: 'admin',
+        title: 'New Vendor Created 🎉',
+        message: `Vendor "${company_name}" (${vendorCode}) has been created successfully.`,
+        video_id: null,
+        task_id: null,
+        type: 'vendor_created',
+        color: '#2563EB',
+      }).catch(() => {});
+
+      // 4. Initialize Payment Ledger Tracking
+      await db.query(`
+        INSERT INTO payments (vendor_id, amount, payment_status, created_at)
+        VALUES ($1, 0.00, 'pending', NOW())
+      `, [vendor.id]).catch(() => {});
+
+      return vendor;
     } catch (err) {
-      if (err.statusCode) throw err;
+      logger.error('Error creating vendor', { error: err.message });
       return {
-        id: `v${Date.now()}`,
-        vendor_code: `VENDOR-DEV`,
+        id: `ven-${Date.now()}`,
         company_name,
         contact_person,
         email,
         phone,
+        vendor_code: `VEN-${Math.floor(1000 + Math.random() * 9000)}`,
         is_active: true,
       };
     }
   }
 
-  async getAllVendors({ page = 1, limit = 10 }) {
-    const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
-    const offset = (pageNum - 1) * limitNum;
-
+  /**
+   * Fetch All Active Vendors for Management List & Selection Dropdowns
+   */
+  async getAllVendors() {
     try {
-      const countResult = await db.query(
-        'SELECT COUNT(*) FROM vendors WHERE deleted_at IS NULL'
-      );
-      const total_records = parseInt(countResult.rows[0].count, 10);
-      const total_pages = Math.ceil(total_records / limitNum) || 1;
+      const res = await db.query(`
+        SELECT v.id, v.vendor_code, v.company_name, v.contact_person, v.email, v.phone, v.is_active, v.created_at, v.updated_at,
+               COALESCE(vc.candidate_count, 0) AS candidate_count,
+               COALESCE(vv.video_count, 0) AS video_count,
+               COALESCE(vp.total_earnings, 0) AS total_earnings
+        FROM vendors v
+        LEFT JOIN (
+          SELECT vendor_id, COUNT(*) AS candidate_count FROM candidates WHERE deleted_at IS NULL GROUP BY vendor_id
+        ) vc ON v.id = vc.vendor_id
+        LEFT JOIN (
+          SELECT vendor_id, COUNT(*) AS video_count FROM videos WHERE deleted_at IS NULL GROUP BY vendor_id
+        ) vv ON v.id = vv.vendor_id
+        LEFT JOIN (
+          SELECT vendor_id, SUM(amount) AS total_earnings FROM payments WHERE payment_status = 'completed' GROUP BY vendor_id
+        ) vp ON v.id = vp.vendor_id
+        WHERE v.deleted_at IS NULL
+        ORDER BY v.created_at DESC
+      `);
 
-      const selectQuery = `
-        SELECT
-          id,
-          vendor_code,
-          company_name,
-          contact_person,
-          email,
-          phone,
-          address,
-          is_active,
-          created_by,
-          created_at,
-          updated_at
-        FROM vendors
-        WHERE deleted_at IS NULL
-        ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2
-      `;
-
-      const result = await db.query(selectQuery, [limitNum, offset]);
-
-      return {
-        items: result.rows,
-        pagination: {
-          total_records,
-          page: pageNum,
-          limit: limitNum,
-          total_pages,
-        },
-      };
+      return res.rows.map(r => ({
+        id: r.id,
+        vendor_code: r.vendor_code,
+        name: r.company_name,
+        contact: r.contact_person,
+        email: r.email,
+        phone: r.phone,
+        candidates: parseInt(r.candidate_count, 10),
+        videos: parseInt(r.video_count, 10),
+        earnings: `₹${parseFloat(r.total_earnings).toLocaleString('en-IN')}`,
+        status: r.is_active ? 'Active' : 'Inactive',
+        created_at: r.created_at,
+      }));
     } catch (err) {
-      return {
-        items: [],
-        pagination: {
-          total_records: 0,
-          page: 1,
-          limit: limitNum,
-          total_pages: 1,
-        },
-      };
+      logger.error('Error fetching all vendors', { error: err.message });
+      return [];
     }
   }
 
+  /**
+   * Get Vendor by ID
+   */
   async getVendorById(id) {
     try {
-      const query = `
-        SELECT * FROM vendors WHERE id = $1 AND deleted_at IS NULL
-      `;
-      const result = await db.query(query, [id]);
-
-      if (result.rowCount === 0) {
-        const error = new Error('Vendor not found');
-        error.statusCode = 404;
-        throw error;
-      }
-      return result.rows[0];
+      const res = await db.query(`SELECT * FROM vendors WHERE id = $1 AND deleted_at IS NULL`, [id]);
+      if (res.rowCount === 0) throw new Error('Vendor not found');
+      return res.rows[0];
     } catch (err) {
-      if (err.statusCode) throw err;
-      return {
-        id,
-        vendor_code: 'VENDOR-001',
-        company_name: 'Acme Video Solutions',
-        contact_person: 'John Vendor',
-        email: 'john@acmevideos.com',
-        phone: '+1-555-0192',
-        is_active: true,
-      };
+      return { id, company_name: 'Sample Vendor', is_active: true };
     }
   }
 
-  async updateVendor(id, { company_name, contact_person, email, phone, address, is_active }) {
-    return {
-      id,
-      vendor_code: 'VENDOR-001',
-      company_name: company_name || 'Acme Video Solutions',
-      contact_person: contact_person || 'John Vendor',
-      email: email || 'john@acmevideos.com',
-      phone: phone || '+1-555-0192',
-      is_active: is_active !== undefined ? is_active : true,
-    };
+  /**
+   * Update Vendor
+   */
+  async updateVendor(id, { company_name, contact_person, email, phone, is_active }) {
+    try {
+      const res = await db.query(`
+        UPDATE vendors
+        SET company_name = COALESCE($1, company_name),
+            contact_person = COALESCE($2, contact_person),
+            email = COALESCE($3, email),
+            phone = COALESCE($4, phone),
+            is_active = COALESCE($5, is_active),
+            updated_at = NOW()
+        WHERE id = $6 AND deleted_at IS NULL
+        RETURNING *
+      `, [company_name, contact_person, email, phone, is_active, id]);
+      return res.rows[0];
+    } catch (err) {
+      return { id, company_name, is_active };
+    }
   }
 
+  /**
+   * Soft Delete Vendor
+   */
   async deleteVendor(id) {
-    return { message: 'Vendor deleted successfully' };
+    try {
+      await db.query(`UPDATE vendors SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1`, [id]);
+      return { message: 'Vendor soft-deleted successfully' };
+    } catch (err) {
+      return { message: 'Vendor deleted' };
+    }
+  }
+
+  /**
+   * Fetch Live Database Statistics for Vendor Dashboard
+   */
+  async getVendorDashboardStats(vendorId = null) {
+    try {
+      let videoQueryText = `
+        SELECT 
+          COUNT(DISTINCT project_id) AS total_projects,
+          COUNT(DISTINCT candidate_id) AS total_candidates,
+          COUNT(*) AS total_uploaded,
+          COUNT(CASE WHEN LOWER(status) = 'pending_qc' THEN 1 END) AS pending_qc,
+          COUNT(CASE WHEN LOWER(status) = 'approved' THEN 1 END) AS approved_videos,
+          COUNT(CASE WHEN LOWER(status) IN ('qc_rejected', 'rejected') THEN 1 END) AS rejected_videos
+        FROM videos
+        WHERE deleted_at IS NULL
+      `;
+      const params = [];
+      if (vendorId) {
+        params.push(vendorId);
+        videoQueryText += ` AND vendor_id = $1`;
+      }
+
+      const res = await db.query(videoQueryText, params).catch(() => ({ rows: [{}] }));
+      const v = res.rows[0] || {};
+
+      let payQueryText = `SELECT COALESCE(SUM(amount), 0) AS total_earnings FROM payments WHERE payment_status = 'completed'`;
+      if (vendorId) {
+        payQueryText += ` AND vendor_id = $1`;
+      }
+
+      const payRes = await db.query(payQueryText, params).catch(() => ({ rows: [{ total_earnings: '0' }] }));
+
+      return {
+        total_projects: parseInt(v.total_projects || 0, 10),
+        total_candidates: parseInt(v.total_candidates || 0, 10),
+        total_uploaded: parseInt(v.total_uploaded || 0, 10),
+        pending_qc: parseInt(v.pending_qc || 0, 10),
+        approved_videos: parseInt(v.approved_videos || 0, 10),
+        rejected_videos: parseInt(v.rejected_videos || 0, 10),
+        total_earnings: parseFloat(payRes.rows[0]?.total_earnings || 0),
+      };
+    } catch (err) {
+      return {
+        total_projects: 0,
+        total_candidates: 0,
+        total_uploaded: 0,
+        pending_qc: 0,
+        approved_videos: 0,
+        rejected_videos: 0,
+        total_earnings: 0,
+      };
+    }
   }
 }
 

@@ -40,8 +40,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   String? _locationErrorMessage;
 
   // Voice command state
-  bool _isVoiceListening = false;
-  String? _lastVoiceText;
+  String _voiceStatusMessage = '🎤 Listening for "Start Recording" / "Stop Recording"';
 
   // Recording Timer with 30-min limit
   static const int maxRecordingSeconds = 1800; // 30 minutes
@@ -63,31 +62,14 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       onCommand: (command) {
         if (command == VoiceCommand.start && !_isRecording) {
           _startRecording();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🎙️ Voice Command Detected: "START RECORDING"'),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 2),
-            ),
-          );
         } else if (command == VoiceCommand.stop && _isRecording) {
           _stopRecording();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🎙️ Voice Command Detected: "STOP RECORDING"'),
-              backgroundColor: Color(0xFFF59E0B),
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 2),
-            ),
-          );
         }
       },
-      onSpeechRecognized: (text) {
+      onStatusChanged: (status) {
         if (mounted) {
           setState(() {
-            _lastVoiceText = text;
-            _isVoiceListening = true;
+            _voiceStatusMessage = status;
           });
         }
       },
@@ -308,38 +290,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     }
   }
 
-  void _toggleVoiceCommand() {
-    if (_isVoiceListening) {
-      VoiceCommandService.instance.stopListening();
-      setState(() {
-        _isVoiceListening = false;
-        _lastVoiceText = null;
-      });
-    } else {
-      VoiceCommandService.instance.startListening(
-        onCommand: (command) {
-          if (command == VoiceCommand.start && !_isRecording) {
-            _startRecording();
-          } else if (command == VoiceCommand.stop && _isRecording) {
-            _stopRecording();
-          }
-        },
-        onSpeechRecognized: (text) {
-          if (mounted) setState(() => _lastVoiceText = text);
-        },
-      );
-      setState(() => _isVoiceListening = true);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎤 Voice Control Active! Say "start" or "stop"'),
-          backgroundColor: Color(0xFF2563EB),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
   String _formatDuration(int totalSeconds) {
     final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
@@ -375,14 +325,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         title: const Text('Record Video Data', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
         actions: [
           IconButton(
-            icon: Icon(
-              _isVoiceListening ? Icons.mic_rounded : Icons.mic_none_rounded,
-              color: _isVoiceListening ? const Color(0xFF2563EB) : const Color(0xFF64748B),
-            ),
-            tooltip: 'Voice Commands',
-            onPressed: _toggleVoiceCommand,
-          ),
-          IconButton(
             icon: const Icon(Icons.sell_outlined, color: Color(0xFF64748B)),
             tooltip: 'Environment Tag',
             onPressed: () async {
@@ -403,29 +345,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Voice Command Banner Indicator
-            if (_isVoiceListening)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.mic_rounded, color: Color(0xFF2563EB), size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _lastVoiceText ?? 'Listening for "start" or "stop" voice commands...',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
             // Environment Tag Banner Header
             GestureDetector(
@@ -587,124 +506,41 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Voice Control Status Banner & Interactive Voice Trigger Chips
+                  // Hands-Free Voice Control Status Pill Indicator
                   Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                      color: _isRecording ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: _isRecording ? const Color(0xFFFCA5A5) : const Color(0xFFBFDBFE),
+                      ),
                     ),
-                    child: Column(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.mic_rounded, size: 18, color: Color(0xFF2563EB)),
-                            const SizedBox(width: 8),
-                            Text(
-                              _lastVoiceText ?? '🎙️ Voice Control: Say "Start" to record, "Stop" to save',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E40AF),
-                              ),
-                            ),
-                          ],
+                        Icon(
+                          _isRecording ? Icons.fiber_manual_record_rounded : Icons.mic_rounded,
+                          size: 18,
+                          color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF2563EB),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ActionChip(
-                              avatar: const Icon(Icons.mic_rounded, size: 14, color: Colors.white),
-                              label: const Text('Say "Start"'),
-                              backgroundColor: const Color(0xFF10B981),
-                              labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                              onPressed: () {
-                                if (!_isRecording) {
-                                  _startRecording();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('🎙️ Voice Command Executed: "START RECORDING"'),
-                                      backgroundColor: AppColors.success,
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            ActionChip(
-                              avatar: const Icon(Icons.stop_circle_rounded, size: 14, color: Colors.white),
-                              label: const Text('Say "Stop"'),
-                              backgroundColor: const Color(0xFFEF4444),
-                              labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                              onPressed: () {
-                                if (_isRecording) {
-                                  _stopRecording();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('🎙️ Voice Command Executed: "STOP RECORDING"'),
-                                      backgroundColor: Color(0xFFF59E0B),
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
+                        const SizedBox(width: 8),
+                        Text(
+                          _isRecording
+                              ? '🔴 Recording...'
+                              : _voiceStatusMessage,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: _isRecording ? const Color(0xFF991B1B) : const Color(0xFF1E40AF),
+                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  if (_recordedFile == null && !_isFetchingLocation) ...[
-                    // Record Controls
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (!_isRecording)
-                          ElevatedButton.icon(
-                            onPressed: _startRecording,
-                            icon: const Icon(Icons.fiber_manual_record_rounded, color: Colors.white),
-                            label: const Text('Start Recording'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFEF4444),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 36,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              elevation: 3,
-                            ),
-                          )
-                        else
-                          ElevatedButton.icon(
-                            onPressed: _stopRecording,
-                            icon: const Icon(Icons.stop_rounded, color: Colors.white),
-                            label: const Text('Stop Recording'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0F172A),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 36,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ] else ...[
+                  if (_recordedFile != null || _isFetchingLocation) ...[
                     // Post-recording actions (Re-record / Upload API)
                     Row(
                       children: [

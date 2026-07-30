@@ -4,7 +4,9 @@ import '../../screens/environment/environment_tag_screen.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/login/login_screen.dart';
 import '../../screens/login/otp_login_screen.dart';
+import '../../screens/onboarding/onboarding_screen.dart';
 import '../../screens/permission/camera_permission_screen.dart';
+import '../../screens/qc/mobile_qc_dashboard_screen.dart';
 import '../../screens/recording/video_recording_screen.dart';
 import '../../screens/splash/splash_screen.dart';
 import '../../screens/upload/video_upload_screen.dart';
@@ -15,6 +17,7 @@ class AppRoutes {
 
   // Route Name Constants
   static const String splash = '/';
+  static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String otpLogin = '/otp-login';
   static const String home = '/home';
@@ -24,11 +27,13 @@ class AppRoutes {
   static const String uploadVideo = '/upload-video';
   static const String adminDashboard = '/admin-dashboard';
   static const String vendorDashboard = '/vendor-dashboard';
+  static const String qcDashboard = '/qc-dashboard';
 
   /// Named Routes Map
   static Map<String, WidgetBuilder> get routes {
     return {
       splash: (context) => const SplashScreen(),
+      onboarding: (context) => const OnboardingScreen(),
       login: (context) => const LoginScreen(),
       otpLogin: (context) => const OTPLoginScreen(),
       home: (context) => const HomeScreen(),
@@ -37,6 +42,7 @@ class AppRoutes {
       environmentTag: (context) => const EnvironmentTagScreen(),
       adminDashboard: (context) => const MobileAdminDashboardScreen(),
       vendorDashboard: (context) => const MobileVendorDashboardScreen(),
+      qcDashboard: (context) => const MobileQCDashboardScreen(),
     };
   }
 
@@ -61,6 +67,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const MobileAdminDashboardScreen());
       case vendorDashboard:
         return MaterialPageRoute(builder: (_) => const MobileVendorDashboardScreen());
+      case qcDashboard:
+        return MaterialPageRoute(builder: (_) => const MobileQCDashboardScreen());
       case uploadVideo:
         final args = settings.arguments as Map<String, dynamic>?;
         final path = args?['videoPath'] as String? ?? '';

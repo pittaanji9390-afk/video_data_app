@@ -4,11 +4,9 @@
   "private": true,
   "description": "Video Data Collection & Multi-Role Platform for Mobile App (Candidates, Vendors, Admin)",
   "scripts": {
-    "install:all": "npm install && npm --prefix backend install && npm --prefix admin-dashboard install && npm --prefix vendor-dashboard install",
+    "install:all": "npm install && npm --prefix backend install",
     "dev:backend": "npm --prefix backend run dev",
-    "dev:admin": "npm --prefix admin-dashboard run dev",
-    "dev:vendor": "npm --prefix vendor-dashboard run dev",
-    "dev": "npx concurrently -k -n \"BACKEND,ADMIN,VENDOR\" -c \"blue,green,magenta\" \"npm --prefix backend run dev\" \"npm --prefix admin-dashboard run dev\" \"npm --prefix vendor-dashboard run dev\"",
+    "dev": "npm --prefix backend run dev",
     "start": "npm run dev"
   },
   "devDependencies": {

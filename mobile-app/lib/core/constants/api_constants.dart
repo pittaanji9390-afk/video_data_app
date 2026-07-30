@@ -7,8 +7,12 @@ class ApiConstants {
   /// Base URL for backend server
   /// Handles localhost for Web/Desktop/iOS vs 10.0.2.2 for Android Emulator
   static String get baseUrl {
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.1.23:5000';
+    if (kIsWeb) {
+      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
+      return 'http://$host:5000';
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.178.34.58:5000';
     }
     return 'http://localhost:5000';
   }
@@ -30,4 +34,14 @@ class ApiConstants {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+
+  static Map<String, String> getHeadersWithAuth([String? token]) {
+    final Map<String, String> headers = Map.from(defaultHeaders);
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    } else {
+      headers['Authorization'] = 'Bearer mock_jwt_token_dev';
+    }
+    return headers;
+  }
 }

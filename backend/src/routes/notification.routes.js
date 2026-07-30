@@ -7,6 +7,9 @@ const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notification.controller');
 
+// SSE Real-Time Stream Endpoint
+router.get('/stream', (req, res) => notificationController.subscribeStream(req, res));
+
 // GET /api/v1/notifications
 router.get('/', (req, res, next) => notificationController.getNotifications(req, res, next));
 

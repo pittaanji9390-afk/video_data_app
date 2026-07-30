@@ -10,6 +10,13 @@ class AuthService {
   static const String keyUserName = 'user_name';
   static const String keyUserEmail = 'user_email';
 
+  static SharedPreferences? _cachedPrefs;
+
+  static Future<SharedPreferences> _getPrefs() async {
+    _cachedPrefs ??= await SharedPreferences.getInstance();
+    return _cachedPrefs!;
+  }
+
   // Base API URL (supports desktop localhost and Android emulator 10.0.2.2)
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:5000/api/v1';
@@ -42,7 +49,7 @@ class AuthService {
         final role = (user['role'] ?? 'candidate').toString().toLowerCase();
 
         // Store tokens & session securely in SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
+        final prefs = await _getPrefs();
         await prefs.setString(keyAccessToken, accessToken);
         await prefs.setString(keyRefreshToken, refreshToken);
         await prefs.setString(keyUserRole, role);
@@ -71,7 +78,7 @@ class AuthService {
         determinedRole = 'vendor';
       }
 
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       await prefs.setString(keyAccessToken, 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}');
       await prefs.setString(keyUserRole, determinedRole);
       await prefs.setString(keyUserName, input.contains('admin') ? 'Super Admin' : input.contains('vendor') ? 'Acme Vendor' : 'Alex Candidate');
@@ -91,7 +98,7 @@ class AuthService {
 
   /// Restore active session from SharedPreferences on app startup
   static Future<Map<String, String>?> restoreSession() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     final token = prefs.getString(keyAccessToken);
     final role = prefs.getString(keyUserRole);
     final name = prefs.getString(keyUserName) ?? 'User';
@@ -106,9 +113,20 @@ class AuthService {
     return null;
   }
 
+  /// Get Authorization headers using stored access token
+  static Future<Map<String, String>> getAuthHeaders() async {
+    final prefs = await _getPrefs();
+    final token = prefs.getString(keyAccessToken) ?? 'mock_jwt_token_dev';
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
+
   /// Clear session tokens on logout
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.remove(keyAccessToken);
     await prefs.remove(keyRefreshToken);
     await prefs.remove(keyUserRole);

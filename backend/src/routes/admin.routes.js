@@ -12,6 +12,18 @@ const {
   validateUpdateAdmin,
 } = require('../validators/admin.validator');
 
+// GET /api/v1/admins/dashboard-stats - Live Database Metrics
+router.get('/dashboard-stats', (req, res, next) => adminController.getDashboardStats(req, res, next));
+
+// GET /api/v1/admins/qc-queue - Get QC_APPROVED video queue for Admin sign-off
+router.get('/qc-queue', (req, res, next) => adminController.getQCApprovedQueue(req, res, next));
+
+// POST /api/v1/admins/videos/:videoId/approve - Admin Approve Video
+router.post('/videos/:videoId/approve', (req, res, next) => adminController.approveVideo(req, res, next));
+
+// POST /api/v1/admins/videos/:videoId/reject - Admin Reject Video
+router.post('/videos/:videoId/reject', (req, res, next) => adminController.rejectVideo(req, res, next));
+
 // POST /api/v1/admins - Create Admin
 router.post('/', validateCreateAdmin, (req, res, next) => adminController.createAdmin(req, res, next));
 

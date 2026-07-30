@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'dart:async';
 import 'dart:html' as html;
 
 enum VoiceCommand { start, stop }
@@ -7,123 +9,190 @@ class VoiceCommandService {
   VoiceCommandService._();
   static final VoiceCommandService instance = VoiceCommandService._();
 
+  final SpeechToText _speechToText = SpeechToText();
+  bool _isInitialized = false;
   bool _isListening = false;
   bool get isListening => _isListening;
 
   void Function(VoiceCommand command)? _onCommandDetected;
-  void Function(String text)? _onSpeechRecognized;
+  void Function(String statusMessage)? _onStatusChanged;
   dynamic _webSpeechRecognition;
 
-  /// Start listening for voice commands using Google Webkit Speech Recognition Engine
-  void startListening({
+  /// Initialize and start continuous speech recognition
+  Future<void> startListening({
     required void Function(VoiceCommand command) onCommand,
-    void Function(String text)? onSpeechRecognized,
-  }) {
+    void Function(String statusMessage)? onStatusChanged,
+  }) async {
     _onCommandDetected = onCommand;
-    _onSpeechRecognized = onSpeechRecognized;
+    _onStatusChanged = onStatusChanged;
     _isListening = true;
 
     if (kIsWeb) {
-      // 1. Request microphone permissions from browser
-      try {
-        html.window.navigator.mediaDevices?.getUserMedia({'audio': true}).then((stream) {
-          debugPrint('Microphone permission granted for Google Speech Engine');
-        }).catchError((err) {
-          debugPrint('Microphone access note: $err');
+      _initWebSpeechRecognition();
+      return;
+    }
+
+    // Native Mobile Speech-to-Text Setup
+    try {
+      if (!_isInitialized) {
+        _isInitialized = await _speechToText.initialize(
+          onError: (errorNotification) {
+            debugPrint('Speech-to-text Error: ${errorNotification.errorMsg}');
+            _restartListeningIfNeeded();
+          },
+          onStatus: (status) {
+            debugPrint('Speech-to-text Status: $status');
+            if (status == 'done' || status == 'notListening') {
+              _restartListeningIfNeeded();
+            }
+          },
+        ).catchError((err) {
+          debugPrint('Speech initialize catchError: $err');
+          return false;
         });
-      } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Speech initialize exception: $e');
+      _isInitialized = false;
+    }
 
-      // 2. Initialize Google Chrome Native Webkit Speech Recognition Engine
-      try {
-        if (html.SpeechRecognition.supported) {
-          _webSpeechRecognition = html.SpeechRecognition()
-            ..continuous = true
-            ..interimResults = true
-            ..maxAlternatives = 3
-            ..lang = 'en-US'; // Uses Google Cloud Speech Recognition behind the scenes in Chrome
+    _startListeningLoop();
+  }
 
-          _webSpeechRecognition.onResult.listen((event) {
+  void _initWebSpeechRecognition() {
+    try {
+      if (html.SpeechRecognition.supported) {
+        _webSpeechRecognition = html.SpeechRecognition()
+          ..continuous = true
+          ..interimResults = true
+          ..maxAlternatives = 1
+          ..lang = 'en-US';
+
+        _webSpeechRecognition.onResult.listen((event) {
+          try {
             final results = event.results;
-            if (results != null && results.isNotEmpty) {
-              for (var i = 0; i < results.length; i++) {
-                final transcript = results[i][0].transcript?.toLowerCase().trim() ?? '';
-                _onSpeechRecognized?.call('Google Speech Detected: "$transcript"');
-
-                // High-sensitivity Google Voice Command triggers
-                if (transcript.contains('start') ||
-                    transcript.contains('record') ||
-                    transcript.contains('begin') ||
-                    transcript.contains('go') ||
-                    transcript.contains('action') ||
-                    transcript.contains('shuru') ||
-                    transcript.contains('chalu')) {
-                  _onCommandDetected?.call(VoiceCommand.start);
-                } else if (transcript.contains('stop') ||
-                    transcript.contains('end') ||
-                    transcript.contains('finish') ||
-                    transcript.contains('cut') ||
-                    transcript.contains('pause') ||
-                    transcript.contains('bandh') ||
-                    transcript.contains('ruk')) {
-                  _onCommandDetected?.call(VoiceCommand.stop);
-                }
+            if (results != null) {
+              final len = results.length ?? 0;
+              for (var i = 0; i < len; i++) {
+                try {
+                  final item = results[i];
+                  if (item != null) {
+                    final alt = item[0];
+                    final transcript = (alt?.transcript ?? '').toString().toLowerCase().trim();
+                    if (transcript.contains('start recording') || transcript == 'start' || transcript.contains('start')) {
+                      _onCommandDetected?.call(VoiceCommand.start);
+                    } else if (transcript.contains('stop recording') || transcript == 'stop' || transcript.contains('stop')) {
+                      _onCommandDetected?.call(VoiceCommand.stop);
+                    }
+                  }
+                } catch (_) {}
               }
             }
-          });
+          } catch (_) {}
+        });
 
-          // Continuous auto-restart loop
-          _webSpeechRecognition.onEnd.listen((_) {
-            if (_isListening) {
-              try {
-                _webSpeechRecognition.start();
-              } catch (_) {}
-            }
-          });
+        _webSpeechRecognition.onEnd.listen((_) {
+          if (_isListening) {
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (_isListening) {
+                try {
+                  _webSpeechRecognition.start();
+                } catch (_) {}
+              }
+            });
+          }
+        });
 
-          _webSpeechRecognition.onError.listen((e) {
-            debugPrint('Google Speech Recognition Error: $e');
-            if (_isListening) {
-              try {
-                _webSpeechRecognition.start();
-              } catch (_) {}
-            }
-          });
+        _webSpeechRecognition.onError.listen((e) {
+          debugPrint('Web Speech Error: $e');
+          if (_isListening) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (_isListening) {
+                try {
+                  _webSpeechRecognition.start();
+                } catch (_) {}
+              }
+            });
+          }
+        });
 
+        try {
           _webSpeechRecognition.start();
-          _onSpeechRecognized?.call('🌐 Google Speech Engine Listening for "Start" / "Stop"...');
-        } else {
-          _onSpeechRecognized?.call('🎙️ Voice Recognition Active — Use "Say Start" or "Say Stop"');
-        }
-      } catch (e) {
-        debugPrint('Google Speech API Exception: $e');
-        _onSpeechRecognized?.call('🎙️ Voice Recognition Active — Use "Say Start" or "Say Stop"');
+        } catch (_) {}
+        _onStatusChanged?.call('🎤 Listening for "Start Recording" / "Stop Recording"');
+      } else {
+        _onStatusChanged?.call('🎤 Voice Recognition Active');
       }
+    } catch (e) {
+      debugPrint('Web speech exception: $e');
+      _onStatusChanged?.call('🎤 Voice Recognition Active');
+    }
+  }
+
+  void _startListeningLoop() {
+    if (!_isInitialized || kIsWeb) return;
+    _isListening = true;
+
+    try {
+      _speechToText.listen(
+        onResult: (result) {
+          final recognizedWords = result.recognizedWords.trim().toLowerCase();
+          
+          if (recognizedWords.contains('start recording') || recognizedWords == 'start') {
+            _onCommandDetected?.call(VoiceCommand.start);
+          } else if (recognizedWords.contains('stop recording') || recognizedWords == 'stop') {
+            _onCommandDetected?.call(VoiceCommand.stop);
+          }
+        },
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
+        partialResults: true,
+        cancelOnError: false,
+        listenMode: ListenMode.confirmation,
+      ).catchError((err) {
+        debugPrint('Speech listen catchError: $err');
+      });
+      _onStatusChanged?.call('🎤 Listening for "Start Recording" / "Stop Recording"');
+    } catch (e) {
+      debugPrint('Error launching speech recognition: $e');
+    }
+  }
+
+  void _restartListeningIfNeeded() {
+    if (_isListening && !kIsWeb) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (_isListening) {
+          _startListeningLoop();
+        }
+      });
     }
   }
 
   /// Manually trigger voice command for testing / web simulation
   void processSimulatedSpeech(String text) {
     if (!_isListening) return;
-
     final lower = text.trim().toLowerCase();
-    _onSpeechRecognized?.call('Google Voice Trigger: "$text"');
 
-    if (lower.contains('start') || lower.contains('record') || lower.contains('begin')) {
+    if (lower.contains('start recording') || lower == 'start') {
       _onCommandDetected?.call(VoiceCommand.start);
-    } else if (lower.contains('stop') || lower.contains('end') || lower.contains('finish')) {
+    } else if (lower.contains('stop recording') || lower == 'stop') {
       _onCommandDetected?.call(VoiceCommand.stop);
     }
   }
 
-  /// Stop listening
+  /// Stop listening completely
   void stopListening() {
     _isListening = false;
     if (kIsWeb && _webSpeechRecognition != null) {
       try {
         _webSpeechRecognition.stop();
       } catch (_) {}
+    } else {
+      try {
+        _speechToText.stop().catchError((_) {});
+      } catch (_) {}
     }
     _onCommandDetected = null;
-    _onSpeechRecognized = null;
+    _onStatusChanged = null;
   }
 }

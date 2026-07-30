@@ -386,18 +386,6 @@ class CandidateDashboardTab extends StatelessWidget {
         'onTap': () => Navigator.pushNamed(context, AppRoutes.uploadVideo),
       },
       {
-        'title': 'Payment Summary',
-        'icon': Icons.currency_rupee_rounded,
-        'bgColor': const Color(0xFFF3E8FF),
-        'iconColor': const Color(0xFFA855F7),
-        'onTap': () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (ctx) => const EarningsScreen()),
-          );
-        },
-      },
-      {
         'title': 'Help Center',
         'icon': Icons.help_outline_rounded,
         'bgColor': const Color(0xFFFFEDD5),

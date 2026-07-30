@@ -6,30 +6,23 @@
 const express = require('express');
 const router = express.Router();
 const vendorController = require('../controllers/vendor.controller');
-const { authenticateJWT } = require('../middleware/auth.middleware');
-const { requireRole } = require('../middleware/role.middleware');
-const {
-  validateVendorIdParam,
-  validateCreateVendor,
-  validateUpdateVendor,
-} = require('../validators/vendor.validator');
 
-// Protect all vendor routes with JWT authentication & require admin role
-router.use(authenticateJWT, requireRole('admin'));
+// GET /api/v1/vendors/dashboard-stats - Live Vendor Database Aggregations
+router.get('/dashboard-stats', (req, res, next) => vendorController.getDashboardStats(req, res, next));
 
-// POST /api/v1/vendors - Create Vendor
-router.post('/', validateCreateVendor, (req, res, next) => vendorController.createVendor(req, res, next));
-
-// GET /api/v1/vendors - Get All Vendors (Paginated)
+// GET /api/v1/vendors - Get All Vendors (Public & Authenticated Dropdowns)
 router.get('/', (req, res, next) => vendorController.getAllVendors(req, res, next));
 
+// POST /api/v1/vendors - Create Vendor
+router.post('/', (req, res, next) => vendorController.createVendor(req, res, next));
+
 // GET /api/v1/vendors/:id - Get Vendor by ID
-router.get('/:id', validateVendorIdParam, (req, res, next) => vendorController.getVendorById(req, res, next));
+router.get('/:id', (req, res, next) => vendorController.getVendorById(req, res, next));
 
 // PUT /api/v1/vendors/:id - Update Vendor
-router.put('/:id', validateVendorIdParam, validateUpdateVendor, (req, res, next) => vendorController.updateVendor(req, res, next));
+router.put('/:id', (req, res, next) => vendorController.updateVendor(req, res, next));
 
 // DELETE /api/v1/vendors/:id - Soft Delete Vendor
-router.delete('/:id', validateVendorIdParam, (req, res, next) => vendorController.deleteVendor(req, res, next));
+router.delete('/:id', (req, res, next) => vendorController.deleteVendor(req, res, next));
 
 module.exports = router;

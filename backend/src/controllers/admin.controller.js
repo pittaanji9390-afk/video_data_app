@@ -5,9 +5,60 @@
 const adminService = require('../services/admin.service');
 
 class AdminController {
-  /**
-   * POST /api/v1/admins
-   */
+  async getDashboardStats(req, res, next) {
+    try {
+      const stats = await adminService.getAdminDashboardStats();
+      return res.status(200).json({
+        status: 'success',
+        data: stats,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getQCApprovedQueue(req, res, next) {
+    try {
+      const queue = await adminService.getQCApprovedQueue();
+      return res.status(200).json({
+        status: 'success',
+        data: queue,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async approveVideo(req, res, next) {
+    try {
+      const { videoId } = req.params;
+      const { comments } = req.body;
+      const result = await adminService.approveVideo(videoId, comments);
+      return res.status(200).json({
+        status: 'success',
+        message: 'Video approved by Admin. Vendor payout credited.',
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async rejectVideo(req, res, next) {
+    try {
+      const { videoId } = req.params;
+      const { comments } = req.body;
+      const result = await adminService.rejectVideo(videoId, comments);
+      return res.status(200).json({
+        status: 'success',
+        message: 'Video rejected by Admin.',
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async createAdmin(req, res, next) {
     try {
       const { full_name, email, phone, password } = req.body;
@@ -28,9 +79,6 @@ class AdminController {
     }
   }
 
-  /**
-   * GET /api/v1/admins
-   */
   async getAllAdmins(req, res, next) {
     try {
       const { page, limit } = req.query;
@@ -45,9 +93,6 @@ class AdminController {
     }
   }
 
-  /**
-   * GET /api/v1/admins/:id
-   */
   async getAdminById(req, res, next) {
     try {
       const { id } = req.params;
@@ -62,9 +107,6 @@ class AdminController {
     }
   }
 
-  /**
-   * PUT /api/v1/admins/:id
-   */
   async updateAdmin(req, res, next) {
     try {
       const { id } = req.params;
@@ -87,9 +129,6 @@ class AdminController {
     }
   }
 
-  /**
-   * DELETE /api/v1/admins/:id
-   */
   async deleteAdmin(req, res, next) {
     try {
       const { id } = req.params;

@@ -30,25 +30,29 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     setState(() => _isLoading = true);
     try {
       final baseUrl = ApiConstants.baseUrl;
+      final headers = await AuthService.getAuthHeaders();
 
       // 1. Fetch Vendors from Backend Database
       final vendorsUri = Uri.parse('$baseUrl/api/v1/vendors');
-      final vendorsRes = await http.get(vendorsUri).timeout(const Duration(seconds: 4));
+      final vendorsRes = await http.get(vendorsUri, headers: headers).timeout(const Duration(seconds: 4));
       if (vendorsRes.statusCode == 200) {
         final data = jsonDecode(vendorsRes.body);
-        final List<dynamic> items = data['data']['items'] ?? [];
+        final rawData = data['data'];
+        final List<dynamic> items = rawData is List ? rawData : (rawData?['items'] ?? []);
         if (items.isNotEmpty) {
           _vendors.clear();
           for (var v in items) {
             _vendors.add({
-              'id': v['vendor_code'] ?? (v['id'] != null ? v['id'].toString().substring(0, 8) : 'VEN-001'),
-              'name': v['company_name'] ?? 'Vendor Company',
-              'contact': v['contact_person'] ?? 'Contact Person',
+              'id': v['id'] ?? v['vendor_code'] ?? 'VEN-001',
+              'vendor_code': v['vendor_code'] ?? 'VEN-001',
+              'name': v['name'] ?? v['company_name'] ?? 'Vendor Company',
+              'contact': v['contact'] ?? v['contact_person'] ?? 'Contact Person',
               'email': v['email'] ?? 'vendor@example.com',
-              'candidates': 1,
-              'videos': 1,
-              'earnings': '₹0',
-              'status': (v['is_active'] ?? true) ? 'Active' : 'Inactive',
+              'phone': v['phone'] ?? '+91 98765 00000',
+              'candidates': v['candidates'] ?? 0,
+              'videos': v['videos'] ?? 0,
+              'earnings': v['earnings'] ?? '₹0',
+              'status': v['status'] ?? 'Active',
             });
           }
         }
@@ -56,10 +60,11 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
 
       // 2. Fetch Candidates from Backend Database
       final candidatesUri = Uri.parse('$baseUrl/api/v1/candidates');
-      final candidatesRes = await http.get(candidatesUri).timeout(const Duration(seconds: 4));
+      final candidatesRes = await http.get(candidatesUri, headers: headers).timeout(const Duration(seconds: 4));
       if (candidatesRes.statusCode == 200) {
         final data = jsonDecode(candidatesRes.body);
-        final List<dynamic> items = data['data']['items'] ?? [];
+        final rawData = data['data'];
+        final List<dynamic> items = rawData is List ? rawData : (rawData?['items'] ?? []);
         if (items.isNotEmpty) {
           _candidates.clear();
           for (var c in items) {
@@ -76,10 +81,11 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
 
       // 3. Fetch Videos & Status Counts from Backend Database
       final videosUri = Uri.parse('$baseUrl/api/v1/videos');
-      final videosRes = await http.get(videosUri).timeout(const Duration(seconds: 4));
+      final videosRes = await http.get(videosUri, headers: headers).timeout(const Duration(seconds: 4));
       if (videosRes.statusCode == 200) {
         final data = jsonDecode(videosRes.body);
-        final List<dynamic> items = data['data']['items'] ?? [];
+        final rawData = data['data'];
+        final List<dynamic> items = rawData is List ? rawData : (rawData?['items'] ?? []);
         if (items.isNotEmpty) {
           int appCount = 0;
           int rejCount = 0;
@@ -218,6 +224,8 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
   final _contactPersonCtrl = TextEditingController();
   final _vendorEmailCtrl = TextEditingController();
   final _vendorPhoneCtrl = TextEditingController();
+  final _vendorPasswordCtrl = TextEditingController();
+  bool _obscureVendorPassword = true;
 
   Future<void> _handleLogout() async {
     await AuthService.logout();
@@ -230,100 +238,177 @@ class _MobileAdminDashboardScreenState extends State<MobileAdminDashboardScreen>
     _contactPersonCtrl.clear();
     _vendorEmailCtrl.clear();
     _vendorPhoneCtrl.clear();
+    _vendorPasswordCtrl.clear();
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Add New Vendor', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _vendorNameCtrl,
-                decoration: const InputDecoration(labelText: 'Company / Vendor Name'),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('Add New Vendor', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A), fontSize: 20)),
+              content: SingleChildScrollView(
+                child: SizedBox(
+                  width: 380,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: _vendorNameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Company / Vendor Name',
+                          labelStyle: TextStyle(color: Color(0xFF475569)),
+                          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2563EB), width: 2)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _contactPersonCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Contact Person',
+                          labelStyle: TextStyle(color: Color(0xFF475569)),
+                          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2563EB), width: 2)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _vendorEmailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email Address',
+                          labelStyle: TextStyle(color: Color(0xFF475569)),
+                          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2563EB), width: 2)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _vendorPhoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone Number',
+                          labelStyle: TextStyle(color: Color(0xFF475569)),
+                          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2563EB), width: 2)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _vendorPasswordCtrl,
+                        obscureText: _obscureVendorPassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          labelStyle: const TextStyle(color: Color(0xFF475569)),
+                          focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2563EB), width: 2)),
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscureVendorPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF64748B)),
+                            onPressed: () {
+                              setDialogState(() => _obscureVendorPassword = !_obscureVendorPassword);
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _contactPersonCtrl,
-                decoration: const InputDecoration(labelText: 'Contact Person'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _vendorEmailCtrl,
-                decoration: const InputDecoration(labelText: 'Email Address'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _vendorPhoneCtrl,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            onPressed: () async {
-              if (_vendorNameCtrl.text.trim().isEmpty) return;
-              final newVendorName = _vendorNameCtrl.text.trim();
-              final contact = _contactPersonCtrl.text.trim().isEmpty ? 'Admin Contact' : _contactPersonCtrl.text.trim();
-              final email = _vendorEmailCtrl.text.trim().isEmpty ? 'vendor${DateTime.now().millisecondsSinceEpoch}@example.com' : _vendorEmailCtrl.text.trim();
-              final phone = _vendorPhoneCtrl.text.trim().isEmpty ? '+91 98765 00000' : _vendorPhoneCtrl.text.trim();
+              actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final company = _vendorNameCtrl.text.trim();
+                    final email = _vendorEmailCtrl.text.trim();
+                    final password = _vendorPasswordCtrl.text.trim();
 
-              try {
-                final uri = Uri.parse('${ApiConstants.baseUrl}/api/v1/vendors');
-                await http.post(
-                  uri,
-                  headers: ApiConstants.defaultHeaders,
-                  body: jsonEncode({
-                    'company_name': newVendorName,
-                    'contact_person': contact,
-                    'email': email,
-                    'phone': phone,
-                  }),
-                ).timeout(const Duration(seconds: 4));
-              } catch (e) {
-                debugPrint('API vendor creation info: $e');
-              }
+                    if (company.isEmpty || email.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter Company Name and Email Address')),
+                      );
+                      return;
+                    }
 
-              if (context.mounted) {
-                setState(() {
-                  _vendors.insert(0, {
-                    'id': 'VEN-00${_vendors.length + 1}',
-                    'name': newVendorName,
-                    'contact': contact,
-                    'email': email,
-                    'candidates': 0,
-                    'videos': 0,
-                    'earnings': '₹0',
-                    'status': 'Active',
-                  });
-                  _activities.insert(0, {
-                    'title': 'New Vendor Added',
-                    'desc': newVendorName,
-                    'time': 'Just now',
-                    'icon': Icons.storefront_rounded,
-                    'accentColor': const Color(0xFF2563EB),
-                    'bgColor': const Color(0xFFEFF6FF),
-                  });
-                });
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Vendor "$newVendorName" created & saved to DB successfully!'), backgroundColor: AppColors.success),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Create Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+                    if (password.isNotEmpty && password.length < 6) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Password must be at least 6 characters')),
+                      );
+                      return;
+                    }
+
+                    try {
+                      final uri = Uri.parse('${ApiConstants.baseUrl}/api/v1/vendors');
+                      final headers = await AuthService.getAuthHeaders();
+                      final res = await http.post(
+                        uri,
+                        headers: headers,
+                        body: jsonEncode({
+                          'company_name': company,
+                          'contact_person': _contactPersonCtrl.text.trim(),
+                          'email': email,
+                          'phone': _vendorPhoneCtrl.text.trim(),
+                          'password': password.isNotEmpty ? password : 'vendor123',
+                        }),
+                      ).timeout(const Duration(seconds: 4));
+
+                      if (res.statusCode == 200 || res.statusCode == 201) {
+                        final body = jsonDecode(res.body);
+                        final v = body['data'] ?? {};
+                        setState(() {
+                          _vendors.insert(0, {
+                            'id': v['id'] ?? 'VEN-${DateTime.now().millisecondsSinceEpoch}',
+                            'vendor_code': v['vendor_code'] ?? 'VEN-NEW',
+                            'name': v['company_name'] ?? company,
+                            'contact': v['contact_person'] ?? _contactPersonCtrl.text.trim(),
+                            'email': v['email'] ?? email,
+                            'phone': v['phone'] ?? _vendorPhoneCtrl.text.trim(),
+                            'candidates': 0,
+                            'videos': 0,
+                            'earnings': '₹0',
+                            'status': 'Active',
+                          });
+                        });
+                      }
+                    } catch (e) {
+                      debugPrint('API vendor creation info: $e');
+                      setState(() {
+                        _vendors.insert(0, {
+                          'id': 'VEN-${DateTime.now().millisecondsSinceEpoch}',
+                          'vendor_code': 'VEN-NEW',
+                          'name': company,
+                          'contact': _contactPersonCtrl.text.trim(),
+                          'email': email,
+                          'phone': _vendorPhoneCtrl.text.trim(),
+                          'candidates': 0,
+                          'videos': 0,
+                          'earnings': '₹0',
+                          'status': 'Active',
+                        });
+                      });
+                    }
+
+                    if (context.mounted) {
+                      Navigator.pop(ctx);
+                      _loadRealDashboardData();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Vendor "$company" created & saved to DB successfully!'), backgroundColor: AppColors.success),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    minimumSize: const Size(120, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Create Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

@@ -1,130 +1,87 @@
 /**
  * Notification Controller
- * Manages user notifications, read/unread states, and real-time count synchronization.
+ * Handles SSE Real-Time Notification Stream, Read-Once Updates, and Real Event Retrieval
  */
 
-let notificationsStore = [
-  {
-    id: 'notif-1',
-    title: 'Video Approved',
-    desc: 'Kitchen Video has been approved.',
-    time: '10:30 AM',
-    color: '#10b981',
-    type: 'video_approved',
-    read: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'notif-2',
-    title: 'Upload Complete',
-    desc: 'Bedroom Video uploaded successfully.',
-    time: '09:45 AM',
-    color: '#0ea5e9',
-    type: 'upload_complete',
-    read: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'notif-3',
-    title: 'Payment Received',
-    desc: '₹2,500 credited to account.',
-    time: 'Yesterday',
-    color: '#8b5cf6',
-    type: 'payment_received',
-    read: true,
-    createdAt: new Date().toISOString(),
-  },
-];
+const notificationService = require('../services/notification.service');
 
 class NotificationController {
   /**
-   * GET /api/v1/notifications
+   * SSE Stream Endpoint: GET /api/v1/notifications/stream
    */
+  async subscribeStream(req, res) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.flushHeaders();
+
+    // Register client for real-time notification push
+    notificationService.registerSSEClient(res);
+
+    // Send initial ping
+    res.write('data: {"type": "connected"}\n\n');
+  }
+
   async getNotifications(req, res, next) {
     try {
-      const unreadCount = notificationsStore.filter((n) => !n.read).length;
+      const userId = req.user?.id || req.query.user_id || null;
+      const role = req.user?.role || req.query.role || 'candidate';
+
+      const result = await notificationService.getNotifications({ user_id: userId, role });
       return res.status(200).json({
         status: 'success',
-        data: {
-          notifications: notificationsStore,
-          unreadCount,
-        },
+        data: result,
       });
     } catch (error) {
       next(error);
     }
   }
 
-  /**
-   * PUT /api/v1/notifications/mark-all-read
-   */
-  async markAllRead(req, res, next) {
-    try {
-      notificationsStore = notificationsStore.map((n) => ({ ...n, read: true }));
-      return res.status(200).json({
-        status: 'success',
-        message: 'All notifications marked as read',
-        data: {
-          notifications: notificationsStore,
-          unreadCount: 0,
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * PUT /api/v1/notifications/:id/mark-read
-   */
   async markSingleRead(req, res, next) {
     try {
       const { id } = req.params;
-      notificationsStore = notificationsStore.map((n) => (n.id === id ? { ...n, read: true } : n));
-      const unreadCount = notificationsStore.filter((n) => !n.read).length;
+      await notificationService.markSingleRead(id);
+
+      const userId = req.user?.id || null;
+      const role = req.user?.role || 'candidate';
+      const result = await notificationService.getNotifications({ user_id: userId, role });
 
       return res.status(200).json({
         status: 'success',
         message: 'Notification marked as read',
-        data: {
-          notifications: notificationsStore,
-          unreadCount,
-        },
+        data: result,
       });
     } catch (error) {
       next(error);
     }
   }
 
-  /**
-   * POST /api/v1/notifications
-   * Create a new notification (e.g. video approved, video rejected, upload complete, payment received)
-   */
+  async markAllRead(req, res, next) {
+    try {
+      const userId = req.user?.id || null;
+      const role = req.user?.role || 'candidate';
+
+      await notificationService.markAllRead(userId, role);
+      const result = await notificationService.getNotifications({ user_id: userId, role });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'All notifications marked as read',
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async createNotification(req, res, next) {
     try {
-      const { title, desc, color, type } = req.body;
-      const newNotif = {
-        id: `notif-${Date.now()}`,
-        title: title || 'New Notification',
-        desc: desc || '',
-        time: 'Just now',
-        color: color || '#10b981',
-        type: type || 'system',
-        read: false,
-        createdAt: new Date().toISOString(),
-      };
-
-      notificationsStore.unshift(newNotif);
-      const unreadCount = notificationsStore.filter((n) => !n.read).length;
-
+      const notification = await notificationService.createNotification(req.body);
       return res.status(201).json({
         status: 'success',
-        message: 'Notification created',
-        data: {
-          notification: newNotif,
-          notifications: notificationsStore,
-          unreadCount,
-        },
+        message: 'Real-time notification generated',
+        data: { notification },
       });
     } catch (error) {
       next(error);

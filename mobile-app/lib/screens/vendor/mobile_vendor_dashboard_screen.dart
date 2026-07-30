@@ -185,6 +185,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,12 +443,8 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
           ),
           const SizedBox(height: 8),
 
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _vendorUploads.length.clamp(0, 3),
-            itemBuilder: (ctx, i) {
-              final item = _vendorUploads[i];
+          Column(
+            children: _vendorUploads.take(3).map((item) {
               final isAppr = item['status'] == 'Approved';
               final isPend = item['status'] == 'Pending';
               final statusColor = isAppr ? AppColors.success : isPend ? Colors.amber.shade800 : AppColors.error;
@@ -455,6 +452,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
+                  onTap: () => _showVideoPreviewModal(item),
                   leading: CircleAvatar(backgroundColor: statusColor.withAlpha(25), child: Icon(Icons.videocam_rounded, color: statusColor)),
                   title: Text(item['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(item['time']),
@@ -465,7 +463,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                   ),
                 ),
               );
-            },
+            }).toList(),
           ),
         ],
       ),
@@ -483,15 +481,17 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
             children: [
               const Text('Candidates', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const Spacer(),
-              ElevatedButton.icon(
-                onPressed: _showAddCandidateModal,
-                icon: const Icon(Icons.person_add_rounded, color: Colors.white, size: 16),
-                label: const Text('+ Add Candidate', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              Flexible(
+                child: ElevatedButton.icon(
+                  onPressed: _showAddCandidateModal,
+                  icon: const Icon(Icons.person_add_rounded, color: Colors.white, size: 16),
+                  label: const Text('+ Add Candidate', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
                 ),
               ),
             ],
@@ -535,12 +535,8 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                 );
               }
 
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: filtered.length,
-                itemBuilder: (ctx, i) {
-                  final c = filtered[i];
+              return Column(
+                children: filtered.map((c) {
                   final isActive = c['status'] == 'Active';
                   return Card(
                     margin: const EdgeInsets.only(bottom: 10),
@@ -555,7 +551,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                       ),
                     ),
                   );
-                },
+                }).toList(),
               );
             },
           ),
@@ -596,13 +592,8 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
           ),
           const SizedBox(height: 16),
 
-          // Uploaded Videos List
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: filtered.length,
-            itemBuilder: (ctx, i) {
-              final item = filtered[i];
+          Column(
+            children: filtered.map((item) {
               final isAppr = item['status'] == 'Approved';
               final isPend = item['status'] == 'Pending';
               final statusColor = isAppr ? AppColors.success : isPend ? Colors.amber.shade800 : AppColors.error;
@@ -611,6 +602,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                 margin: const EdgeInsets.only(bottom: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
+                  onTap: () => _showVideoPreviewModal(item),
                   leading: Container(
                     width: 48,
                     height: 48,
@@ -626,7 +618,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                   ),
                 ),
               );
-            },
+            }).toList(),
           ),
         ],
       ),
@@ -671,8 +663,6 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
 
   // 4. NOTIFICATIONS TAB (Screen #6 in Image 2)
   Widget _buildNotificationsTab() {
-    _markNotificationsAsRead();
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -690,12 +680,8 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
           ),
           const SizedBox(height: 14),
 
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _vendorNotifications.length,
-            itemBuilder: (ctx, i) {
-              final n = _vendorNotifications[i];
+          Column(
+            children: _vendorNotifications.map((n) {
               final c = (n['color'] is Color) ? n['color'] as Color : AppColors.success;
               final isRead = n['read'] == true;
               return Card(
@@ -703,7 +689,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                 color: isRead ? Colors.white : const Color(0xFFF0F9FF),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: isRead ? const Color(0xFFE2E8F0) : AppColors.primary.withOpacity(0.3)),
+                  side: BorderSide(color: isRead ? const Color(0xFFE2E8F0) : AppColors.primary.withAlpha(76)),
                 ),
                 child: ListTile(
                   onTap: () => _handleNotificationTap(n),
@@ -713,7 +699,7 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
                   trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
                 ),
               );
-            },
+            }).toList(),
           ),
         ],
       ),
@@ -792,28 +778,99 @@ class _MobileVendorDashboardScreenState extends State<MobileVendorDashboardScree
     );
   }
 
-  Widget _buildStatusMiniTile(String label, String count, Color color, Color bg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            count,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color, height: 1.1),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: color),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+  void _showVideoPreviewModal(Map<String, dynamic> item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.video_library_rounded, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Expanded(child: Text(item['title'] ?? 'Video Preview', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 160,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 54),
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      color: Colors.black87,
+                      child: Text(item['duration'] ?? '00:30', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Tag: ${item['env'] ?? 'General'}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Submitted: ${item['time']}'),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Text('Status: '),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(color: AppColors.success.withAlpha(25), borderRadius: BorderRadius.circular(6)),
+                  child: Text(item['status'] ?? 'Approved', style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 11)),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusMiniTile(String label, String count, Color color, Color bg, [VoidCallback? onTap]) {
+    return InkWell(
+      onTap: onTap ?? () {
+        setState(() {
+          _currentTab = 1;
+        });
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              count,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color, height: 1.1),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: color),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

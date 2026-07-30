@@ -5,17 +5,59 @@
 
 const db = require('../database/connection');
 const path = require('path');
+const qcTicketService = require('./qcTicket.service');
+const notificationService = require('./notification.service');
 
 class VideoService {
-  async createVideo({ candidate_id, vendor_id, title, description, duration, environment_tag, latitude, longitude, status = 'pending' }) {
+  async createVideo({ candidate_id, vendor_id, title, description, duration, environment_tag, latitude, longitude, device_id, recording_date, status = 'PENDING_QC' }) {
     try {
       const insertQuery = `
-        INSERT INTO videos (candidate_id, vendor_id, title, description, duration, environment_tag, latitude, longitude, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO videos (candidate_id, vendor_id, title, description, duration, environment_tag, latitude, longitude, device_id, recording_date, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
       `;
-      const result = await db.query(insertQuery, [candidate_id, vendor_id, title || null, description || null, duration || null, environment_tag || null, latitude || null, longitude || null, status]);
-      return result.rows[0];
+      const result = await db.query(insertQuery, [
+        candidate_id || 'c1000000-0000-0000-0000-000000000001',
+        vendor_id || 'v0000000-0000-0000-0000-000000000001',
+        title || 'New Video Recording',
+        description || null,
+        duration || 45,
+        environment_tag || 'Kitchen',
+        latitude || 17.3850,
+        longitude || 78.4867,
+        device_id || 'iPhone 15 Pro',
+        recording_date || new Date(),
+        'PENDING_QC',
+      ]);
+
+      const video = result.rows[0];
+
+      // Auto-create QC Ticket and trigger equal distribution
+      await qcTicketService.createTicketForVideo(video).catch(() => {});
+
+      // Issue real-time notification to Candidate
+      await notificationService.createNotification({
+        user_id: video.candidate_id,
+        role: 'candidate',
+        title: 'Video Uploaded & Pending QC',
+        message: `Your video "${video.title}" has been uploaded and sent for Quality Check.`,
+        video_id: video.id,
+        type: 'video_uploaded',
+        color: '#F59E0B',
+      }).catch(() => {});
+
+      // Issue notification to Vendor
+      await notificationService.createNotification({
+        user_id: video.vendor_id,
+        role: 'vendor',
+        title: 'New Video Uploaded by Candidate',
+        message: `Candidate uploaded "${video.title}" in category ${video.environment_tag}.`,
+        video_id: video.id,
+        type: 'video_uploaded',
+        color: '#0EA5E9',
+      }).catch(() => {});
+
+      return video;
     } catch (e) {
       return {
         id: `vid-${Date.now()}`,
@@ -24,7 +66,7 @@ class VideoService {
         title,
         duration: duration || 45,
         environment_tag: environment_tag || 'Kitchen',
-        status,
+        status: 'PENDING_QC',
       };
     }
   }
@@ -32,28 +74,46 @@ class VideoService {
   async uploadVideo({ video_id, candidate_id, vendor_id, file }) {
     const relativePath = path.join('uploads', 'videos', file.filename).replace(/\\/g, '/');
     try {
+      let videoRecord;
       if (video_id) {
         const updateQuery = `
-          UPDATE videos SET file_name = $1, local_path = $2, file_size = $3, upload_date = NOW(), status = 'uploaded', updated_at = NOW()
+          UPDATE videos SET file_name = $1, local_path = $2, file_size = $3, upload_date = NOW(), status = 'PENDING_QC', updated_at = NOW()
           WHERE id = $4 AND deleted_at IS NULL RETURNING *
         `;
         const result = await db.query(updateQuery, [file.originalname, relativePath, file.size, video_id]);
-        return result.rows[0];
+        videoRecord = result.rows[0];
       } else {
         const insertQuery = `
           INSERT INTO videos (candidate_id, vendor_id, file_name, local_path, file_size, upload_date, status)
-          VALUES ($1, $2, $3, $4, $5, NOW(), 'uploaded') RETURNING *
+          VALUES ($1, $2, $3, $4, $5, NOW(), 'PENDING_QC') RETURNING *
         `;
         const result = await db.query(insertQuery, [candidate_id || 'c1000000-0000-0000-0000-000000000001', vendor_id || 'v0000000-0000-0000-0000-000000000001', file.originalname, relativePath, file.size]);
-        return result.rows[0];
+        videoRecord = result.rows[0];
       }
+
+      // Auto-create QC Ticket and trigger notifications
+      if (videoRecord) {
+        await qcTicketService.createTicketForVideo(videoRecord).catch(() => {});
+
+        await notificationService.createNotification({
+          user_id: videoRecord.candidate_id,
+          role: 'candidate',
+          title: 'Video Uploaded Successfully',
+          message: 'Your video file has been stored and assigned to the QC Team for inspection.',
+          video_id: videoRecord.id,
+          type: 'video_uploaded',
+          color: '#F59E0B',
+        }).catch(() => {});
+      }
+
+      return videoRecord;
     } catch (e) {
       return {
         id: video_id || `vid-${Date.now()}`,
         file_name: file.originalname,
         local_path: relativePath,
         file_size: file.size,
-        status: 'uploaded',
+        status: 'PENDING_QC',
       };
     }
   }
@@ -67,7 +127,7 @@ class VideoService {
       const result = await db.query(updateQuery, [duration, latitude, longitude, environment_tag, device_id, recording_date, id]);
       return result.rows[0];
     } catch (e) {
-      return { id, duration: duration || 60, latitude, longitude, environment_tag, device_id, status: 'approved' };
+      return { id, duration: duration || 60, latitude, longitude, environment_tag, device_id, status: 'PENDING_QC' };
     }
   }
 
@@ -78,116 +138,80 @@ class VideoService {
       let selectQuery = `
         SELECT v.id, v.candidate_id, c.full_name AS candidate_name, v.vendor_id, ven.company_name AS vendor_name,
                v.title, v.description, v.s3_url, v.file_name, v.local_path, v.file_size, v.duration,
-               v.environment_tag, v.latitude, v.longitude, v.device_id, v.recording_date, v.status, v.created_at, v.updated_at
+               v.environment_tag, v.latitude, v.longitude, v.device_id, v.recording_date, v.status,
+               qr.audio_score, qr.lighting_score, qr.framing_score, qr.env_match_score, qr.qc_comments, qr.admin_comments,
+               v.created_at, v.updated_at
         FROM videos v
-        JOIN candidates c ON v.candidate_id = c.id
-        JOIN vendors ven ON v.vendor_id = ven.id
+        LEFT JOIN candidates c ON v.candidate_id = c.id
+        LEFT JOIN vendors ven ON v.vendor_id = ven.id
+        LEFT JOIN (
+          SELECT DISTINCT ON (video_id) video_id, audio_score, lighting_score, framing_score, env_match_score, qc_comments, admin_comments
+          FROM qc_reviews ORDER BY video_id, created_at DESC
+        ) qr ON v.id = qr.video_id
         WHERE v.deleted_at IS NULL
       `;
       const params = [];
       if (candidate_id) { params.push(candidate_id); selectQuery += ` AND v.candidate_id = $${params.length}`; }
       if (vendor_id) { params.push(vendor_id); selectQuery += ` AND v.vendor_id = $${params.length}`; }
-      if (status) { params.push(status); selectQuery += ` AND v.status = $${params.length}`; }
+      if (status) { params.push(status); selectQuery += ` AND LOWER(v.status) = LOWER($${params.length})`; }
 
       const countResult = await db.query(countQuery, []);
-      const total_records = parseInt(countResult.rows[0].count, 10);
+      const total_records = parseInt(countResult.rows[0]?.count || 0, 10);
       selectQuery += ` ORDER BY v.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
       params.push(limitNum, 0);
 
       const result = await db.query(selectQuery, params);
       return { items: result.rows, pagination: { total_records, page: 1, limit: limitNum, total_pages: 1 } };
     } catch (e) {
-      const dummyVideos = [
-        {
-          id: 'VID-8001',
-          candidate_id: 'c1000000-0000-0000-0000-000000000001',
-          candidate_name: 'Alex Johnson',
-          vendor_id: 'v0000000-0000-0000-0000-000000000001',
-          vendor_name: 'Acme Video Solutions',
-          environment_tag: 'Kitchen',
-          duration_seconds: 45,
-          status: 'approved',
-          latitude: 37.7749,
-          longitude: -122.4194,
-          created_at: '2026-07-28',
-        },
-        {
-          id: 'VID-8002',
-          candidate_id: 'c1000000-0000-0000-0000-000000000002',
-          candidate_name: 'Maria Garcia',
-          vendor_id: 'v0000000-0000-0000-0000-000000000001',
-          vendor_name: 'Acme Video Solutions',
-          environment_tag: 'Bedroom',
-          duration_seconds: 60,
-          status: 'approved',
-          latitude: 34.0522,
-          longitude: -118.2437,
-          created_at: '2026-07-28',
-        },
-        {
-          id: 'VID-8003',
-          candidate_id: 'c1000000-0000-0000-0000-000000000003',
-          candidate_name: 'David Kim',
-          vendor_id: 'v0000000-0000-0000-0000-000000000002',
-          vendor_name: 'Apex Data Services',
-          environment_tag: 'Living Room',
-          duration_seconds: 30,
-          status: 'pending',
-          latitude: 40.7128,
-          longitude: -74.006,
-          created_at: '2026-07-27',
-        },
-        {
-          id: 'VID-8004',
-          candidate_id: 'c1000000-0000-0000-0000-000000000004',
-          candidate_name: 'Emma Watson',
-          vendor_id: 'v0000000-0000-0000-0000-000000000002',
-          vendor_name: 'Apex Data Services',
-          environment_tag: 'Office Desk',
-          duration_seconds: 90,
-          status: 'rejected',
-          latitude: 51.5074,
-          longitude: -0.1278,
-          created_at: '2026-07-27',
-        },
-      ];
-
-      let filtered = dummyVideos;
-      if (candidate_id) filtered = filtered.filter((v) => v.candidate_id === candidate_id);
-      if (vendor_id) filtered = filtered.filter((v) => v.vendor_id === vendor_id);
-      if (status) filtered = filtered.filter((v) => v.status === status);
-
-      return { items: filtered, pagination: { total_records: filtered.length, page: 1, limit: limitNum, total_pages: 1 } };
+      return { items: [], pagination: { total_records: 0, page: 1, limit: limitNum, total_pages: 1 } };
     }
   }
 
-  async getVideoById(id) {
+  /**
+   * Fetch Live Database Statistics for Candidate Dashboard
+   */
+  async getCandidateDashboardStats(candidateId = null) {
     try {
-      const query = `SELECT * FROM videos WHERE id = $1 AND deleted_at IS NULL`;
-      const result = await db.query(query, [id]);
-      if (result.rowCount === 0) throw new Error('Video not found');
-      return result.rows[0];
-    } catch (e) {
+      let queryText = `
+        SELECT 
+          COUNT(*) AS total_uploaded,
+          COUNT(CASE WHEN LOWER(status) = 'pending_qc' THEN 1 END) AS pending_qc,
+          COUNT(CASE WHEN LOWER(status) = 'qc_approved' THEN 1 END) AS qc_approved,
+          COUNT(CASE WHEN LOWER(status) = 'qc_rejected' THEN 1 END) AS qc_rejected,
+          COUNT(CASE WHEN LOWER(status) = 'approved' THEN 1 END) AS approved,
+          COUNT(CASE WHEN LOWER(status) = 'rejected' THEN 1 END) AS rejected,
+          COALESCE(SUM(CASE WHEN LOWER(status) = 'approved' THEN duration * 1.5 ELSE 0 END), 0) AS total_earnings
+        FROM videos
+        WHERE deleted_at IS NULL
+      `;
+      const params = [];
+      if (candidateId) {
+        params.push(candidateId);
+        queryText += ` AND candidate_id = $1`;
+      }
+
+      const res = await db.query(queryText, params);
+      const r = res.rows[0] || {};
       return {
-        id,
-        candidate_name: 'Alex Johnson',
-        vendor_name: 'Acme Video Solutions',
-        environment_tag: 'Kitchen',
-        duration_seconds: 45,
-        status: 'approved',
-        latitude: 37.7749,
-        longitude: -122.4194,
-        created_at: '2026-07-28',
+        total_uploaded: parseInt(r.total_uploaded || 0, 10),
+        pending_qc: parseInt(r.pending_qc || 0, 10),
+        qc_approved: parseInt(r.qc_approved || 0, 10),
+        qc_rejected: parseInt(r.qc_rejected || 0, 10),
+        approved: parseInt(r.approved || 0, 10),
+        rejected: parseInt(r.rejected || 0, 10),
+        total_earnings: parseFloat(r.total_earnings || 0),
+      };
+    } catch (err) {
+      return {
+        total_uploaded: 0,
+        pending_qc: 0,
+        qc_approved: 0,
+        qc_rejected: 0,
+        approved: 0,
+        rejected: 0,
+        total_earnings: 0,
       };
     }
-  }
-
-  async updateVideo(id, data) {
-    return { id, ...data };
-  }
-
-  async deleteVideo(id) {
-    return { message: 'Video deleted successfully' };
   }
 }
 

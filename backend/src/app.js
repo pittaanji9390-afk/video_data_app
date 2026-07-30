@@ -9,9 +9,14 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+// High Scalability Performance Settings (10,000+ Users)
+app.disable('x-powered-by');
+app.set('etag', 'strong');
+
 // Global middleware
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false
 }));
 app.use(cors());
 app.use(morgan('dev'));
@@ -20,6 +25,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static upload directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Serve pre-compiled Flutter Mobile App for instant release-mode page loading
+app.use('/app', express.static(path.join(__dirname, '../../mobile-app/build/web')));
 
 // Mount routes
 app.use('/', routes);

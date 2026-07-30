@@ -54,6 +54,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (role == 'admin') {
         Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
+      } else if (role == 'qc_team' || role == 'qc') {
+        Navigator.pushReplacementNamed(context, AppRoutes.qcDashboard);
       } else if (role == 'vendor') {
         Navigator.pushReplacementNamed(context, AppRoutes.vendorDashboard);
       } else {
@@ -294,37 +296,73 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+                              onPressed: () async {
+                                setState(() {
+                                  _identifierController.text = 'anji@gmail.com';
+                                  _passwordController.text = 'anji123';
+                                });
+                                await _handleLogin('anji@gmail.com', 'anji123');
+                              },
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: Color(0xFF2563EB)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                               ),
-                              child: const Text('Candidate', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                              child: const Text('Candidate', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.vendorDashboard),
+                              onPressed: () async {
+                                setState(() {
+                                  _identifierController.text = 'vendor@acmevideos.com';
+                                  _passwordController.text = 'vendor123';
+                                });
+                                await _handleLogin('vendor@acmevideos.com', 'vendor123');
+                              },
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: Color(0xFF0EA5E9)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                               ),
-                              child: const Text('Vendor', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0EA5E9))),
+                              child: const Text('Vendor', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0EA5E9))),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard),
+                              onPressed: () async {
+                                setState(() {
+                                  _identifierController.text = 'qc.reviewer@videoplatform.com';
+                                  _passwordController.text = 'qc1234';
+                                });
+                                await _handleLogin('qc.reviewer@videoplatform.com', 'qc1234');
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFF8B5CF6)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              child: const Text('QC Team', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                setState(() {
+                                  _identifierController.text = 'admin@videoplatform.com';
+                                  _passwordController.text = 'password123';
+                                });
+                                await _handleLogin('admin@videoplatform.com', 'password123');
+                              },
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: Color(0xFF6366F1)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                               ),
-                              child: const Text('Admin', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF6366F1))),
+                              child: const Text('Admin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6366F1))),
                             ),
                           ),
                         ],

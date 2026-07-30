@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
 import '../../config/routes/app_routes.dart';
 import '../../widgets/powered_by_footer.dart';
 
@@ -18,26 +17,13 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkSessionAndNavigate() async {
-    await Future.delayed(const Duration(seconds: 2));
+    // Smooth splash load delay (1.5s) to display branding
+    await Future.delayed(const Duration(milliseconds: 1500));
 
     if (!mounted) return;
 
-    final session = await AuthService.restoreSession();
-
-    if (!mounted) return;
-
-    if (session != null) {
-      final role = session['role'];
-      if (role == 'admin') {
-        Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
-      } else if (role == 'vendor') {
-        Navigator.pushReplacementNamed(context, AppRoutes.vendorDashboard);
-      } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
-      }
-    } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
-    }
+    // Navigate to Onboarding screens flow before login
+    Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
   }
 
   @override

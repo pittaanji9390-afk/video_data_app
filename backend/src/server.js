@@ -12,6 +12,7 @@ const app = require('./app');
 const config = require('./config');
 const logger = require('./utils/logger');
 const db = require('./database/connection');
+const { startQCScheduler } = require('./jobs/qcScheduler');
 
 const PORT = config.port;
 
@@ -22,6 +23,7 @@ async function startServer() {
   // 5. Start Express HTTP server
   const server = app.listen(PORT, () => {
     logger.info(`Server running in ${config.nodeEnv} mode on port ${PORT}`);
+    startQCScheduler();
   });
 
   // Graceful shutdown handling
