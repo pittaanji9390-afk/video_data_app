@@ -10,9 +10,9 @@ const poolConfig = config.database.url
   ? {
       connectionString: config.database.url,
       ssl: { rejectUnauthorized: false },
-      max: 20,
+      max: 30,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 10000,
     }
   : {
       host: config.database.host,
@@ -21,9 +21,9 @@ const poolConfig = config.database.url
       user: config.database.user,
       password: config.database.password,
       ssl: config.database.ssl ? { rejectUnauthorized: false } : false,
-      max: 20,
+      max: 30,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 10000,
     };
 
 const pool = new Pool(poolConfig);

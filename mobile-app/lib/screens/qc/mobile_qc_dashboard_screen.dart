@@ -27,96 +27,18 @@ class _MobileQCDashboardScreenState extends State<MobileQCDashboardScreen> {
   final TextEditingController _rejectReasonCtrl = TextEditingController();
 
   Map<String, dynamic> _statistics = {
-    'total_assigned': 3,
-    'pending_review': 2,
-    'in_review': 1,
-    'approved': 1,
+    'total_assigned': 0,
+    'pending_review': 0,
+    'in_review': 0,
+    'approved': 0,
     'rejected': 0,
-    'completed_today': 1,
+    'completed_today': 0,
   };
 
-  List<Map<String, dynamic>> _myTickets = [
-    {
-      'id': 'TKT-10001',
-      'ticket_code': 'TKT-10001',
-      'video_id': 'VID-401',
-      'video_title': 'Kitchen Workflow Clip',
-      'candidate_name': 'Anji (Candidate)',
-      'vendor_name': 'ABC Solutions',
-      'project_id': 'PRJ-AUDIO-01',
-      'environment_tag': 'Kitchen',
-      'duration': 32,
-      'upload_date': '2026-07-30T10:15:00Z',
-      'status': 'pending_qc',
-      'assigned_reviewer_name': 'QC Reviewer Specialist',
-    },
-    {
-      'id': 'TKT-10002',
-      'ticket_code': 'TKT-10002',
-      'video_id': 'VID-402',
-      'video_title': 'Living Room Pan Stream',
-      'candidate_name': 'Alex Johnson',
-      'vendor_name': 'PQR Enterprises',
-      'project_id': 'PRJ-VISION-02',
-      'environment_tag': 'Living Room',
-      'duration': 45,
-      'upload_date': '2026-07-30T11:20:00Z',
-      'status': 'pending_qc',
-      'assigned_reviewer_name': 'QC Reviewer Specialist',
-    },
-  ];
-
-  List<Map<String, dynamic>> _inReviewTickets = [
-    {
-      'id': 'TKT-10003',
-      'ticket_code': 'TKT-10003',
-      'video_id': 'VID-403',
-      'video_title': 'Office Desk Motion Test',
-      'candidate_name': 'Priya Sharma',
-      'vendor_name': 'LMN Groups',
-      'project_id': 'PRJ-DESK-03',
-      'environment_tag': 'Office',
-      'duration': 60,
-      'upload_date': '2026-07-30T09:00:00Z',
-      'status': 'in_review',
-      'assigned_reviewer_name': 'QC Reviewer Specialist',
-    },
-  ];
-
-  List<Map<String, dynamic>> _qcApprovedList = [
-    {
-      'id': 'TKT-10000',
-      'ticket_code': 'TKT-10000',
-      'video_id': 'VID-399',
-      'video_title': 'Bedroom Lighting Angle',
-      'candidate_name': 'Rahul Kumar',
-      'vendor_name': 'ABC Solutions',
-      'project_id': 'PRJ-LIGHTING-01',
-      'environment_tag': 'Bedroom',
-      'duration': 28,
-      'upload_date': '2026-07-30T08:00:00Z',
-      'status': 'qc_approved',
-      'assigned_reviewer_name': 'QC Reviewer Specialist',
-    },
-  ];
-
-  List<Map<String, dynamic>> _qcRejectedList = [
-    {
-      'id': 'TKT-9999',
-      'ticket_code': 'TKT-9999',
-      'video_id': 'VID-398',
-      'video_title': 'Garden Walkthrough',
-      'candidate_name': 'Kiran Patel',
-      'vendor_name': 'LMN Groups',
-      'project_id': 'PRJ-OUTDOOR-02',
-      'environment_tag': 'Garden',
-      'duration': 15,
-      'upload_date': '2026-07-30T07:30:00Z',
-      'status': 'qc_rejected',
-      'assigned_reviewer_name': 'QC Reviewer Specialist',
-      'reason': 'Audio level too low; framing off-center',
-    },
-  ];
+  List<Map<String, dynamic>> _myTickets = [];
+  List<Map<String, dynamic>> _inReviewTickets = [];
+  List<Map<String, dynamic>> _qcApprovedList = [];
+  List<Map<String, dynamic>> _qcRejectedList = [];
 
   @override
   void initState() {
@@ -135,7 +57,7 @@ class _MobileQCDashboardScreenState extends State<MobileQCDashboardScreen> {
     try {
       final session = await AuthService.restoreSession();
       final reviewerId = session?['id'] ?? 'q0000000-0000-0000-0000-000000000001';
-      final url = Uri.parse('${ApiConstants.baseUrl}/qc-tickets/tickets/reviewer-activity');
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/v1/qc-tickets/tickets/reviewer-activity');
       await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -152,7 +74,7 @@ class _MobileQCDashboardScreenState extends State<MobileQCDashboardScreen> {
     try {
       final session = await AuthService.restoreSession();
       final reviewerId = session?['id'] ?? 'q0000000-0000-0000-0000-000000000001';
-      final url = Uri.parse('${ApiConstants.baseUrl}/qc-tickets/tickets/my-tickets?reviewer_id=$reviewerId');
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/v1/qc-tickets/tickets/my-tickets?reviewer_id=$reviewerId');
       final res = await http.get(url).timeout(const Duration(seconds: 4));
 
       if (res.statusCode == 200) {
@@ -192,7 +114,7 @@ class _MobileQCDashboardScreenState extends State<MobileQCDashboardScreen> {
     final newStatus = isApproved ? 'qc_approved' : 'qc_rejected';
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/qc-tickets/tickets/$ticketId/status');
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/v1/qc-tickets/tickets/$ticketId/status');
       await http.patch(
         url,
         headers: {'Content-Type': 'application/json'},

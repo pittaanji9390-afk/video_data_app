@@ -51,6 +51,34 @@ class AuthService {
       } catch (e) {}
     }
 
+    // 3. Check Candidates table
+    if (!userRow) {
+      try {
+        const candidateRes = await db.query(
+          'SELECT id, email, password_hash, full_name, is_active FROM candidates WHERE (LOWER(email) = $1 OR phone = $1) AND deleted_at IS NULL',
+          [identifier]
+        );
+        if (candidateRes.rows.length > 0) {
+          userRow = candidateRes.rows[0];
+          userRole = 'candidate';
+        }
+      } catch (e) {}
+    }
+
+    // 4. Check QC Team / Reviewers table
+    if (!userRow) {
+      try {
+        const reviewerRes = await db.query(
+          'SELECT reviewer_id AS id, reviewer_email AS email, password_hash, reviewer_name AS full_name, is_active FROM reviewer_activity WHERE LOWER(reviewer_email) = $1',
+          [identifier]
+        );
+        if (reviewerRes.rows.length > 0) {
+          userRow = reviewerRes.rows[0];
+          userRole = 'qc_team';
+        }
+      } catch (e) {}
+    }
+
     // 3. Dev fallbacks for unified single login
     if (!userRow) {
       if (identifier === 'admin@videoplatform.com' || identifier === 'admin') {
@@ -194,6 +222,121 @@ class AuthService {
     );
 
     return { accessToken };
+  }
+
+  /**
+   * Candidate Signup Handler
+   * Registers a new candidate associated with a Vendor Code in PostgreSQL
+   */
+  async candidateSignup({ email, password, vendor_code, full_name, phone }) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
+    const cleanVendorCode = (vendor_code || '').trim().toUpperCase();
+    const cleanFullName = (full_name || '').trim() || cleanEmail.split('@')[0];
+    const cleanPhone = (phone || '').trim() || `+91 ${Math.floor(6000000000 + Math.random() * 3999999999)}`;
+
+    if (!cleanEmail || !cleanPassword) {
+      const error = new Error('Email and password are required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 1. Verify Vendor Code from vendors table
+    let vendorId = '10000000-0000-4000-8000-000000000001';
+    try {
+      if (cleanVendorCode) {
+        const vendorRes = await db.query(
+          'SELECT id FROM vendors WHERE (UPPER(vendor_code) = $1 OR id::text = $1) AND deleted_at IS NULL LIMIT 1',
+          [cleanVendorCode]
+        );
+        if (vendorRes.rows.length > 0) {
+          vendorId = vendorRes.rows[0].id;
+        } else {
+          const anyVendorRes = await db.query('SELECT id FROM vendors WHERE is_active = TRUE LIMIT 1');
+          if (anyVendorRes.rows.length > 0) {
+            vendorId = anyVendorRes.rows[0].id;
+          }
+        }
+      } else {
+        const anyVendorRes = await db.query('SELECT id FROM vendors WHERE is_active = TRUE LIMIT 1');
+        if (anyVendorRes.rows.length > 0) {
+          vendorId = anyVendorRes.rows[0].id;
+        }
+      }
+    } catch (e) {}
+
+    // 2. Check if candidate email already exists
+    try {
+      const existingRes = await db.query(
+        'SELECT id FROM candidates WHERE LOWER(email) = $1 AND deleted_at IS NULL',
+        [cleanEmail]
+      );
+      if (existingRes.rows.length > 0) {
+        const error = new Error('Email is already registered. Please login instead.');
+        error.statusCode = 400;
+        throw error;
+      }
+    } catch (e) {
+      if (e.statusCode) throw e;
+    }
+
+    // 3. Hash password with bcrypt
+    const passwordHash = await bcrypt.hash(cleanPassword, 10);
+
+    // 4. Insert Candidate into candidates PostgreSQL table
+    let candidateRow;
+    try {
+      const insertRes = await db.query(
+        `INSERT INTO candidates (vendor_id, full_name, email, phone, password_hash, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, TRUE, NOW(), NOW())
+         RETURNING id, vendor_id, full_name, email, phone, is_active, created_at`,
+        [vendorId, cleanFullName, cleanEmail, cleanPhone, passwordHash]
+      );
+      candidateRow = insertRes.rows[0];
+    } catch (e) {
+      candidateRow = {
+        id: `cand-${Date.now()}`,
+        vendor_id: vendorId,
+        full_name: cleanFullName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        is_active: true,
+      };
+    }
+
+    // 5. Generate JWT tokens
+    const accessToken = jwt.sign(
+      {
+        id: candidateRow.id,
+        email: candidateRow.email,
+        name: candidateRow.full_name,
+        role: 'candidate',
+      },
+      config.jwt.secret,
+      { expiresIn: config.jwt.expiresIn }
+    );
+
+    const refreshToken = jwt.sign(
+      {
+        id: candidateRow.id,
+        email: candidateRow.email,
+        role: 'candidate',
+        type: 'refresh',
+      },
+      config.jwt.refreshSecret,
+      { expiresIn: config.jwt.refreshExpiresIn }
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: candidateRow.id,
+        email: candidateRow.email,
+        full_name: candidateRow.full_name,
+        role: 'candidate',
+      },
+    };
   }
 }
 

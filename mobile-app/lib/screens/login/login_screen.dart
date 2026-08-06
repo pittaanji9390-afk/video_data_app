@@ -13,8 +13,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _identifierController = TextEditingController(text: 'anji@gmail.com');
-  final TextEditingController _passwordController = TextEditingController(text: 'anji123');
+  final TextEditingController _identifierController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (role == 'admin') {
         Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
-      } else if (role == 'qc_team' || role == 'qc') {
+      } else if (role == 'qc_team' || role == 'qc' || role == 'qc_reviewer' || role.contains('qc')) {
         Navigator.pushReplacementNamed(context, AppRoutes.qcDashboard);
       } else if (role == 'vendor') {
         Navigator.pushReplacementNamed(context, AppRoutes.vendorDashboard);
@@ -272,6 +272,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Don't Have An Account? Candidate Sign Up Redirect Link
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Don't have an account? ",
+                        style: TextStyle(fontSize: 14, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, AppRoutes.candidateSignup),
+                        child: const Text(
+                          'Sign Up',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),

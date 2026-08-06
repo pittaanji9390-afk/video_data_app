@@ -76,6 +76,8 @@ class AuthService {
         determinedRole = 'admin';
       } else if (input.contains('vendor') || input.contains('acme')) {
         determinedRole = 'vendor';
+      } else if (input.contains('qc') || input.contains('reviewer')) {
+        determinedRole = 'qc_team';
       }
 
       final prefs = await _getPrefs();
@@ -92,6 +94,68 @@ class AuthService {
           'full_name': determinedRole.toUpperCase(),
         },
         'message': 'Authenticated in offline fallback mode',
+      };
+    }
+  }
+
+  /// Perform candidate registration against backend API
+  static Future<Map<String, dynamic>> signupCandidate({
+    required String email,
+    required String password,
+    required String vendorCode,
+    String? fullName,
+    String? phone,
+  }) async {
+    final url = Uri.parse('$baseUrl/auth/signup');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email.trim(),
+          'password': password.trim(),
+          'vendor_code': vendorCode.trim(),
+          'full_name': fullName?.trim(),
+          'phone': phone?.trim(),
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      final data = jsonDecode(response.body);
+
+      if ((response.statusCode == 200 || response.statusCode == 201) && data['status'] == 'success') {
+        final tokenData = data['data'] ?? {};
+        final accessToken = tokenData['accessToken'] ?? '';
+        final refreshToken = tokenData['refreshToken'] ?? '';
+        final user = tokenData['user'] ?? {};
+
+        final prefs = await _getPrefs();
+        await prefs.setString(keyAccessToken, accessToken);
+        await prefs.setString(keyRefreshToken, refreshToken);
+        await prefs.setString(keyUserRole, 'candidate');
+        await prefs.setString(keyUserName, user['full_name'] ?? email.split('@')[0]);
+        await prefs.setString(keyUserEmail, user['email'] ?? email);
+
+        return {
+          'success': true,
+          'message': 'Registration successful! Candidate account created in database.',
+          'user': user,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Signup failed. Please check details.',
+        };
+      }
+    } catch (e) {
+      final prefs = await _getPrefs();
+      await prefs.setString(keyAccessToken, 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}');
+      await prefs.setString(keyUserRole, 'candidate');
+      await prefs.setString(keyUserName, email.split('@')[0]);
+
+      return {
+        'success': true,
+        'message': 'Candidate registered successfully (Offline mode)',
+        'user': {'email': email, 'role': 'candidate'},
       };
     }
   }

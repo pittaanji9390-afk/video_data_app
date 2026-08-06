@@ -296,5 +296,9 @@ router.use('/notifications', notificationRoutes);
 router.use('/vendors', vendorRoutes);
 router.use('/candidates', candidateRoutes);
 router.use('/videos', videoRoutes);
+router.use('/qc-tickets', qcTicketRoutes);
+router.use('/qc-reviews', qcReviewRoutes);
+router.use('/admin', adminRoutes);
+router.use('/admins', adminRoutes);
 
 module.exports = router;

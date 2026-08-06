@@ -506,6 +506,64 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Prominent Shutter / Record Button
+                  if (_recordedFile == null && !_isFetchingLocation)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: GestureDetector(
+                        onTap: _isRecording ? _stopRecording : _startRecording,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: _isRecording
+                                  ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
+                                  : [const Color(0xFFEF4444), const Color(0xFFE11D48)],
+                            ),
+                            borderRadius: BorderRadius.circular(40),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFEF4444).withValues(alpha: 0.4),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    _isRecording ? Icons.stop_rounded : Icons.circle_rounded,
+                                    size: 14,
+                                    color: const Color(0xFFEF4444),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                _isRecording ? 'STOP RECORDING' : 'START RECORDING',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
                   // Hands-Free Voice Control Status Pill Indicator
                   Container(
                     margin: const EdgeInsets.only(bottom: 12),
